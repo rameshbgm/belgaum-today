@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belgaum Today - Your Daily News</title>
+    <meta name="description" content="Your source for local and global news, with a focus on Belgaum.">
+    
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bitter:wght@400;700&family=Cormorant+Garamond:wght@400;600&family=Crimson+Text:wght@400;600&family=Dancing+Script:wght@400;700&family=EB+Garamond:wght@400;600&family=Georgia&family=Indie+Flower&family=Lora:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;600&family=Open+Sans:wght@400;600&family=Pacifico&family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-light">
+    
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo">BT</div>
+                <h1 class="site-title">Belgaum Today</h1>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Toggle Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="header-controls" id="headerControls">
+                <select id="countrySelect"></select>
+                <select id="citySelect"></select>
+
+                <select id="themeSelect" title="Change Theme">
+                    <option value="theme-coffee">☕ Coffee</option>
+                    <option value="theme-dark">🌙 Dark</option>
+                    <option value="theme-elegant">✨ Elegant</option>
+                    <option value="theme-forest">🌲 Forest</option>
+                    <option value="theme-light">☀️ Light</option>
+                    <option value="theme-matrix">📟 Matrix</option>
+                    <option value="theme-minimal">📄 Minimal</option>
+                    <option value="theme-ocean">🌊 Ocean</option>
+                    <option value="theme-soft">🎨 Soft</option>
+                    <option value="theme-sunset">🌅 Sunset</option>
+                </select>
+
+                <select id="fontSelect" title="Change Font" class="font-preview-dropdown"></select>
+
+                <div class="font-size-controls">
+                    <button id="decreaseFont" title="Decrease Font Size">A-</button>
+                    <button id="increaseFont" title="Increase Font Size">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="main-nav" id="mainNav">
+            <a href="#" class="nav-link active" data-category="Belgaum">Belgaum</a>
+            <a href="#" class="nav-link" data-category="India">India</a>
+            <a href="#" class="nav-link" data-category="Business">Business</a>
+            <a href="#" class="nav-link" data-category="Technology">Technology</a>
+            <a href="#" class="nav-link" data-category="Entertainment">Entertainment</a>
+            <a href="#" class="nav-link" data-category="Sports">Sports</a>
+            <a href="#" class="nav-link" data-category="preferred" id="preferredNav">Preferred News</a>
+        </nav>
+    </header>
+
+    <main class="main-content" id="mainContent"></main>
+
+    <div class="loader-overlay active" id="loader">
+        <div class="loader-background"></div>
+        <div class="loader-icons">
+            <span>🗞️</span><span>☕</span><span>📡</span><span>💡</span><span>🌍</span>
+            <span>📰</span><span>🔥</span><span>⚡</span><span>🚀</span><span>📱</span>
+        </div>
+        <div class="loader-card">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loaderText">Loading...</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+        <div class="loader-tip" id="loaderTip">Tip: You can sip coffee while we fetch stories ☕</div>
+    </div>
+
+    <footer class="site-footer">
+        <p>&copy; 2025 Belgaum Today - Multi-Source News Aggregator</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
