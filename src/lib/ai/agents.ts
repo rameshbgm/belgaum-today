@@ -12,7 +12,7 @@
  *   - SarvamAI (openai-compatible, custom base_url)
  */
 
-import { query } from '@/lib/db';
+import { query, insert as dbInsert } from '@/lib/db';
 import { decryptApiKey } from '@/lib/ai/crypto';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { logger } from '@/lib/logger';
@@ -44,6 +44,49 @@ interface ActiveAgent {
     maxTokens: number;
     temperature: number;
     apiKey: string;
+}
+
+// ── Log Agent Call to ai_agent_logs table ──
+
+async function logAgentCall(data: {
+    provider: string;
+    model: string;
+    category: string;
+    status: 'success' | 'error' | 'fallback';
+    inputArticles: number;
+    outputTrending: number;
+    promptTokens: number;
+    durationMs: number;
+    errorMessage?: string;
+    requestSummary?: string;
+    responseSummary?: string;
+}): Promise<void> {
+    try {
+        await dbInsert(
+            `INSERT INTO ai_agent_logs (provider, model, category, status, input_articles, output_trending, prompt_tokens, duration_ms, error_message, request_summary, response_summary)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                data.provider,
+                data.model,
+                data.category,
+                data.status,
+                data.inputArticles,
+                data.outputTrending,
+                data.promptTokens,
+                data.durationMs,
+                data.errorMessage || null,
+                data.requestSummary || null,
+                data.responseSummary || null,
+            ]
+        );
+    } catch (err) {
+        console.error('[ai_agent_logs] Failed to log agent call:', err);
+    }
+}
+
+/** Rough token estimate (~4 chars per token) */
+function estimateTokens(text: string): number {
+    return Math.ceil(text.length / 4);
 }
 
 // ── Get Active Agent from DB ──
@@ -245,6 +288,7 @@ async function callAgent(
 /**
  * Analyze articles using the active AI agent and return trending results.
  * Falls back to recency-based selection if no agent is configured.
+ * Every call is logged to the ai_agent_logs table.
  */
 export async function analyzeTrendingArticles(
     articles: ArticleForAnalysis[],
@@ -266,6 +310,19 @@ export async function analyzeTrendingArticles(
 
     if (!agent) {
         await logger.aiFallback('No active agent or API key configured');
+        // Log fallback to ai_agent_logs
+        await logAgentCall({
+            provider: 'none',
+            model: 'none',
+            category,
+            status: 'fallback',
+            inputArticles: articles.length,
+            outputTrending: Math.min(count, articles.length),
+            promptTokens: 0,
+            durationMs: 0,
+            errorMessage: 'No active agent or API key configured',
+            requestSummary: `${articles.length} articles for "${category}" — no agent available`,
+        });
         return fallbackTrending(articles, count);
     }
 
@@ -275,6 +332,7 @@ export async function analyzeTrendingArticles(
     try {
         const systemPrompt = buildSystemPrompt(category, count);
         const userPrompt = buildUserPrompt(articles, category, count);
+        const totalPromptTokens = estimateTokens(systemPrompt + userPrompt);
 
         const rawResponse = await callAgent(agent, systemPrompt, userPrompt);
 
@@ -288,16 +346,52 @@ export async function analyzeTrendingArticles(
         await logger.aiCallComplete(agent.providerName, agent.modelId, category, durationMs);
 
         // Validate and ensure proper ranking
-        return results
+        const validated = results
             .filter((r) => r.articleId && r.rank && articles.some((a) => a.id === r.articleId))
             .sort((a, b) => a.rank - b.rank)
             .slice(0, count)
             .map((r, i) => ({ ...r, rank: i + 1 }));
+
+        // Build summaries for the log
+        const articleTitles = articles.slice(0, 5).map(a => a.title).join('; ');
+        const requestSummary = `${articles.length} articles for "${category}". Top titles: ${articleTitles}${articles.length > 5 ? '...' : ''}`;
+        const responseSummary = validated.map(r => `#${r.rank} id=${r.articleId} score=${r.score}`).join(', ');
+
+        // Log success to ai_agent_logs
+        await logAgentCall({
+            provider: agent.providerName,
+            model: agent.modelId,
+            category,
+            status: 'success',
+            inputArticles: articles.length,
+            outputTrending: validated.length,
+            promptTokens: totalPromptTokens,
+            durationMs,
+            requestSummary,
+            responseSummary,
+        });
+
+        return validated;
     } catch (error) {
         const durationMs = Date.now() - startTime;
         const errorType = error instanceof Error ? error.message : String(error);
         await logger.aiCallError(agent.providerName, agent.modelId, errorType);
         console.error(`AI analysis failed (${agent.providerName}/${agent.modelId}):`, errorType);
+
+        // Log error to ai_agent_logs
+        await logAgentCall({
+            provider: agent.providerName,
+            model: agent.modelId,
+            category,
+            status: 'error',
+            inputArticles: articles.length,
+            outputTrending: 0,
+            promptTokens: 0,
+            durationMs,
+            errorMessage: errorType.substring(0, 2000),
+            requestSummary: `${articles.length} articles for "${category}" — call failed`,
+        });
+
         return fallbackTrending(articles, count);
     }
 }
@@ -316,3 +410,4 @@ function fallbackTrending(articles: ArticleForAnalysis[], count: number): Trendi
             reasoning: 'Selected by recency (AI agent unavailable)',
         }));
 }
+

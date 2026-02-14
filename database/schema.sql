@@ -240,3 +240,23 @@ INSERT INTO ai_models (provider_id, model_id, display_name, is_active, is_defaul
 ((SELECT id FROM ai_providers WHERE name='sarvam'),    'sarvam-m',               'Sarvam-M',           true, true,  1000, 0.30)
 ON DUPLICATE KEY UPDATE display_name=VALUES(display_name);
 
+-- AI Agent Call Logs (detailed logging for every AI call)
+CREATE TABLE IF NOT EXISTS ai_agent_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    provider VARCHAR(50) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    status ENUM('success','error','fallback') NOT NULL DEFAULT 'success',
+    input_articles INT DEFAULT 0,
+    output_trending INT DEFAULT 0,
+    prompt_tokens INT DEFAULT 0,
+    duration_ms INT DEFAULT 0,
+    error_message TEXT,
+    request_summary TEXT,
+    response_summary TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_provider (provider),
+    INDEX idx_status (status),
+    INDEX idx_category (category),
+    INDEX idx_created_at (created_at)
+);
