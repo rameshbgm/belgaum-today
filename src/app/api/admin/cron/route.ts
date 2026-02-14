@@ -1,0 +1,168 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { query, execute } from '@/lib/db';
+import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
+import { generateSlug, calculateReadingTime } from '@/lib/utils';
+import { insert } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+/**
+ * POST /api/admin/cron — Trigger RSS fetch ad-hoc (authenticated)
+ * Body: { feedIds?: number[] } — if empty, runs all active feeds
+ */
+export async function POST(request: NextRequest) {
+    try {
+        const user = await getCurrentUser();
+        if (!user || user.role !== 'admin') {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const feedIds: number[] | undefined = body.feedIds;
+
+        // Get feeds to process
+        let feeds: RssFeedConfig[];
+        if (feedIds && feedIds.length > 0) {
+            feeds = await query<RssFeedConfig[]>(
+                `SELECT * FROM rss_feed_config WHERE id IN (${feedIds.map(() => '?').join(',')}) AND is_active = true`,
+                feedIds
+            );
+        } else {
+            feeds = await query<RssFeedConfig[]>(
+                'SELECT * FROM rss_feed_config WHERE is_active = true'
+            );
+        }
+
+        if (feeds.length === 0) {
+            return NextResponse.json({
+                success: true,
+                message: 'No active feeds to process',
+                feedsProcessed: 0,
+                newArticles: 0,
+                skipped: 0,
+            });
+        }
+
+        // Fetch all feeds in parallel
+        const feedResults = await fetchAllFeeds(feeds);
+
+        let totalNew = 0;
+        let totalSkipped = 0;
+        const feedSummaries: Array<{ name: string; fetched: number; new: number; skipped: number }> = [];
+        const errors: string[] = [];
+
+        for (const { feedId, items } of feedResults) {
+            const feed = feeds.find((f) => f.id === feedId);
+            if (!feed) continue;
+
+            let feedNew = 0;
+            let feedSkipped = 0;
+
+            for (const item of items) {
+                try {
+                    const existing = await query<{ id: number }[]>(
+                        'SELECT id FROM articles WHERE source_url = ? OR title = ? LIMIT 1',
+                        [item.link, item.title]
+                    );
+
+                    if (existing.length > 0) {
+                        feedSkipped++;
+                        continue;
+                    }
+
+                    let slug = generateSlug(item.title);
+                    const slugExists = await query<{ id: number }[]>(
+                        'SELECT id FROM articles WHERE slug = ? LIMIT 1',
+                        [slug]
+                    );
+                    if (slugExists.length > 0) {
+                        slug = `${slug}-${Date.now()}`;
+                    }
+
+                    const readingTime = calculateReadingTime(item.description || item.title);
+
+                    await insert(
+                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            item.title, slug, item.description || item.title, item.description || item.title,
+                            item.imageUrl, feed.category, item.sourceName, item.link,
+                            'published', false, false, 0, readingTime, item.pubDate,
+                        ]
+                    );
+
+                    feedNew++;
+                } catch (itemError) {
+                    errors.push(`Failed: ${item.title}`);
+                }
+            }
+
+            await execute(
+                'UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?',
+                [feedId]
+            );
+
+            totalNew += feedNew;
+            totalSkipped += feedSkipped;
+            feedSummaries.push({
+                name: feed.name,
+                fetched: items.length,
+                new: feedNew,
+                skipped: feedSkipped,
+            });
+        }
+
+        // Run trending analysis for each category that had new articles
+        const categoriesUpdated = [...new Set(feeds.map((f) => f.category))];
+        for (const category of categoriesUpdated) {
+            try {
+                const recentArticles = await query<ArticleForAnalysis[]>(
+                    `SELECT id, title, excerpt, source_name, published_at 
+                     FROM articles 
+                     WHERE category = ? AND status = 'published' 
+                     ORDER BY published_at DESC LIMIT 50`,
+                    [category]
+                );
+
+                if (recentArticles.length > 0) {
+                    const trending = await analyzeTrendingArticles(recentArticles, category, 7);
+                    const batchId = `${category}-${Date.now()}`;
+
+                    // Clear old trending for this category
+                    await execute('DELETE FROM trending_articles WHERE category = ?', [category]);
+
+                    // Insert new trending
+                    for (const t of trending) {
+                        await insert(
+                            `INSERT INTO trending_articles (article_id, category, rank_position, ai_score, ai_reasoning, batch_id, expires_at)
+                             VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 4 HOUR))`,
+                            [t.articleId, category, t.rank, t.score, t.reasoning, batchId]
+                        );
+                    }
+                }
+            } catch (trendErr) {
+                errors.push(`Trending analysis failed for ${category}: ${String(trendErr)}`);
+            }
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: 'Cron completed',
+            feedsProcessed: feedSummaries.length,
+            newArticles: totalNew,
+            skipped: totalSkipped,
+            feeds: feedSummaries,
+            trendingUpdated: categoriesUpdated,
+            errors: errors.length > 0 ? errors : undefined,
+        });
+    } catch (error) {
+        console.error('Admin cron error:', error);
+        return NextResponse.json(
+            { success: false, error: 'Internal server error', details: String(error) },
+            { status: 500 }
+        );
+    }
+}
