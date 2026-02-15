@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { TrendingUp, Tag, Rss } from 'lucide-react';
+import { TrendingUp, Tag, Rss, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { CATEGORY_META, Category } from '@/types';
 
@@ -13,22 +14,34 @@ interface TrendingTopic {
 }
 
 interface SidebarProps {
-    trendingTopics?: TrendingTopic[];
     showCategories?: boolean;
     showRss?: boolean;
 }
 
 export function Sidebar({
-    trendingTopics = [
-        { name: 'Karnataka Elections', count: 15 },
-        { name: 'Tech Layoffs', count: 12 },
-        { name: 'Cricket World Cup', count: 10 },
-        { name: 'Budget 2026', count: 8 },
-        { name: 'Belgaum Development', count: 5 },
-    ],
     showCategories = true,
     showRss = true,
 }: SidebarProps) {
+    const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchTrending() {
+            try {
+                const res = await fetch('/api/trending-topics');
+                const data = await res.json();
+                if (data.success && data.data.length > 0) {
+                    setTrendingTopics(data.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch trending topics:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchTrending();
+    }, []);
+
     return (
         <aside className="space-y-6">
             {/* Trending Topics */}
@@ -37,28 +50,39 @@ export function Sidebar({
                     <TrendingUp className="w-5 h-5 text-blue-500" />
                     Trending Topics
                 </h3>
-                <ul className="space-y-3">
-                    {trendingTopics.map((topic, index) => (
-                        <li key={topic.name}>
-                            <Link
-                                href={`/search?q=${encodeURIComponent(topic.name)}`}
-                                className="flex items-center justify-between group"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium">
-                                        {index + 1}
+
+                {loading ? (
+                    <div className="flex items-center justify-center py-6">
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    </div>
+                ) : trendingTopics.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
+                        No trending topics yet
+                    </p>
+                ) : (
+                    <ul className="space-y-3">
+                        {trendingTopics.map((topic, index) => (
+                            <li key={topic.name}>
+                                <Link
+                                    href={`/search?q=${encodeURIComponent(topic.name)}`}
+                                    className="flex items-center justify-between group"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium">
+                                            {index + 1}
+                                        </span>
+                                        <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                            {topic.name}
+                                        </span>
                                     </span>
-                                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                        {topic.name}
-                                    </span>
-                                </span>
-                                <Badge variant="default" size="sm">
-                                    {topic.count}
-                                </Badge>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                                    <Badge variant="default" size="sm">
+                                        {topic.count}
+                                    </Badge>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
 
             {/* Categories */}
