@@ -9,31 +9,6 @@ import { Sidebar } from '@/components/layout';
 
 const validCategories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
 
-// Mock data for development
-const mockArticles: Article[] = [
-    {
-        id: 1,
-        title: 'Sample Article for Category',
-        slug: 'sample-article',
-        excerpt: 'This is a sample article excerpt for the category page.',
-        content: 'Full content...',
-        featured_image: null,
-        category: 'india',
-        source_name: 'Sample Source',
-        source_url: 'https://example.com',
-        status: 'published',
-        featured: false,
-        ai_generated: false,
-        ai_confidence: null,
-        requires_review: false,
-        view_count: 100,
-        reading_time: 3,
-        published_at: new Date(),
-        created_at: new Date(),
-        updated_at: new Date(),
-    },
-];
-
 type Props = {
     params: Promise<{ category: string }>;
 };
@@ -68,8 +43,8 @@ async function getCategoryArticles(category: Category): Promise<Article[]> {
         );
         return articles;
     } catch (error) {
-        console.log('Database not available, using mock data');
-        return mockArticles.map(a => ({ ...a, category }));
+        console.error(`[${category}] DB error:`, error instanceof Error ? error.message : error);
+        return [];
     }
 }
 
