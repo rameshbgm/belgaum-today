@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-    LayoutDashboard, FileText, Rss, Bot, Key, Activity, Brain,
+    LayoutDashboard, FileText, Rss, Activity, Brain,
     Settings, ChevronLeft, ChevronRight, LogOut, ExternalLink,
     Menu, X
 } from 'lucide-react';
@@ -13,8 +13,6 @@ const NAV_ITEMS = [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/articles', icon: FileText, label: 'Articles' },
     { href: '/admin/feeds', icon: Rss, label: 'RSS Feeds' },
-    { href: '/admin/agents', icon: Bot, label: 'AI Agents' },
-    { href: '/admin/api-keys', icon: Key, label: 'API Keys' },
     { href: '/admin/agents-log', icon: Brain, label: 'Agent Logs' },
     { href: '/admin/logs', icon: Activity, label: 'System Logs' },
 ];

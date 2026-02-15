@@ -195,45 +195,81 @@ CREATE TABLE IF NOT EXISTS trending_articles (
     UNIQUE KEY uk_cat_rank (category, rank_position)
 );
 
--- AI Providers (OpenAI, Anthropic, DeepSeek, Gemini, SarvamAI)
+-- Unified AI Providers (single source of truth per provider)
+-- One provider row contains model + API key + runtime tuning.
+-- Rule: At most one provider may be active at a time (or all disabled).
 CREATE TABLE IF NOT EXISTS ai_providers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL UNIQUE,
     display_name VARCHAR(100) NOT NULL,
     base_url VARCHAR(500),
     api_format ENUM('openai', 'anthropic', 'gemini', 'custom') DEFAULT 'openai',
-    is_active BOOLEAN DEFAULT TRUE,
-    is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
 
--- AI Models (specific models per provider)
-CREATE TABLE IF NOT EXISTS ai_models (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    provider_id INT NOT NULL,
-    model_id VARCHAR(100) NOT NULL,
-    display_name VARCHAR(100) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    is_default BOOLEAN DEFAULT FALSE,
+    -- One model per provider
+    model_id VARCHAR(120) NOT NULL,
+
+    -- Unified runtime configuration
     max_tokens INT DEFAULT 1000,
-    temperature DECIMAL(3,2) DEFAULT 0.30,
+    temperature DECIMAL(4,2) DEFAULT 0.30,
+    request_timeout_ms INT DEFAULT 45000,
+    retry_count TINYINT DEFAULT 1,
+
+    -- Key is encrypted before insert (same AES-256-GCM approach)
+    api_key_encrypted TEXT NULL,
+    key_name VARCHAR(120) NULL,
+
+    -- Prompt/guardrail provider-level override (optional)
+    provider_prompt_override LONGTEXT NULL,
+    provider_guardrails_json JSON NULL,
+
+    -- Extensible provider options
+    extra_config_json JSON NULL,
+
+    -- Activation rule
+    is_active BOOLEAN DEFAULT FALSE,
+    active_singleton TINYINT GENERATED ALWAYS AS (CASE WHEN is_active THEN 1 ELSE NULL END) STORED,
+
+    -- Health/ops metadata
+    last_used_at TIMESTAMP NULL,
+    last_success_at TIMESTAMP NULL,
+    last_error_at TIMESTAMP NULL,
+    last_error_message TEXT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (provider_id) REFERENCES ai_providers(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_provider_model (provider_id, model_id)
+
+    UNIQUE KEY uk_active_singleton (active_singleton)
 );
 
--- API Keys (encrypted, managed from admin panel)
-CREATE TABLE IF NOT EXISTS ai_api_keys (
+-- Global system prompt and guardrail management
+CREATE TABLE IF NOT EXISTS ai_system_prompts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    prompt_name VARCHAR(120) NOT NULL,
+    system_prompt LONGTEXT NOT NULL,
+    guardrails_json JSON NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    singleton_key TINYINT GENERATED ALWAYS AS (CASE WHEN is_active THEN 1 ELSE NULL END) STORED,
+    created_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_active_prompt_singleton (singleton_key),
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Optional operational events for AI config changes
+CREATE TABLE IF NOT EXISTS ai_provider_events (
     id INT PRIMARY KEY AUTO_INCREMENT,
     provider_id INT NOT NULL,
-    key_name VARCHAR(100) NOT NULL,
-    api_key_encrypted TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    last_used_at TIMESTAMP NULL,
+    event_type ENUM('created','updated','enabled','disabled','key_rotated','test_run') NOT NULL,
+    event_message VARCHAR(500) NOT NULL,
+    event_metadata JSON NULL,
+    created_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (provider_id) REFERENCES ai_providers(id) ON DELETE CASCADE
+    FOREIGN KEY (provider_id) REFERENCES ai_providers(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_provider_id (provider_id),
+    INDEX idx_event_type (event_type),
+    INDEX idx_created_at (created_at)
 );
 
 -- System logs (operational logging for cron, AI, admin actions)
@@ -249,27 +285,46 @@ CREATE TABLE IF NOT EXISTS system_logs (
     INDEX idx_created_at (created_at)
 );
 
--- Seed AI providers
-INSERT INTO ai_providers (name, display_name, base_url, api_format, is_active, is_default) VALUES
-('openai',    'OpenAI',    'https://api.openai.com/v1',           'openai',    true, true),
-('anthropic', 'Anthropic', 'https://api.anthropic.com',           'anthropic', true, false),
-('deepseek',  'DeepSeek',  'https://api.deepseek.com/v1',         'openai',    true, false),
-('gemini',    'Google Gemini', 'https://generativelanguage.googleapis.com', 'gemini', true, false),
-('sarvam',    'SarvamAI',  'https://api.sarvam.ai/v1',            'openai',    true, false)
-ON DUPLICATE KEY UPDATE display_name=VALUES(display_name);
+-- Seed unified providers (one model per provider; key can be set from admin panel)
+INSERT INTO ai_providers
+    (name, display_name, base_url, api_format, model_id, max_tokens, temperature, request_timeout_ms, retry_count, is_active, key_name, api_key_encrypted, extra_config_json)
+VALUES
+    ('openai', 'OpenAI', 'https://api.openai.com/v1', 'openai', 'gpt-4o-mini', 1000, 0.30, 45000, 1, true, NULL, NULL, JSON_OBJECT('supports_tools', true)),
+    ('anthropic', 'Anthropic', 'https://api.anthropic.com', 'anthropic', 'claude-3-5-sonnet-20241022', 1200, 0.30, 45000, 1, false, NULL, NULL, JSON_OBJECT('supports_tools', true)),
+    ('deepseek', 'DeepSeek', 'https://api.deepseek.com/v1', 'openai', 'deepseek-chat', 1000, 0.30, 45000, 1, false, NULL, NULL, JSON_OBJECT('supports_tools', false)),
+    ('gemini', 'Google Gemini', 'https://generativelanguage.googleapis.com', 'gemini', 'gemini-2.0-flash', 1200, 0.30, 45000, 1, false, NULL, NULL, JSON_OBJECT('supports_tools', true)),
+    ('sarvam', 'SarvamAI', 'https://api.sarvam.ai/v1', 'openai', 'sarvam-m', 1000, 0.30, 45000, 1, false, NULL, NULL, JSON_OBJECT('supports_tools', false))
+ON DUPLICATE KEY UPDATE
+    display_name = VALUES(display_name),
+    base_url = VALUES(base_url),
+    api_format = VALUES(api_format),
+    model_id = VALUES(model_id),
+    max_tokens = VALUES(max_tokens),
+    temperature = VALUES(temperature),
+    request_timeout_ms = VALUES(request_timeout_ms),
+    retry_count = VALUES(retry_count),
+    extra_config_json = VALUES(extra_config_json);
 
--- Seed default models
-INSERT INTO ai_models (provider_id, model_id, display_name, is_active, is_default, max_tokens, temperature) VALUES
-((SELECT id FROM ai_providers WHERE name='openai'),    'gpt-4o-mini',            'GPT-4o Mini',        true, true,  1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='openai'),    'chatgpt-4o-latest',      'ChatGPT-4o Latest',  true, false, 1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='anthropic'), 'claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet', true, true, 1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='anthropic'), 'claude-3-5-haiku-20241022',  'Claude 3.5 Haiku',  true, false, 1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='deepseek'),  'deepseek-chat',          'DeepSeek Chat',      true, true,  1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='deepseek'),  'deepseek-reasoner',      'DeepSeek Reasoner',  true, false, 1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='gemini'),    'gemini-2.0-flash',       'Gemini 2.0 Flash',   true, true,  1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='gemini'),    'gemini-1.5-pro',         'Gemini 1.5 Pro',     true, false, 1000, 0.30),
-((SELECT id FROM ai_providers WHERE name='sarvam'),    'sarvam-m',               'Sarvam-M',           true, true,  1000, 0.30)
-ON DUPLICATE KEY UPDATE display_name=VALUES(display_name);
+-- Seed a default global system prompt + baseline guardrails
+INSERT INTO ai_system_prompts
+    (prompt_name, system_prompt, guardrails_json, is_active, created_by)
+VALUES
+    (
+        'Default Editorial Prompt',
+        'You are a senior Indian news editor. Rank stories by impact, novelty, credibility, and relevance to readers. Respond only with valid JSON.',
+        JSON_OBJECT(
+            'strict_json_only', true,
+            'max_reasoning_length', 240,
+            'block_unverified_claims', true,
+            'avoid_duplicate_story_selection', true
+        ),
+        true,
+        (SELECT id FROM users WHERE email = 'admin@belgaum.today' LIMIT 1)
+    )
+ON DUPLICATE KEY UPDATE
+    system_prompt = VALUES(system_prompt),
+    guardrails_json = VALUES(guardrails_json),
+    is_active = VALUES(is_active);
 
 -- AI Agent Call Logs (detailed logging for every AI call)
 CREATE TABLE IF NOT EXISTS ai_agent_logs (

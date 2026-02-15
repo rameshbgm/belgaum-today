@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
     FileText, Eye, Edit3, Clock, TrendingUp, MousePointer,
     BarChart3, PieChart, Plus, Settings, Rss, Bot, Activity,
-    RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle
+    RefreshCw, Loader2, CheckCircle2, XCircle, AlertTriangle, MessageSquare
 } from 'lucide-react';
 import { Card, CardContent, Badge, Button, useToast } from '@/components/ui';
 import { DashboardStats } from '@/types';
@@ -429,6 +429,12 @@ export default function AdminDashboardPage() {
                                 <Button variant="outline" className="w-full justify-start">
                                     <Bot className="w-4 h-4 mr-2" />
                                     AI Agents
+                                </Button>
+                            </Link>
+                            <Link href="/admin/system-prompts">
+                                <Button variant="outline" className="w-full justify-start">
+                                    <MessageSquare className="w-4 h-4 mr-2" />
+                                    System Prompts
                                 </Button>
                             </Link>
                             <Link href="/admin/logs">

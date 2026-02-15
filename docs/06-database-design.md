@@ -4,7 +4,7 @@
 
 - **Engine:** MySQL 8.0
 - **Schema file:** `database/schema.sql`
-- **Total tables:** 15
+- **Total tables:** 10
 - **Connection:** `mysql2/promise` connection pool (10 connections, keep-alive enabled)
 - **Containerized:** Docker Compose on port 3307 (local), standard 3306 (production)
 
@@ -21,8 +21,6 @@ erDiagram
     articles ||--o{ article_views : "tracked"
     articles ||--o{ source_clicks : "clicked"
     articles ||--o{ trending_articles : "ranked"
-    ai_providers ||--o{ ai_models : "offers"
-    ai_providers ||--o{ ai_api_keys : "secured by"
 
     articles {
         int id PK
@@ -249,71 +247,9 @@ Both FKs have `ON DELETE CASCADE`.
 | `expires_at` | TIMESTAMP | NULL | When ranking expires |
 
 **Indexes:** `idx_category`, `idx_batch`, `idx_expires`
-**Unique key:** `uk_cat_rank (category, rank_position)` — ensures one article per rank per category
-
 ---
 
-### 3.10 `ai_providers`
-
-**Purpose:** AI/LLM provider registry.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | INT | PK, AUTO_INCREMENT | — |
-| `name` | VARCHAR(50) | NOT NULL, UNIQUE | Identifier (e.g., "openai") |
-| `display_name` | VARCHAR(100) | NOT NULL | UI name (e.g., "OpenAI") |
-| `base_url` | VARCHAR(500) | — | API base URL |
-| `api_format` | ENUM('openai','anthropic','gemini','custom') | DEFAULT 'openai' | SDK compatibility |
-| `is_active` | BOOLEAN | DEFAULT TRUE | Provider enabled |
-| `is_default` | BOOLEAN | DEFAULT FALSE | Used when no specific selection |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | — |
-| `updated_at` | TIMESTAMP | ON UPDATE CURRENT_TIMESTAMP | — |
-
-**Seed data:** OpenAI (default), Anthropic, DeepSeek, Google Gemini, SarvamAI
-
----
-
-### 3.11 `ai_models`
-
-**Purpose:** Specific LLM models per provider.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | INT | PK, AUTO_INCREMENT | — |
-| `provider_id` | INT | NOT NULL, FK → ai_providers | Parent provider |
-| `model_id` | VARCHAR(100) | NOT NULL | API model name |
-| `display_name` | VARCHAR(100) | NOT NULL | UI display name |
-| `is_active` | BOOLEAN | DEFAULT TRUE | Model enabled |
-| `is_default` | BOOLEAN | DEFAULT FALSE | Default for this provider |
-| `max_tokens` | INT | DEFAULT 1000 | Max response tokens |
-| `temperature` | DECIMAL(3,2) | DEFAULT 0.30 | Creativity setting |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | — |
-| `updated_at` | TIMESTAMP | ON UPDATE CURRENT_TIMESTAMP | — |
-
-**Unique key:** `uk_provider_model (provider_id, model_id)`
-**Seed data:** 9 models across 5 providers
-
----
-
-### 3.12 `ai_api_keys`
-
-**Purpose:** Encrypted API keys for AI providers.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | INT | PK, AUTO_INCREMENT | — |
-| `provider_id` | INT | NOT NULL, FK → ai_providers | Provider this key is for |
-| `key_name` | VARCHAR(100) | NOT NULL | Label (e.g., "Production Key") |
-| `api_key_encrypted` | TEXT | NOT NULL | AES-256-GCM encrypted key |
-| `is_active` | BOOLEAN | DEFAULT TRUE | Key enabled |
-| `last_used_at` | TIMESTAMP | NULL | Last API call using this key |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | — |
-
-**Encryption:** AES-256-GCM with JWT_SECRET as passphrase (via scrypt KDF). Stored as base64: `iv (12B) + authTag (16B) + ciphertext`.
-
----
-
-### 3.13 `system_logs`
+### 3.10 `system_logs`
 
 **Purpose:** Operational logs for cron jobs, AI calls, admin actions.
 **Note:** Writing to this table is **DISABLED** by default to save database space. Logs are written to the `logs/` directory instead.
@@ -331,30 +267,6 @@ Both FKs have `ON DELETE CASCADE`.
 
 ---
 
-### 3.14 `ai_agent_logs`
-
-**Purpose:** Detailed per-call logging for every AI agent invocation.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | INT | PK, AUTO_INCREMENT | — |
-| `provider` | VARCHAR(50) | NOT NULL | e.g., "openai" |
-| `model` | VARCHAR(100) | NOT NULL | e.g., "gpt-4o-mini" |
-| `category` | VARCHAR(50) | NOT NULL | News category analyzed |
-| `status` | ENUM('success','error','fallback') | DEFAULT 'success' | Call outcome |
-| `input_articles` | INT | DEFAULT 0 | Articles sent to LLM |
-| `output_trending` | INT | DEFAULT 0 | Rankings returned |
-| `prompt_tokens` | INT | DEFAULT 0 | Token usage |
-| `duration_ms` | INT | DEFAULT 0 | Wall-clock time |
-| `error_message` | TEXT | — | Error details (if failed) |
-| `request_summary` | TEXT | — | Prompt summary |
-| `response_summary` | TEXT | — | Response summary |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | — |
-
-**Indexes:** `idx_provider`, `idx_status`, `idx_category`, `idx_created_at`
-
----
-
 ## 4. Key Relationships
 
 | Relationship | Type | Cascade |
@@ -365,8 +277,6 @@ Both FKs have `ON DELETE CASCADE`.
 | `article_views` → `articles` | FK, one-to-many | ON DELETE CASCADE |
 | `source_clicks` → `articles` | FK, one-to-many | ON DELETE SET NULL |
 | `trending_articles` → `articles` | FK, one-to-many | ON DELETE CASCADE |
-| `ai_models` → `ai_providers` | FK, one-to-many | ON DELETE CASCADE |
-| `ai_api_keys` → `ai_providers` | FK, one-to-many | ON DELETE CASCADE |
 
 ---
 
