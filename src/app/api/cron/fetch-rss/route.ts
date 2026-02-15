@@ -14,10 +14,20 @@ export const maxDuration = 60;
 /**
  * GET /api/cron/fetch-rss?secret=<CRON_SECRET>
  * Background job to fetch RSS feeds, store articles, and update trending.
+ * 
+ * Detailed logs are written to:
+ *   - logs/cron-YYYY-MM-DD.log (RSS fetch details, per-feed stats)
+ *   - logs/ai-YYYY-MM-DD.log (AI trending analysis details)
  */
 export const GET = withLogging(async (request: NextRequest) => {
     const cronStart = Date.now();
-    fileLogger.cronStart('fetch-rss', { timestamp: new Date().toISOString() });
+    fileLogger.cronStart('fetch-rss', {
+        timestamp: new Date().toISOString(),
+        pid: process.pid,
+    });
+    fileLogger.info('cron', '═══════════════════════════════════════════════════');
+    fileLogger.info('cron', '  RSS FEED FETCH — Cron Job Started');
+    fileLogger.info('cron', '═══════════════════════════════════════════════════');
 
     try {
         // Verify secret
@@ -25,8 +35,11 @@ export const GET = withLogging(async (request: NextRequest) => {
         const secret = searchParams.get('secret');
 
         if (!secret || secret !== process.env.CRON_SECRET) {
+            fileLogger.error('cron', '✕ Authentication failed: invalid or missing CRON_SECRET');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        fileLogger.info('cron', '✓ Authentication successful');
 
         // Get active RSS feed configs
         const feeds = await query<RssFeedConfig[]>(
@@ -34,6 +47,7 @@ export const GET = withLogging(async (request: NextRequest) => {
         );
 
         if (feeds.length === 0) {
+            fileLogger.warn('cron', '⚠ No active RSS feeds configured. Exiting.');
             return NextResponse.json({
                 message: 'No active feeds configured',
                 feedsProcessed: 0,
@@ -43,10 +57,20 @@ export const GET = withLogging(async (request: NextRequest) => {
         }
 
         await logger.cronStart(feeds.length);
-        fileLogger.cronStep('fetch-rss', `Found ${feeds.length} active feeds`);
+        fileLogger.info('cron', `📡 Found ${feeds.length} active RSS feeds`, {
+            feeds: feeds.map(f => ({ id: f.id, name: f.name, category: f.category, feedUrl: f.feed_url?.substring(0, 80) })),
+        });
 
         // Fetch all feeds in parallel
+        const fetchStart = Date.now();
         const feedResults = await fetchAllFeeds(feeds);
+        const fetchDuration = Date.now() - fetchStart;
+
+        fileLogger.info('cron', `📥 RSS fetch completed in ${fetchDuration}ms`, {
+            totalFeeds: feedResults.length,
+            totalItems: feedResults.reduce((sum, r) => sum + r.items.length, 0),
+            fetchDurationMs: fetchDuration,
+        });
 
         let totalNew = 0;
         let totalSkipped = 0;
@@ -56,8 +80,15 @@ export const GET = withLogging(async (request: NextRequest) => {
             const feed = feeds.find((f: RssFeedConfig) => f.id === feedId);
             if (!feed) continue;
 
+            const feedStart = Date.now();
             let feedNew = 0;
             let feedSkipped = 0;
+
+            fileLogger.info('cron', `  ┌─ Feed: "${feed.name}" (${feed.category})`, {
+                feedId: feed.id,
+                feedUrl: feed.feed_url,
+                itemCount: items.length,
+            });
 
             for (const item of items) {
                 try {
@@ -69,6 +100,10 @@ export const GET = withLogging(async (request: NextRequest) => {
 
                     if (existing.length > 0) {
                         feedSkipped++;
+                        fileLogger.debug('cron', `  │ ⏭ SKIP (duplicate): "${item.title.substring(0, 80)}..."`, {
+                            existingId: existing[0].id,
+                            sourceUrl: item.link,
+                        });
                         continue;
                     }
 
@@ -94,8 +129,19 @@ export const GET = withLogging(async (request: NextRequest) => {
                     );
 
                     feedNew++;
+                    fileLogger.debug('cron', `  │ ✓ NEW: "${item.title.substring(0, 80)}..."`, {
+                        slug,
+                        category: feed.category,
+                        source: item.sourceName,
+                        pubDate: item.pubDate,
+                        readingTime,
+                    });
                 } catch (itemError) {
-                    console.error(`Error inserting article: ${item.title}`, itemError);
+                    const errMsg = itemError instanceof Error ? itemError.message : String(itemError);
+                    fileLogger.error('cron', `  │ ✕ ERROR inserting: "${item.title.substring(0, 80)}..."`, {
+                        error: errMsg,
+                        sourceUrl: item.link,
+                    });
                     errors.push(`Failed to insert: ${item.title}`);
                 }
             }
@@ -105,16 +151,30 @@ export const GET = withLogging(async (request: NextRequest) => {
                 [feedId]
             );
 
+            const feedDuration = Date.now() - feedStart;
             totalNew += feedNew;
             totalSkipped += feedSkipped;
 
             await logger.cronFeedFetch(feed.name, feedNew, feedSkipped);
-            fileLogger.cronStep('fetch-rss', `Feed: ${feed.name}`, { newArticles: feedNew, skipped: feedSkipped, category: feed.category });
+            fileLogger.info('cron', `  └─ Feed "${feed.name}": ${feedNew} new, ${feedSkipped} skipped (${feedDuration}ms)`, {
+                feedId: feed.id,
+                category: feed.category,
+                newArticles: feedNew,
+                skipped: feedSkipped,
+                durationMs: feedDuration,
+            });
         }
+
+        fileLogger.info('cron', '───────────────────────────────────────────────────');
+        fileLogger.info('cron', `  RSS Summary: ${totalNew} new articles, ${totalSkipped} skipped from ${feedResults.length} feeds`);
+        fileLogger.info('cron', '───────────────────────────────────────────────────');
 
         // Update trending articles per category
         const categoriesWithFeeds = [...new Set(feeds.map((f) => f.category))];
+        fileLogger.info('cron', `🤖 Starting AI trending analysis for ${categoriesWithFeeds.length} categories: [${categoriesWithFeeds.join(', ')}]`);
+
         for (const category of categoriesWithFeeds) {
+            const trendingStart = Date.now();
             try {
                 const recentArticles = await query<ArticleForAnalysis[]>(
                     `SELECT id, title, excerpt, source_name, published_at 
@@ -123,6 +183,8 @@ export const GET = withLogging(async (request: NextRequest) => {
                      ORDER BY published_at DESC LIMIT 50`,
                     [category]
                 );
+
+                fileLogger.info('cron', `  🔍 [${category}] Found ${recentArticles.length} recent articles for trending analysis`);
 
                 if (recentArticles.length > 0) {
                     const trending = await analyzeTrendingArticles(recentArticles, category, 7);
@@ -137,15 +199,34 @@ export const GET = withLogging(async (request: NextRequest) => {
                             [t.articleId, category, t.rank, t.score, t.reasoning, batchId]
                         );
                     }
+
+                    const trendDuration = Date.now() - trendingStart;
+                    fileLogger.info('cron', `  ✓ [${category}] Trending updated: ${trending.length} articles, batch=${batchId} (${trendDuration}ms)`, {
+                        category,
+                        trendingCount: trending.length,
+                        batchId,
+                        durationMs: trendDuration,
+                        trending: trending.map(t => ({ rank: t.rank, articleId: t.articleId, score: t.score })),
+                    });
                 }
             } catch (trendErr) {
+                const errMsg = trendErr instanceof Error ? trendErr.message : String(trendErr);
+                fileLogger.error('cron', `  ✕ [${category}] Trending analysis FAILED: ${errMsg}`, {
+                    error: errMsg,
+                    stack: trendErr instanceof Error ? trendErr.stack?.split('\n').slice(0, 5).join('\n') : undefined,
+                });
                 errors.push(`Trending for ${category}: ${String(trendErr)}`);
             }
         }
 
         const durationMs = Date.now() - cronStart;
         await logger.cronComplete(feedResults.length, totalNew, durationMs);
-        fileLogger.cronComplete('fetch-rss', durationMs, { feedsProcessed: feedResults.length, newArticles: totalNew, skipped: totalSkipped, trendingUpdated: categoriesWithFeeds });
+
+        fileLogger.info('cron', '═══════════════════════════════════════════════════');
+        fileLogger.info('cron', `  RSS FEED FETCH — Completed in ${durationMs}ms`);
+        fileLogger.info('cron', `  Feeds: ${feedResults.length} | New: ${totalNew} | Skipped: ${totalSkipped} | Errors: ${errors.length}`);
+        fileLogger.info('cron', `  Trending updated: [${categoriesWithFeeds.join(', ')}]`);
+        fileLogger.info('cron', '═══════════════════════════════════════════════════');
 
         return NextResponse.json({
             message: 'RSS fetch completed',
@@ -160,7 +241,13 @@ export const GET = withLogging(async (request: NextRequest) => {
         const durationMs = Date.now() - cronStart;
         const errorType = error instanceof Error ? error.message : String(error);
         await logger.cronError(errorType);
-        fileLogger.cronError('fetch-rss', error);
+
+        fileLogger.error('cron', `✕ RSS FETCH FAILED: ${errorType}`, {
+            durationMs,
+            error: errorType,
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+
         return NextResponse.json(
             { error: 'Internal server error', details: String(error) },
             { status: 500 }
