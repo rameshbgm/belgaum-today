@@ -133,14 +133,45 @@ CREATE TABLE IF NOT EXISTS rss_feed_config (
 
 -- Insert default RSS feed sources
 INSERT INTO rss_feed_config (name, feed_url, category, fetch_interval_minutes, is_active) VALUES
+-- India
 ('Hindustan Times - India News', 'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml', 'india', 120, true),
 ('The Hindu - National', 'https://www.thehindu.com/news/national/feeder/default.rss', 'india', 120, true),
+-- Business
 ('Hindustan Times - Business', 'https://www.hindustantimes.com/feeds/rss/business/rssfeed.xml', 'business', 120, true),
 ('The Hindu - Agri Business', 'https://www.thehindu.com/business/agri-business/feeder/default.rss', 'business', 120, true),
 ('The Hindu - Industry', 'https://www.thehindu.com/business/Industry/feeder/default.rss', 'business', 120, true),
 ('The Hindu - Economy', 'https://www.thehindu.com/business/Economy/feeder/default.rss', 'business', 120, true),
 ('The Hindu - Markets', 'https://www.thehindu.com/business/markets/feeder/default.rss', 'business', 120, true),
-('The Hindu - Budget', 'https://www.thehindu.com/business/budget/feeder/default.rss', 'business', 120, true)
+('The Hindu - Budget', 'https://www.thehindu.com/business/budget/feeder/default.rss', 'business', 120, true),
+-- Technology
+('Hindustan Times - Technology', 'https://www.hindustantimes.com/feeds/rss/technology/rssfeed.xml', 'technology', 120, true),
+('The Hindu - Science', 'https://www.thehindu.com/sci-tech/science/feeder/default.rss', 'technology', 120, true),
+('The Hindu - Technology', 'https://www.thehindu.com/sci-tech/technology/feeder/default.rss', 'technology', 120, true),
+('The Hindu - Internet', 'https://www.thehindu.com/sci-tech/technology/internet/feeder/default.rss', 'technology', 120, true),
+('The Hindu - Gadgets', 'https://www.thehindu.com/sci-tech/technology/gadgets/feeder/default.rss', 'technology', 120, true),
+-- Sports
+('Hindustan Times - Cricket', 'https://www.hindustantimes.com/feeds/rss/cricket/rssfeed.xml', 'sports', 120, true),
+('Hindustan Times - Football', 'https://www.hindustantimes.com/feeds/rss/football/rssfeed.xml', 'sports', 120, true),
+('Hindustan Times - Tennis', 'https://www.hindustantimes.com/feeds/rss/tennis/rssfeed.xml', 'sports', 120, true),
+('Hindustan Times - Other Sports', 'https://www.hindustantimes.com/feeds/rss/other-sports/rssfeed.xml', 'sports', 120, true),
+('The Hindu - Sport', 'https://www.thehindu.com/sport/feeder/default.rss', 'sports', 120, true),
+('The Hindu - Cricket', 'https://www.thehindu.com/sport/cricket/feeder/default.rss', 'sports', 120, true),
+('The Hindu - Football', 'https://www.thehindu.com/sport/football/feeder/default.rss', 'sports', 120, true),
+('The Hindu - Tennis', 'https://www.thehindu.com/sport/tennis/feeder/default.rss', 'sports', 120, true),
+('The Hindu - Hockey', 'https://www.thehindu.com/sport/hockey/feeder/default.rss', 'sports', 120, true),
+('The Hindu - Other Sports', 'https://www.thehindu.com/sport/other-sports/feeder/default.rss', 'sports', 120, true),
+-- Entertainment
+('Hindustan Times - Entertainment', 'https://www.hindustantimes.com/feeds/rss/entertainment/rssfeed.xml', 'entertainment', 120, true),
+('Hindustan Times - Bollywood', 'https://www.hindustantimes.com/feeds/rss/entertainment/bollywood/rssfeed.xml', 'entertainment', 120, true),
+('Hindustan Times - Hollywood', 'https://www.hindustantimes.com/feeds/rss/entertainment/hollywood/rssfeed.xml', 'entertainment', 120, true),
+('Hindustan Times - Music', 'https://www.hindustantimes.com/feeds/rss/entertainment/music/rssfeed.xml', 'entertainment', 120, true),
+('Hindustan Times - TV', 'https://www.hindustantimes.com/feeds/rss/entertainment/tv/rssfeed.xml', 'entertainment', 120, true),
+('The Hindu - Entertainment', 'https://www.thehindu.com/entertainment/feeder/default.rss', 'entertainment', 120, true),
+('The Hindu - Movies', 'https://www.thehindu.com/entertainment/movies/feeder/default.rss', 'entertainment', 120, true),
+('The Hindu - Music', 'https://www.thehindu.com/entertainment/music/feeder/default.rss', 'entertainment', 120, true),
+('The Hindu - Theatre', 'https://www.thehindu.com/entertainment/theatre/feeder/default.rss', 'entertainment', 120, true),
+('The Hindu - Art', 'https://www.thehindu.com/entertainment/art/feeder/default.rss', 'entertainment', 120, true),
+('The Hindu - Dance', 'https://www.thehindu.com/entertainment/dance/feeder/default.rss', 'entertainment', 120, true)
 ON DUPLICATE KEY UPDATE name=name;
 
 -- Add index on source_url for deduplication

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/logs — Fetch system logs with filtering and pagination
  */
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
@@ -56,4 +57,4 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to fetch logs' }, { status: 500 });
     }
-}
+});

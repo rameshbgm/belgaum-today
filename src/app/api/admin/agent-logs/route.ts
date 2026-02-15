@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/agent-logs — Fetch AI agent call logs with filtering and pagination
  */
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
@@ -90,4 +91,4 @@ export async function GET(request: NextRequest) {
         console.error('Failed to fetch agent logs:', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch agent logs' }, { status: 500 });
     }
-}
+});

@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
-import { Article, ApiResponse } from '@/types';
+import { Article } from '@/types';
 import { getCurrentUser } from '@/lib/auth';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
-
-type Props = {
-    params: Promise<{ id: string }>;
-};
+import { withLogging } from '@/lib/withLogging';
 
 // GET /api/articles/[id] - Get single article
-export async function GET(request: NextRequest, { params }: Props) {
-    const { id } = await params;
+export const GET = withLogging(async (request: NextRequest, context) => {
+    const resolvedParams = await context?.params;
+    const id = resolvedParams?.id;
 
     try {
         const articles = await query<Article[]>(
@@ -36,11 +34,12 @@ export async function GET(request: NextRequest, { params }: Props) {
             { status: 500 }
         );
     }
-}
+});
 
 // PUT /api/articles/[id] - Update article
-export async function PUT(request: NextRequest, { params }: Props) {
-    const { id } = await params;
+export const PUT = withLogging(async (request: NextRequest, context) => {
+    const resolvedParams = await context?.params;
+    const id = resolvedParams?.id;
 
     try {
         const user = await getCurrentUser();
@@ -163,11 +162,12 @@ export async function PUT(request: NextRequest, { params }: Props) {
             { status: 500 }
         );
     }
-}
+});
 
 // DELETE /api/articles/[id] - Delete article
-export async function DELETE(request: NextRequest, { params }: Props) {
-    const { id } = await params;
+export const DELETE = withLogging(async (request: NextRequest, context) => {
+    const resolvedParams = await context?.params;
+    const id = resolvedParams?.id;
 
     try {
         const user = await getCurrentUser();
@@ -202,4 +202,4 @@ export async function DELETE(request: NextRequest, { params }: Props) {
             { status: 500 }
         );
     }
-}
+});

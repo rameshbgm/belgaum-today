@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { DashboardStats } from '@/types';
 import { getCurrentUser } from '@/lib/auth';
+import { withLogging } from '@/lib/withLogging';
 
 // GET /api/admin/stats - Get dashboard statistics (real data only)
-export async function GET() {
+export const GET = withLogging(async () => {
     try {
         const user = await getCurrentUser();
 
@@ -104,4 +105,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-}
+});

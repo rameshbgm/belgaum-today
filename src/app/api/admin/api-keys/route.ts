@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { encryptApiKey, maskApiKey, decryptApiKey } from '@/lib/ai/crypto';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/api-keys — List all API keys (masked)
  */
-export async function GET() {
+export const GET = withLogging(async () => {
     try {
         const keys = await query<Array<{
             id: number; provider_id: number; key_name: string;
@@ -46,12 +47,11 @@ export async function GET() {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to fetch API keys' }, { status: 500 });
     }
-}
-
+});
 /**
  * POST /api/admin/api-keys — Add a new API key (encrypted)
  */
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { provider_id, key_name, api_key } = body;
@@ -71,12 +71,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to add API key' }, { status: 500 });
     }
-}
-
+});
 /**
  * PATCH /api/admin/api-keys — Toggle key active status or rename
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { id, is_active, key_name } = body;
@@ -102,12 +101,11 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to update API key' }, { status: 500 });
     }
-}
-
+});
 /**
  * DELETE /api/admin/api-keys — Delete an API key
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
@@ -118,4 +116,4 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to delete API key' }, { status: 500 });
     }
-}
+});
