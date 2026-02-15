@@ -14,13 +14,35 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0,
 });
 
+// Detailed error logger for DB operations
+function logDbError(operation: string, sql: string, error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    const message = err.message || 'Unknown error';
+    const isConnectionError = message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT') || message.includes('ENOTFOUND');
+
+    console.error(`[DB ${operation} Error]`, {
+        message,
+        sql: sql.substring(0, 200),
+        host: process.env.DATABASE_HOST || 'localhost',
+        port: process.env.DATABASE_PORT || '3306',
+        database: process.env.DATABASE_NAME || 'belgaum_today',
+        isConnectionError,
+        timestamp: new Date().toISOString(),
+    });
+}
+
 // Query helper with automatic connection handling
 export async function query<T = unknown>(
     sql: string,
     params?: unknown[]
 ): Promise<T> {
-    const [rows] = await pool.execute(sql, params);
-    return rows as T;
+    try {
+        const [rows] = await pool.execute(sql, params);
+        return rows as T;
+    } catch (error) {
+        logDbError('QUERY', sql, error);
+        throw error;
+    }
 }
 
 // Get a single row
@@ -28,8 +50,13 @@ export async function queryOne<T = unknown>(
     sql: string,
     params?: unknown[]
 ): Promise<T | null> {
-    const rows = await query<T[]>(sql, params);
-    return rows.length > 0 ? rows[0] : null;
+    try {
+        const rows = await query<T[]>(sql, params);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        logDbError('QUERY_ONE', sql, error);
+        throw error;
+    }
 }
 
 // Execute insert and return insertId
@@ -37,8 +64,13 @@ export async function insert(
     sql: string,
     params?: unknown[]
 ): Promise<number> {
-    const [result] = await pool.execute(sql, params);
-    return (result as mysql.ResultSetHeader).insertId;
+    try {
+        const [result] = await pool.execute(sql, params);
+        return (result as mysql.ResultSetHeader).insertId;
+    } catch (error) {
+        logDbError('INSERT', sql, error);
+        throw error;
+    }
 }
 
 // Execute update/delete and return affected rows
@@ -46,25 +78,34 @@ export async function execute(
     sql: string,
     params?: unknown[]
 ): Promise<number> {
-    const [result] = await pool.execute(sql, params);
-    return (result as mysql.ResultSetHeader).affectedRows;
+    try {
+        const [result] = await pool.execute(sql, params);
+        return (result as mysql.ResultSetHeader).affectedRows;
+    } catch (error) {
+        logDbError('EXECUTE', sql, error);
+        throw error;
+    }
 }
 
 // Transaction helper
 export async function transaction<T>(
     callback: (connection: mysql.PoolConnection) => Promise<T>
 ): Promise<T> {
-    const connection = await pool.getConnection();
+    let connection: mysql.PoolConnection | null = null;
     try {
+        connection = await pool.getConnection();
         await connection.beginTransaction();
         const result = await callback(connection);
         await connection.commit();
         return result;
     } catch (error) {
-        await connection.rollback();
+        if (connection) {
+            try { await connection.rollback(); } catch { /* ignore rollback error */ }
+        }
+        logDbError('TRANSACTION', 'transaction callback', error);
         throw error;
     } finally {
-        connection.release();
+        if (connection) connection.release();
     }
 }
 
