@@ -61,18 +61,19 @@ graph TD
 
 | Component | Description |
 |---|---|
-| `src/lib/ai/agents.ts` | Multi-agent system — unified interface for 5 LLM providers (OpenAI, Anthropic, DeepSeek, Gemini, SarvamAI) |
-| `src/lib/ai/prompts.ts` | System + user prompt builder for trending article analysis |
-| `src/lib/ai/crypto.ts` | AES-256-GCM encryption for API keys stored in DB |
+| `src/lib/ai/config.ts` | Loads OpenAI config from environment variables (OPENAI_API_KEY, OPENAI_MODEL, etc.) |
+| `src/lib/ai/agents.ts` | LangChain integration for gpt-4o-mini trending article ranking |
+| `src/lib/ai/system-prompt.ts` | Detailed editorial prompt with guardrails and JSON output spec |
+| `src/lib/ai/prompts.ts` | User prompt builder for article ranking context |
 | `trending_articles` table | AI-ranked articles with scores, reasoning, and batch IDs |
 
-### Layer 3 — API Layer (20 Routes)
+### Layer 3 — API Layer (15 Routes)
 
 | Group | Routes | Purpose |
 |---|---|---|
 | **Public** | `/api/articles`, `/api/articles/[id]`, `/api/articles/slug/[slug]`, `/api/articles/featured`, `/api/search`, `/api/trending-topics` | Article browsing, search, trending topics |
 | **Auth** | `/api/auth/login`, `/api/auth/logout` | JWT-based admin authentication |
-| **Admin** | `/api/admin/stats`, `/api/admin/articles`, `/api/admin/feeds`, `/api/admin/logs`, `/api/admin/agent-logs`, `/api/admin/providers`, `/api/admin/models`, `/api/admin/api-keys`, `/api/admin/cron` | Dashboard, content management, AI configuration |
+| **Admin** | `/api/admin/stats`, `/api/admin/articles`, `/api/admin/feeds`, `/api/admin/logs`, `/api/admin/agent-logs`, `/api/admin/cron` | Dashboard, content management, AI operations |
 | **Tracking** | `/api/track/view`, `/api/track/source` | Analytics — article views, source clicks |
 | **Cron** | `/api/cron/fetch-rss` | Background RSS fetch + AI trending |
 
@@ -81,16 +82,17 @@ graph TD
 | Page Type | Pages |
 |---|---|
 | **Public** | Home (`/`), Category (`/india`, `/business`, `/technology`, `/sports`, `/entertainment`), Article (`/article/[slug]`), Search (`/search`) |
-| **Admin** | Login (`/admin/login`), Dashboard (`/admin/dashboard`), Articles (`/admin/articles`), Feeds (`/admin/feeds`), Agents (`/admin/agents`), Agent Logs (`/admin/agents-log`), API Keys (`/admin/api-keys`), System Logs (`/admin/logs`) |
+| **Admin** | Login (`/admin/login`), Dashboard (`/admin/dashboard`), Articles (`/admin/articles`), Feeds (`/admin/feeds`), Agent Logs (`/admin/agents-log`), System Logs (`/admin/logs`) |
 | **SEO** | `robots.ts`, `sitemap.ts`, `feed.xml` |
 
 ### Layer 5 — Infrastructure
 
 | Component | Description |
 |---|---|
-| MySQL 8.0 | 15 tables — articles, users, tags, feeds, AI config, logs, analytics |
+| MySQL 8.0 | 10 tables — articles, users, tags, feeds, logs, analytics |
 | Docker Compose | Local dev DB on port 3307, auto-initializes from `schema.sql` |
 | File Logger | Daily rotating JSON log files — 5 channels (app, api, cron, ai, error) |
+| Environment Config | OPENAI_API_KEY, OPENAI_MODEL, etc. loaded at runtime from .env.local |
 | Middleware | Auth guard for admin routes + request logging |
 
 ---

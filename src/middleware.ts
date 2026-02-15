@@ -4,9 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 const protectedRoutes = [
     '/admin/dashboard',
     '/admin/articles',
-    '/admin/agents',
     '/admin/feeds',
-    '/admin/api-keys',
     '/admin/logs',
     '/admin/settings',
 ];
