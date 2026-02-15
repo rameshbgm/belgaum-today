@@ -316,6 +316,7 @@ Both FKs have `ON DELETE CASCADE`.
 ### 3.13 `system_logs`
 
 **Purpose:** Operational logs for cron jobs, AI calls, admin actions.
+**Note:** Writing to this table is **DISABLED** by default to save database space. Logs are written to the `logs/` directory instead.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|

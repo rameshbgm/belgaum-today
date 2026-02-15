@@ -1,12 +1,10 @@
 /**
- * Structured logger — writes operational logs to BOTH:
- *   1. system_logs DB table (for admin UI viewing)
- *   2. File logger (for server-side log files)
+ * Structured logger — writes operational logs to FILE ONLY.
+ * (Database logging for system_logs is disabled, but ai_agent_logs are still separate)
  * 
  * Logs cron operations, AI calls, and admin actions.
  * IMPORTANT: Never log article content or user data — only operational info.
  */
-import { execute } from '@/lib/db';
 import { fileLogger } from '@/lib/fileLogger';
 
 type LogLevel = 'info' | 'warn' | 'error';
@@ -31,7 +29,8 @@ function toChannel(category: LogCategory) {
 }
 
 /**
- * Write a log entry to system_logs table AND file logger.
+ * Write a log entry to file logger ONLY.
+ * (Database logging for system_logs has been disabled per configuration)
  */
 async function writeLog(level: LogLevel, category: LogCategory, message: string, metadata?: LogMetadata): Promise<void> {
     // 1. Always write to file logger (fast, synchronous)
@@ -46,15 +45,8 @@ async function writeLog(level: LogLevel, category: LogCategory, message: string,
         fileLogger.info(channel, `[${category}] ${message}`, data);
     }
 
-    // 2. Write to DB (async, best-effort)
-    try {
-        await execute(
-            'INSERT INTO system_logs (level, category, message, metadata) VALUES (?, ?, ?, ?)',
-            [level, category, message, metadata ? JSON.stringify(metadata) : null]
-        );
-    } catch {
-        // DB write failed — already logged to file, don't break the caller
-    }
+    // 2. Database logging skipped for system_logs
+    // We only log AI agent calls to DB (via ai/agents.ts -> ai_agent_logs)
 }
 
 export const logger = {
