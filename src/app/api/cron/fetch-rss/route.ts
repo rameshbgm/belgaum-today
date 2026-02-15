@@ -5,6 +5,8 @@ import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { insert } from '@/lib/db';
 import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { logger } from '@/lib/logger';
+import { fileLogger } from '@/lib/fileLogger';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -13,8 +15,9 @@ export const maxDuration = 60;
  * GET /api/cron/fetch-rss?secret=<CRON_SECRET>
  * Background job to fetch RSS feeds, store articles, and update trending.
  */
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async (request: NextRequest) => {
     const cronStart = Date.now();
+    fileLogger.cronStart('fetch-rss', { timestamp: new Date().toISOString() });
 
     try {
         // Verify secret
@@ -40,6 +43,7 @@ export async function GET(request: NextRequest) {
         }
 
         await logger.cronStart(feeds.length);
+        fileLogger.cronStep('fetch-rss', `Found ${feeds.length} active feeds`);
 
         // Fetch all feeds in parallel
         const feedResults = await fetchAllFeeds(feeds);
@@ -105,6 +109,7 @@ export async function GET(request: NextRequest) {
             totalSkipped += feedSkipped;
 
             await logger.cronFeedFetch(feed.name, feedNew, feedSkipped);
+            fileLogger.cronStep('fetch-rss', `Feed: ${feed.name}`, { newArticles: feedNew, skipped: feedSkipped, category: feed.category });
         }
 
         // Update trending articles per category
@@ -140,6 +145,7 @@ export async function GET(request: NextRequest) {
 
         const durationMs = Date.now() - cronStart;
         await logger.cronComplete(feedResults.length, totalNew, durationMs);
+        fileLogger.cronComplete('fetch-rss', durationMs, { feedsProcessed: feedResults.length, newArticles: totalNew, skipped: totalSkipped, trendingUpdated: categoriesWithFeeds });
 
         return NextResponse.json({
             message: 'RSS fetch completed',
@@ -154,10 +160,10 @@ export async function GET(request: NextRequest) {
         const durationMs = Date.now() - cronStart;
         const errorType = error instanceof Error ? error.message : String(error);
         await logger.cronError(errorType);
-        console.error('RSS fetch cron error:', error);
+        fileLogger.cronError('fetch-rss', error);
         return NextResponse.json(
             { error: 'Internal server error', details: String(error) },
             { status: 500 }
         );
     }
-}
+});

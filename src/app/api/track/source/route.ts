@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insert } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 // POST /api/track/source - Track source click
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { sourceName, articleId } = body;
@@ -26,4 +27,4 @@ export async function POST(request: NextRequest) {
         console.log('Source click tracking failed:', error);
         return NextResponse.json({ success: true });
     }
-}
+});

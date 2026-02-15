@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
-
-type Props = {
-    params: Promise<{ slug: string }>;
-};
+import { withLogging } from '@/lib/withLogging';
 
 // GET /api/articles/slug/[slug] - Get article by slug
-export async function GET(request: NextRequest, { params }: Props) {
-    const { slug } = await params;
+export const GET = withLogging(async (request: NextRequest, context) => {
+    const resolvedParams = await context?.params;
+    const slug = resolvedParams?.slug;
 
     try {
         const articles = await query<Article[]>(
@@ -34,4 +32,4 @@ export async function GET(request: NextRequest, { params }: Props) {
             { status: 500 }
         );
     }
-}
+});

@@ -5,6 +5,7 @@ import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { insert } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -13,7 +14,7 @@ export const maxDuration = 60;
  * POST /api/admin/cron — Trigger RSS fetch ad-hoc (authenticated)
  * Body: { feedIds?: number[] } — if empty, runs all active feeds
  */
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== 'admin') {
@@ -165,4 +166,4 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+});

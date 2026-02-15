@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/models — List all AI models (optionally filter by provider)
  */
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const providerId = searchParams.get('provider_id');
@@ -27,12 +28,11 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to fetch models' }, { status: 500 });
     }
-}
-
+});
 /**
  * POST /api/admin/models — Add a new model
  */
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { provider_id, model_id, display_name, max_tokens, temperature } = body;
@@ -53,12 +53,11 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ success: false, error: 'Failed to add model' }, { status: 500 });
     }
-}
-
+});
 /**
  * PATCH /api/admin/models — Update a model (toggle active/default, edit)
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { id, is_active, is_default, display_name, max_tokens, temperature } = body;
@@ -100,12 +99,11 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to update model' }, { status: 500 });
     }
-}
-
+});
 /**
  * DELETE /api/admin/models — Delete a model
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
@@ -116,4 +114,4 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to delete model' }, { status: 500 });
     }
-}
+});

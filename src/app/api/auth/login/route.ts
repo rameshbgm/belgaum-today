@@ -3,8 +3,9 @@ import { query } from '@/lib/db';
 import { verifyPassword, generateToken, setAuthCookie } from '@/lib/auth';
 import { User, AuthPayload } from '@/types';
 import { isValidEmail } from '@/lib/utils';
+import { withLogging } from '@/lib/withLogging';
 
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { email, password } = body;
@@ -108,4 +109,4 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+});

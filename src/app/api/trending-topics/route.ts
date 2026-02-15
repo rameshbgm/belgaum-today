@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300; // Cache for 5 minutes
@@ -9,7 +10,7 @@ export const revalidate = 300; // Cache for 5 minutes
  * Derives trending topics from articles published in the last 7 days by extracting
  * common title/excerpt keywords, grouping, and counting occurrences.
  */
-export async function GET() {
+export const GET = withLogging(async () => {
     try {
         // Strategy 1: Get trending from tags table (if tags exist and are populated)
         const tagTopics = await query<Array<{ name: string; count: number }>>(`
@@ -80,4 +81,4 @@ export async function GET() {
         console.error('Trending topics error:', error instanceof Error ? error.message : error);
         return NextResponse.json({ success: true, data: [] });
     }
-}
+});

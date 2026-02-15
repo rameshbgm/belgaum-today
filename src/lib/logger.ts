@@ -1,9 +1,13 @@
 /**
- * Structured logger — writes operational logs to the system_logs table.
+ * Structured logger — writes operational logs to BOTH:
+ *   1. system_logs DB table (for admin UI viewing)
+ *   2. File logger (for server-side log files)
+ * 
  * Logs cron operations, AI calls, and admin actions.
  * IMPORTANT: Never log article content or user data — only operational info.
  */
 import { execute } from '@/lib/db';
+import { fileLogger } from '@/lib/fileLogger';
 
 type LogLevel = 'info' | 'warn' | 'error';
 type LogCategory = 'cron' | 'ai' | 'admin' | 'system';
@@ -19,18 +23,37 @@ interface LogMetadata {
     [key: string]: string | number | boolean | undefined;
 }
 
+// Map LogCategory to file logger channels
+function toChannel(category: LogCategory) {
+    if (category === 'cron') return 'cron' as const;
+    if (category === 'ai') return 'ai' as const;
+    return 'app' as const;
+}
+
 /**
- * Write a log entry to system_logs table.
+ * Write a log entry to system_logs table AND file logger.
  */
 async function writeLog(level: LogLevel, category: LogCategory, message: string, metadata?: LogMetadata): Promise<void> {
+    // 1. Always write to file logger (fast, synchronous)
+    const channel = toChannel(category);
+    const data = metadata as Record<string, unknown> | undefined;
+
+    if (level === 'error') {
+        fileLogger.error(channel, `[${category}] ${message}`, data);
+    } else if (level === 'warn') {
+        fileLogger.warn(channel, `[${category}] ${message}`, data);
+    } else {
+        fileLogger.info(channel, `[${category}] ${message}`, data);
+    }
+
+    // 2. Write to DB (async, best-effort)
     try {
         await execute(
             'INSERT INTO system_logs (level, category, message, metadata) VALUES (?, ?, ?, ?)',
             [level, category, message, metadata ? JSON.stringify(metadata) : null]
         );
-    } catch (error) {
-        // Fallback to console if DB write fails — don't break the caller
-        console.error(`[LOG-FALLBACK] [${level}] [${category}] ${message}`, metadata);
+    } catch {
+        // DB write failed — already logged to file, don't break the caller
     }
 }
 

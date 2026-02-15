@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/feeds — List all RSS feed configs with article counts
  */
-export async function GET() {
+export const GET = withLogging(async () => {
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== 'admin') {
@@ -37,13 +38,12 @@ export async function GET() {
             { status: 500 }
         );
     }
-}
-
+});
 /**
  * PATCH /api/admin/feeds — Toggle feed active/inactive
  * Body: { feedId: number, is_active: boolean }
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withLogging(async (request: NextRequest) => {
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== 'admin') {
@@ -73,4 +73,4 @@ export async function PATCH(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+});

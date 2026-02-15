@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/articles — List articles with pagination and filters
  */
-export async function GET(request: NextRequest) {
+export const GET = withLogging(async (request: NextRequest) => {
     try {
         const user = await getCurrentUser();
         if (!user) {
@@ -63,13 +64,12 @@ export async function GET(request: NextRequest) {
         console.error('Error fetching articles:', error);
         return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
-}
-
+});
 /**
  * PATCH /api/admin/articles — Update article status
  * Body: { id: number, status: 'published' | 'draft' | 'archived' }
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withLogging(async (request: NextRequest) => {
     try {
         const user = await getCurrentUser();
         if (!user) {
@@ -96,13 +96,12 @@ export async function PATCH(request: NextRequest) {
         console.error('Error updating article:', error);
         return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
-}
-
+});
 /**
  * DELETE /api/admin/articles — Delete an article
  * Query: ?id=<number>
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withLogging(async (request: NextRequest) => {
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== 'admin') {
@@ -123,4 +122,4 @@ export async function DELETE(request: NextRequest) {
         console.error('Error deleting article:', error);
         return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
-}
+});

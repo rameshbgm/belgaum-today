@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/providers — List all AI providers
  */
-export async function GET() {
+export const GET = withLogging(async () => {
     try {
         const providers = await query(
             `SELECT p.*, 
@@ -18,12 +19,11 @@ export async function GET() {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to fetch providers' }, { status: 500 });
     }
-}
-
+});
 /**
  * POST /api/admin/providers — Create a new AI provider
  */
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { name, display_name, base_url, api_format } = body;
@@ -44,12 +44,11 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ success: false, error: 'Failed to create provider' }, { status: 500 });
     }
-}
-
+});
 /**
  * PATCH /api/admin/providers — Update a provider (toggle active/default, edit)
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { id, is_active, is_default, display_name, base_url, api_format } = body;
@@ -83,12 +82,11 @@ export async function PATCH(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to update provider' }, { status: 500 });
     }
-}
-
+});
 /**
  * DELETE /api/admin/providers — Delete a provider
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
@@ -99,4 +97,4 @@ export async function DELETE(request: NextRequest) {
     } catch (error) {
         return NextResponse.json({ success: false, error: 'Failed to delete provider' }, { status: 500 });
     }
-}
+});

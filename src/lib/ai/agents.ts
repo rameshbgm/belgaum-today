@@ -16,6 +16,7 @@ import { query, insert as dbInsert } from '@/lib/db';
 import { decryptApiKey } from '@/lib/ai/crypto';
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { logger } from '@/lib/logger';
+import { fileLogger } from '@/lib/fileLogger';
 
 // ── Types ──
 
@@ -81,6 +82,20 @@ async function logAgentCall(data: {
         );
     } catch (err) {
         console.error('[ai_agent_logs] Failed to log agent call:', err);
+    }
+
+    // Also log to file
+    if (data.status === 'success') {
+        fileLogger.aiCallComplete(data.provider, data.model, data.category, data.durationMs, {
+            inputArticles: data.inputArticles,
+            outputTrending: data.outputTrending,
+            promptTokens: data.promptTokens,
+            responseSummary: data.responseSummary?.substring(0, 200),
+        });
+    } else if (data.status === 'error') {
+        fileLogger.aiCallError(data.provider, data.model, data.errorMessage || 'Unknown error');
+    } else {
+        fileLogger.aiFallback(data.category, data.errorMessage || 'No agent available');
     }
 }
 

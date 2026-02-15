@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insert, execute } from '@/lib/db';
+import { withLogging } from '@/lib/withLogging';
 
 // POST /api/track/view - Track article view
-export async function POST(request: NextRequest) {
+export const POST = withLogging(async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { articleId, category, pageView } = body;
@@ -30,4 +31,4 @@ export async function POST(request: NextRequest) {
         console.log('View tracking failed:', error);
         return NextResponse.json({ success: true });
     }
-}
+});

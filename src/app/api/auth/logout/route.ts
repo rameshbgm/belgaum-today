@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { clearAuthCookie } from '@/lib/auth';
+import { withLogging } from '@/lib/withLogging';
 
-export async function POST() {
+export const POST = withLogging(async () => {
     try {
         await clearAuthCookie();
 
@@ -16,4 +17,4 @@ export async function POST() {
             { status: 500 }
         );
     }
-}
+});
