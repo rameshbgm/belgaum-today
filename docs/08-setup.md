@@ -95,17 +95,15 @@ The schema is auto-loaded from `database/schema.sql` when the Docker container s
 | Core (categories, users, articles, tags, article_tags) | 5 |
 | Analytics (article_views, source_clicks) | 2 |
 | RSS (rss_feed_config) | 1 |
-| AI (ai_providers, ai_models, ai_api_keys, trending_articles) | 4 |
-| Logging (system_logs, ai_agent_logs) | 2 |
+| Logging (system_logs) | 1 |
 | Future (newsletter_subscriptions) | 1 |
-| **Total** | **15** |
+| **Total** | **10** |
 
 **Seed data automatically inserted:**
 
 - 6 categories with colors
 - 1 admin user (<admin@belgaum.today>)
 - 34 RSS feeds (Hindustan Times + The Hindu)
-- 5 AI providers + 9 AI models
 
 ### 3.3 Manual Database Connection
 
@@ -166,9 +164,12 @@ RSS_FETCH_INTERVAL_MINUTES=120        # Default: fetch every 2 hours
 CRON_SECRET=belgaum-today-cron-secret-2026
 # Used to authenticate cron job calls: /api/cron/fetch-rss?secret=<CRON_SECRET>
 
-# ─── AI Configuration (Optional) ───
-# API keys can also be managed from the admin panel (stored encrypted in DB)
-OPENAI_API_KEY=sk-proj-your-openai-key-here
+# ─── OpenAI Configuration (gpt-4o-mini) ───
+OPENAI_API_KEY=sk-...your-openai-api-key...
+OPENAI_MODEL=gpt-4o-mini              # Latest cost-effective model
+OPENAI_TEMPERATURE=0.3                # 0-2, lower = consistent rankings
+OPENAI_MAX_TOKENS=1000                # Sufficient for JSON rankings
+OPENAI_REQUEST_TIMEOUT_MS=45000       # Request timeout in milliseconds
 ```
 
 ### Variable Reference
@@ -180,13 +181,17 @@ OPENAI_API_KEY=sk-proj-your-openai-key-here
 | `DATABASE_USER` | Yes | `belgaum_user` | MySQL username |
 | `DATABASE_PASSWORD` | Yes | `belgaum_pass` | MySQL password |
 | `DATABASE_NAME` | Yes | `belgaum_today` | MySQL database name |
-| `JWT_SECRET` | Yes | — | Secret for JWT + API key encryption. **MUST change in production** |
+| `JWT_SECRET` | Yes | — | Secret for JWT functions. **MUST change in production** |
 | `SITE_URL` | Yes | — | Full site URL (server-side) |
 | `NEXT_PUBLIC_SITE_URL` | Yes | — | Full site URL (client-side, exposed to browser) |
 | `NEXT_PUBLIC_SITE_NAME` | No | — | Site name for meta tags |
 | `RSS_FETCH_INTERVAL_MINUTES` | No | `120` | Cron fetch interval |
 | `CRON_SECRET` | Yes | — | Secret to authenticate cron endpoints |
-| `OPENAI_API_KEY` | No | — | Fallback OpenAI key (prefer admin panel) |
+| `OPENAI_API_KEY` | Yes | — | OpenAI API key from https://platform.openai.com/api-keys |
+| `OPENAI_MODEL` | No | `gpt-4o-mini` | GPT model name |
+| `OPENAI_TEMPERATURE` | No | `0.3` | Temperature for AI responses (0-2) |
+| `OPENAI_MAX_TOKENS` | No | `1000` | Maximum tokens in AI response |
+| `OPENAI_REQUEST_TIMEOUT_MS` | No | `45000` | Request timeout in milliseconds |
 
 ---
 
@@ -202,17 +207,14 @@ logs/
 ├── error-2026-02-15.log    # Errors only
 ├── api-2026-02-15.log      # HTTP request/response logs
 ├── cron-2026-02-15.log     # Cron job execution logs
-└── ai-2026-02-15.log       # AI agent call logs
+└── ai-2026-02-15.log       # AI operation logs
 ```
 
 ### 5.2 Log Storage
 
 **Files:** All logs (cron, api, ai, error) are written to the `logs/` directory.
 
-**Database:**
-
-- `system_logs` table: **DISABLED** (logs go to files only).
-- `ai_agent_logs` table: **ENABLED** (AI call history is preserved for auditing).
+**Database:** No logs stored in database. All logging is file-based.
 
 ### 5.3 Log Format
 
@@ -357,7 +359,7 @@ docker exec -i belgaum-today-db mysql -u belgaum_user -p belgaum_today < backup.
 |---|---|
 | 401 Unauthorized | Verify `CRON_SECRET` matches in `.env.local` and cron URL |
 | No new articles | Check feed URLs are accessible; view `logs/cron-*.log` |
-| AI trending not updating | Verify AI API key is configured and active in admin panel |
+| AI trending not updating | Verify `OPENAI_API_KEY` is set in `.env.local`; check `logs/ai-*.log` for errors |
 
 ### Logging Issues
 
@@ -369,27 +371,64 @@ docker exec -i belgaum-today-db mysql -u belgaum_user -p belgaum_today < backup.
 
 ---
 
-## 10. API Key Management
+## 10. OpenAI Configuration
 
-### Adding an AI API Key (Admin Panel)
+### Getting an OpenAI API Key
 
-1. Navigate to `http://localhost:3000/admin/api-keys`
-2. Click "Add API Key"
-3. Select the provider (OpenAI, Anthropic, etc.)
-4. Enter a name (e.g., "Production Key")
-5. Paste the API key
-6. Click Save — key is encrypted with AES-256-GCM before storage
-7. Navigate to `http://localhost:3000/admin/agents` to set default provider/model
+1. Go to <https://platform.openai.com/api-keys>
+2. Sign in with your OpenAI account (or create one)
+3. Click "Create new secret key"
+4. Copy the key and paste it in `.env.local` as `OPENAI_API_KEY`
 
-### Supported Providers & API Key Sources
+### Configuration Variables
 
-| Provider | Get API Key |
-|---|---|
-| OpenAI | <https://platform.openai.com/api-keys> |
-| Anthropic | <https://console.anthropic.com/settings/keys> |
-| DeepSeek | <https://platform.deepseek.com/api_keys> |
-| Google Gemini | <https://aistudio.google.com/app/apikey> |
-| SarvamAI | <https://dashboard.sarvam.ai> |
+Once you have an API key, add these to your `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...your-key-here...
+OPENAI_MODEL=gpt-4o-mini              # Recommended for cost-effectiveness
+OPENAI_TEMPERATURE=0.3                # Lower = consistent trending rankings
+OPENAI_MAX_TOKENS=1000                # Sufficient for article rankings
+OPENAI_REQUEST_TIMEOUT_MS=45000       # 45 second timeout for LLM calls
+```
+
+### Model Choice
+
+- **gpt-4o-mini** (recommended): $0.15/$0.60 per 1M tokens, fast, cost-effective ✅
+- **gpt-4o**: $5/$15 per 1M tokens, more capable, slower
+- **gpt-4-turbo**: $10/$30 per 1M tokens, older, expensive
+
+### How Trending Works
+
+1. RSS feeds fetch articles every `RSS_FETCH_INTERVAL_MINUTES`
+2. For each category, up to 50 articles are sent to `gpt-4o-mini`
+3. The model ranks them by editorial significance (0-100 score)
+4. Top 7-10 are displayed as "Trending" on the homepage
+5. All calls are logged to `logs/ai-YYYY-MM-DD.log` for debugging
+
+### Fallback Behavior
+
+If OpenAI is unavailable or API key is missing:
+- The system falls back to **recency-based ranking** (newest articles first)
+- Fallback is automatic and logged: `Selected by recency (AI call failed)`
+- No manual intervention required
+
+---
+
+## 11. API Key Management (Deprecated)
+
+**AI API keys are NO LONGER managed through the admin panel.**
+
+All AI configuration is environment-based. To add a new API key or change the model:
+
+1. Edit your `.env.local` file
+2. Update `OPENAI_API_KEY`, `OPENAI_MODEL`, or other settings
+3. Restart the application
+
+Previously removed admin pages:
+- ~~`/admin/agents`~~ (AI provider/model management)
+- ~~`/admin/system-prompts`~~ (Custom prompts editor)
+- ~~`/admin/api-keys`~~ (Deprecated key storage)
 
 ---
 
@@ -407,10 +446,24 @@ belgaum.today/
 │   └── .gitkeep           ← Keeps directory in Git
 ├── next.config.ts          ← Next.js config (images, React Compiler)
 ├── package.json            ← Dependencies + scripts
+├── prisma/                 ← Prisma schema + migrations
+│   ├── schema.prisma       ← Database schema definition
+│   └── migrations/         ← Database migration files
 ├── src/
 │   ├── app/                ← Pages + API routes
+│   │   ├── admin/          ← Admin dashboard pages (no AI pages)
+│   │   └── api/            ← API endpoints (no AI CRUD endpoints)
 │   ├── components/         ← React components
-│   ├── lib/                ← Core libraries (DB, auth, RSS, AI, logger)
+│   ├── lib/                ← Core libraries
+│   │   ├── ai/
+│   │   │   ├── agents.ts   ← Trending article analysis (uses env config)
+│   │   │   ├── config.ts   ← Loads OPENAI_* from .env (NEW)
+│   │   │   ├── prompts.ts  ← Prompt building
+│   │   │   ├── crypto.ts   ← Encryption utilities
+│   │   │   └── system-prompt.ts ← Detailed AI prompt spec (NEW)
+│   │   ├── db.ts           ← MySQL wrapper
+│   │   ├── logger.ts       ← Structured logging
+│   │   └── ...
 │   ├── middleware.ts       ← Auth guard + request logging
 │   └── types/              ← TypeScript interfaces
 └── tsconfig.json           ← TypeScript config
