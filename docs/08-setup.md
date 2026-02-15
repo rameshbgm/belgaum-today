@@ -205,7 +205,16 @@ logs/
 └── ai-2026-02-15.log       # AI agent call logs
 ```
 
-### 5.2 Log Format
+### 5.2 Log Storage
+
+**Files:** All logs (cron, api, ai, error) are written to the `logs/` directory.
+
+**Database:**
+
+- `system_logs` table: **DISABLED** (logs go to files only).
+- `ai_agent_logs` table: **ENABLED** (AI call history is preserved for auditing).
+
+### 5.3 Log Format
 
 Each line is a JSON object (JSON-lines format):
 

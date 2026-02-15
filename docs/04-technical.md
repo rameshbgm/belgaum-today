@@ -227,13 +227,17 @@ Request → Middleware → Console Log → [REQ] prefix
          ↓
     fileLogger.apiRequest() / apiResponse()
          ↓
-    ┌──────────────────────────────────────┐
-    │  JSON-lines written to:              │
-    │  • logs/api-YYYY-MM-DD.log           │
-    │  • logs/app-YYYY-MM-DD.log (mirror)  │
-    │  • logs/error-YYYY-MM-DD.log (if 5xx)│
-    │  • Console (colored output)          │
-    └──────────────────────────────────────┘
+    ┌────────────────────────────────────────────────────────┐
+    │  JSON-lines written to File System (logs/):            │
+    │  • logs/api-YYYY-MM-DD.log                             │
+    │  • logs/cron-YYYY-MM-DD.log                            │
+    │  • logs/ai-YYYY-MM-DD.log (also writes to DB table)    │
+    │  • logs/error-YYYY-MM-DD.log (if 5xx)                  │
+    │  • Console (colored output)                            │
+    └────────────────────────────────────────────────────────┘
+
+    *Note: General system logs are NOT written to `system_logs` table to save space.
+    Only `ai_agent_logs` are persisted to DB for history.*
 ```
 
 **Log levels:**
