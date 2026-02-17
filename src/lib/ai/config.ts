@@ -30,7 +30,7 @@ export interface AiConfig {
 function loadConfig(): AiConfig {
     const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
 
-    const model = (process.env.OPENAI_MODEL || 'gpt-4o-mini').trim();
+    const model = (process.env.OPENAI_MODEL || 'gpt-5-neno').trim();
     const temperature = parseFloat(process.env.OPENAI_TEMPERATURE || '0.3');
     const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS || '1000', 10);
     const requestTimeoutMs = parseInt(process.env.OPENAI_REQUEST_TIMEOUT_MS || '45000', 10);

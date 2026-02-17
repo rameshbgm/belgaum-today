@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { ArticleGrid } from '@/components/articles';
+import { CategoryArticleList } from '@/components/articles';
 import { Sidebar } from '@/components/layout';
 
 const validCategories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
@@ -89,7 +89,7 @@ export default async function CategoryPage({ params }: Props) {
             <div className="lg:grid lg:grid-cols-4 lg:gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-3">
-                    <ArticleGrid articles={articles} />
+                    <CategoryArticleList initialArticles={articles} category={typedCategory} />
                 </div>
 
                 {/* Sidebar */}
