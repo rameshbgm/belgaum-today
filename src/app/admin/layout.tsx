@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-    LayoutDashboard, FileText, Rss, Activity, Brain,
+    LayoutDashboard, FileText, Rss, Brain,
     Settings, ChevronLeft, ChevronRight, LogOut, ExternalLink,
     Menu, X
 } from 'lucide-react';
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
     { href: '/admin/articles', icon: FileText, label: 'Articles' },
     { href: '/admin/feeds', icon: Rss, label: 'RSS Feeds' },
     { href: '/admin/agents-log', icon: Brain, label: 'Agent Logs' },
-    { href: '/admin/logs', icon: Activity, label: 'System Logs' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
