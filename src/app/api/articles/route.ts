@@ -12,7 +12,6 @@ export const GET = withLogging(async (request: NextRequest) => {
     const before = searchParams.get('before'); // Timestamp filter for loading previous articles
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = (page - 1) * limit;
 
     try {
         let sql = `SELECT * FROM articles WHERE status = 'published'`;
@@ -29,8 +28,15 @@ export const GET = withLogging(async (request: NextRequest) => {
             params.push(before);
         }
 
-        sql += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ? OFFSET ?`;
-        params.push(limit, offset);
+        sql += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ?`;
+        params.push(limit);
+
+        // Only use OFFSET for page-based pagination (not timestamp-based)
+        if (!before && page > 1) {
+            sql += ` OFFSET ?`;
+            const offset = (page - 1) * limit;
+            params.push(offset);
+        }
 
         const articles = await query<Article[]>(sql, params);
 
