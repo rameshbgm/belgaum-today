@@ -28,7 +28,7 @@
  *   }
  */
 export function getSystemPrompt(category: string, articleCount: number): string {
-    return `You are an experienced news editor for a regional Indian news platform (Belgaum Today).
+    return `You are an experienced news editor for a regional Indian news platform.
 Your task is to analyze and rank a list of articles by their trending potential and editorial value.
 
 CONTEXT:
