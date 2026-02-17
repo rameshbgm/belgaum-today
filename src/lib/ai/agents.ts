@@ -21,6 +21,7 @@ import { getSystemPrompt, getDefaultSystemPrompt } from '@/lib/ai/system-prompt'
 import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
 import { logger } from '@/lib/logger';
 import { fileLogger } from '@/lib/fileLogger';
+import { query } from '@/lib/db';
 
 // LangChain imports
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
@@ -43,7 +44,7 @@ export interface TrendingResult {
     reasoning: string;
 }
 
-// ── Logging (File-only, no database) ──
+// ── Logging (Database + File) ──
 
 async function logAgentCall(data: {
     model: string;
@@ -74,6 +75,36 @@ async function logAgentCall(data: {
     if (data.requestSummary) logData.requestSummary = data.requestSummary;
     if (data.responseSummary) logData.responseSummary = data.responseSummary;
 
+    // Insert log into database
+    try {
+        await query(
+            `INSERT INTO ai_agent_logs 
+            (provider, model, category, status, input_articles, output_trending, 
+             prompt_tokens, duration_ms, error_message, request_summary, response_summary) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                'OpenAI',
+                data.model,
+                data.category,
+                data.status,
+                data.inputArticles,
+                data.outputTrending,
+                data.promptTokens,
+                data.durationMs,
+                data.errorMessage || null,
+                data.requestSummary || null,
+                data.responseSummary || null,
+            ]
+        );
+    } catch (dbError) {
+        // Don't fail the AI call if logging fails - just log to file
+        fileLogger.error('ai', `Failed to insert agent log to database`, { 
+            error: dbError instanceof Error ? dbError.message : String(dbError),
+            logData 
+        });
+    }
+
+    // Also log to file for debugging
     if (data.status === 'success') {
         fileLogger.info('ai', `✓ AI CALL SUCCESS [OpenAI/${data.model}] for [${data.category}] (${data.durationMs}ms)`, logData);
     } else if (data.status === 'error') {
