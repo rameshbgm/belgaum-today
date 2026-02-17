@@ -255,12 +255,20 @@ export async function analyzeTrendingArticles(
         let results: TrendingResult[];
         if (Array.isArray(parsedResponse)) {
             results = parsedResponse;
+        } else if (parsedResponse.trendingArticles && Array.isArray(parsedResponse.trendingArticles)) {
+            results = parsedResponse.trendingArticles;
         } else if (parsedResponse.results && Array.isArray(parsedResponse.results)) {
             results = parsedResponse.results;
         } else if (parsedResponse.trending && Array.isArray(parsedResponse.trending)) {
             results = parsedResponse.trending;
         } else {
-            throw new Error('AI response is not in expected format (missing array)');
+            // Try to find the first array value in the response object
+            const firstArrayKey = Object.keys(parsedResponse).find(k => Array.isArray(parsedResponse[k]));
+            if (firstArrayKey) {
+                results = parsedResponse[firstArrayKey];
+            } else {
+                throw new Error('AI response is not in expected format (missing array)');
+            }
         }
 
         const durationMs = Date.now() - startTime;
