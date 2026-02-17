@@ -127,6 +127,9 @@ async function createLangChainModel(): Promise<BaseChatModel> {
         temperature: config.temperature,
         maxTokens: config.maxTokens,
         timeout: config.requestTimeoutMs,
+        modelKwargs: {
+            response_format: { type: 'json_object' },
+        },
     });
 
     fileLogger.info('ai', `🔗 LangChain: ChatOpenAI created`, {
@@ -246,7 +249,19 @@ export async function analyzeTrendingArticles(
 
         // Parse JSON — handle potential markdown wrapping
         const jsonStr = rawResponse.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
-        const results: TrendingResult[] = JSON.parse(jsonStr);
+        let parsedResponse = JSON.parse(jsonStr);
+        
+        // Handle different response formats
+        let results: TrendingResult[];
+        if (Array.isArray(parsedResponse)) {
+            results = parsedResponse;
+        } else if (parsedResponse.results && Array.isArray(parsedResponse.results)) {
+            results = parsedResponse.results;
+        } else if (parsedResponse.trending && Array.isArray(parsedResponse.trending)) {
+            results = parsedResponse.trending;
+        } else {
+            throw new Error('AI response is not in expected format (missing array)');
+        }
 
         const durationMs = Date.now() - startTime;
         await logger.aiCallComplete('OpenAI', config.model, category, durationMs);

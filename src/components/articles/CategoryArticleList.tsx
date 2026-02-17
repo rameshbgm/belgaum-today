@@ -2,33 +2,54 @@
 
 import { useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
-import { Article } from '@/types';
+import { Article, Category, CATEGORY_META } from '@/types';
 import { ArticleGrid } from './ArticleGrid';
-import { Button, Input } from '@/components/ui';
+import { CategorySearchHeader, SubCategory } from './CategorySearchHeader';
+import { Button } from '@/components/ui';
 
 interface CategoryArticleListProps {
     initialArticles: Article[];
-    category: string;
+    category: Category;
+    subCategories: SubCategory[];
 }
 
-export function CategoryArticleList({ initialArticles, category }: CategoryArticleListProps) {
+export function CategoryArticleList({ initialArticles, category, subCategories }: CategoryArticleListProps) {
     const [articles, setArticles] = useState<Article[]>(initialArticles);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedSubCategory, setSelectedSubCategory] = useState('all');
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(initialArticles.length >= 20);
 
-    // Client-side search filtering
-    const filteredArticles = useMemo(() => {
-        if (!searchQuery.trim()) return articles;
+    const categoryMeta = CATEGORY_META[category];
 
-        const query = searchQuery.toLowerCase();
-        return articles.filter(
-            (article) =>
-                article.title.toLowerCase().includes(query) ||
-                article.excerpt?.toLowerCase().includes(query) ||
-                article.source_name.toLowerCase().includes(query)
-        );
-    }, [articles, searchQuery]);
+    // Client-side filtering by subcategory and search query
+    const filteredArticles = useMemo(() => {
+        let filtered = articles;
+
+        // Filter by subcategory (if not "all")
+        if (selectedSubCategory !== 'all') {
+            const searchTerm = selectedSubCategory.toLowerCase();
+            filtered = articles.filter(
+                (article) =>
+                    article.title.toLowerCase().includes(searchTerm) ||
+                    article.excerpt?.toLowerCase().includes(searchTerm) ||
+                    article.content.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(
+                (article) =>
+                    article.title.toLowerCase().includes(query) ||
+                    article.excerpt?.toLowerCase().includes(query) ||
+                    article.source_name.toLowerCase().includes(query)
+            );
+        }
+
+        return filtered;
+    }, [articles, selectedSubCategory, searchQuery]);
 
     const loadMore = async () => {
         if (loading || !hasMore) return;
@@ -65,39 +86,40 @@ export function CategoryArticleList({ initialArticles, category }: CategoryArtic
 
     return (
         <div>
-            {/* Search Bar */}
-            <div className="mb-6">
-                <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                        type="text"
-                        placeholder="Search articles..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 py-2.5"
-                    />
-                </div>
-                {searchQuery && (
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Found {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''}
-                    </p>
-                )}
-            </div>
+            {/* Category Header with Search and Filters */}
+            <CategorySearchHeader
+                category={category}
+                subCategories={subCategories}
+                selectedSubCategory={selectedSubCategory}
+                onSubCategoryChange={setSelectedSubCategory}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                categoryName={categoryMeta.name}
+                categoryColor={categoryMeta.color}
+            />
 
             {/* Article Grid */}
             <ArticleGrid articles={filteredArticles} />
 
             {/* No results message */}
-            {searchQuery && filteredArticles.length === 0 && (
-                <div className="text-center py-12">
-                    <p className="text-gray-500 dark:text-gray-400">
-                        No articles found for &quot;{searchQuery}&quot;
+            {filteredArticles.length === 0 && (
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-gray-400 dark:text-gray-500 mb-2">
+                        <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    </div>
+                    <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                        No articles found
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        {searchQuery
+                            ? `No results for "${searchQuery}" in ${selectedSubCategory !== 'all' ? selectedSubCategory : categoryMeta.name}`
+                            : `No articles available in ${selectedSubCategory !== 'all' ? selectedSubCategory : categoryMeta.name}`}
                     </p>
                 </div>
             )}
 
-            {/* Load More Button - only show when not searching */}
-            {!searchQuery && hasMore && (
+            {/* Load More Button - only show when not filtering */}
+            {!searchQuery && selectedSubCategory === 'all' && hasMore && filteredArticles.length > 0 && (
                 <div className="mt-8 text-center">
                     <Button
                         onClick={loadMore}
@@ -109,7 +131,7 @@ export function CategoryArticleList({ initialArticles, category }: CategoryArtic
                 </div>
             )}
 
-            {!searchQuery && !hasMore && articles.length > 0 && (
+            {!searchQuery && selectedSubCategory === 'all' && !hasMore && articles.length > 0 && (
                 <div className="mt-8 text-center text-gray-500 dark:text-gray-400">
                     No more articles to load
                 </div>
