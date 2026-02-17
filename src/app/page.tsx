@@ -2,33 +2,48 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { FeaturedArticle, ArticleList } from '@/components/articles';
 import { Sidebar } from '@/components/layout';
+import { BreakingNewsTicker, TickerArticle } from '@/components/BreakingNewsTicker';
 
-async function getArticles(): Promise<{ featured: Article | null; articles: Article[] }> {
+async function getArticles(): Promise<{ 
+  featured: Article | null; 
+  articles: Article[];
+  tickerArticles: TickerArticle[];
+}> {
   try {
     const featured = await query<Article[]>(
-      `SELECT * FROM articles WHERE status = 'published' AND featured = true ORDER BY published_at DESC LIMIT 1`
+      `SELECT * FROM articles WHERE status = 'published' AND featured = true ORDER BY COALESCE(published_at, created_at) DESC LIMIT 1`
     );
 
     const articles = await query<Article[]>(
-      `SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 20`
+      `SELECT * FROM articles WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
+    );
+
+    // Get recent articles for ticker (latest 10)
+    const ticker = await query<TickerArticle[]>(
+      `SELECT id, title, source_url, source_name FROM articles WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 10`
     );
 
     return {
       featured: featured.length > 0 ? featured[0] : null,
       articles: articles,
+      tickerArticles: ticker,
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { featured: null, articles: [] };
+    return { featured: null, articles: [], tickerArticles: [] };
   }
 }
 
 export default async function HomePage() {
-  const { featured, articles } = await getArticles();
+  const { featured, articles, tickerArticles } = await getArticles();
   const regularArticles = articles.filter(a => !featured || a.id !== featured.id);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      {/* Breaking News Ticker */}
+      <BreakingNewsTicker articles={tickerArticles} />
+
+      <div className="container mx-auto px-4 py-8">
       {/* Featured Article */}
       {featured && (
         <section className="mb-10">
@@ -66,5 +81,6 @@ export default async function HomePage() {
         </aside>
       </div>
     </div>
+    </>
   );
 }
