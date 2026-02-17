@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, Clock, Info, ExternalLink } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
-import { Article, CATEGORY_META } from '@/types';
+import { Article } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
 
 interface ArticleCardProps {
@@ -13,8 +13,6 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, priority = false }: ArticleCardProps) {
-    const categoryMeta = CATEGORY_META[article.category];
-
     return (
         <article className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-blue-500/50">
             {/* Image */}
@@ -33,12 +31,6 @@ export function ArticleCard({ article, priority = false }: ArticleCardProps) {
                         <span className="text-4xl">📰</span>
                     </div>
                 )}
-                {/* Category Badge */}
-                <div className="absolute top-3 left-3">
-                    <Badge variant="custom" color={categoryMeta.color} size="sm">
-                        {categoryMeta.name}
-                    </Badge>
-                </div>
                 {/* AI Badge */}
                 {article.ai_generated && (
                     <div className="absolute top-3 right-3">
