@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS articles (
     featured_image VARCHAR(500),
     category ENUM('india', 'business', 'technology', 'entertainment', 'sports', 'belgaum') NOT NULL,
     source_name VARCHAR(100) NOT NULL,
-    source_url VARCHAR(500) NOT NULL,
+    source_url VARCHAR(1000) NOT NULL,
     status ENUM('draft', 'published', 'archived') DEFAULT 'draft',
     featured BOOLEAN DEFAULT FALSE,
     ai_generated BOOLEAN DEFAULT FALSE,
