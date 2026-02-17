@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.hindustantimes.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'th-i.thgim.com',
         pathname: '/**',
       },
