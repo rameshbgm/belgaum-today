@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Brain, RefreshCw, Loader2, Activity, CheckCircle2, XCircle, AlertTriangle,
-    Clock, Zap, Hash, ChevronDown, ChevronRight, Filter
+    Clock, Zap, Hash, ChevronDown, ChevronRight, Filter, Calendar
 } from 'lucide-react';
 import { Button, Card, Badge, useToast } from '@/components/ui';
 
@@ -39,10 +39,18 @@ export default function AgentLogsPage() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [providerFilter, setProviderFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [expandedId, setExpandedId] = useState<number | null>(null);
+    
+    // Date filters - default to today
+    const getTodayDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+    
+    const [startDate, setStartDate] = useState(getTodayDate());
+    const [endDate, setEndDate] = useState(getTodayDate());
 
     const fetchLogs = useCallback(async () => {
         setLoading(true);
@@ -50,9 +58,10 @@ export default function AgentLogsPage() {
             const params = new URLSearchParams();
             params.set('page', String(page));
             params.set('limit', '25');
-            if (providerFilter) params.set('provider', providerFilter);
             if (statusFilter) params.set('status', statusFilter);
             if (categoryFilter) params.set('category', categoryFilter);
+            if (startDate) params.set('startDate', startDate);
+            if (endDate) params.set('endDate', endDate);
 
             const res = await fetch(`/api/admin/agent-logs?${params.toString()}`);
             const data = await res.json();
@@ -66,7 +75,7 @@ export default function AgentLogsPage() {
         } finally {
             setLoading(false);
         }
-    }, [page, providerFilter, statusFilter, categoryFilter]);
+    }, [page, statusFilter, categoryFilter, startDate, endDate, showToast]);
 
     useEffect(() => {
         fetchLogs();
@@ -90,15 +99,6 @@ export default function AgentLogsPage() {
         },
     };
 
-    const providerColors: Record<string, string> = {
-        openai: '#10a37f',
-        anthropic: '#d97706',
-        deepseek: '#3b82f6',
-        gemini: '#8b5cf6',
-        sarvam: '#ec4899',
-        none: '#6b7280',
-    };
-
     const formatDate = (d: string) => {
         return new Date(d).toLocaleDateString('en-IN', {
             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -114,6 +114,16 @@ export default function AgentLogsPage() {
         ? Math.round((stats.success_count / stats.total_calls) * 100)
         : 0;
 
+    const formatDateRange = () => {
+        if (startDate === endDate) {
+            const date = new Date(startDate);
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return `${start.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ${end.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -124,7 +134,7 @@ export default function AgentLogsPage() {
                         AI Agent Logs
                     </h1>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Detailed log of every AI agent call with provider, model, and performance data
+                        Showing logs for <span className="font-medium text-gray-700 dark:text-gray-300">{formatDateRange()}</span>
                     </p>
                 </div>
                 <Button variant="outline" onClick={() => fetchLogs()}>
@@ -182,48 +192,89 @@ export default function AgentLogsPage() {
             )}
 
             {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <select
-                    value={providerFilter}
-                    onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
-                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
-                    aria-label="Filter by provider"
-                >
-                    <option value="">All Providers</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="anthropic">Anthropic</option>
-                    <option value="deepseek">DeepSeek</option>
-                    <option value="gemini">Gemini</option>
-                    <option value="sarvam">SarvamAI</option>
-                    <option value="none">None (Fallback)</option>
-                </select>
-                <select
-                    value={statusFilter}
-                    onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
-                    aria-label="Filter by status"
-                >
-                    <option value="">All Status</option>
-                    <option value="success">Success</option>
-                    <option value="error">Error</option>
-                    <option value="fallback">Fallback</option>
-                </select>
-                <select
-                    value={categoryFilter}
-                    onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
-                    aria-label="Filter by category"
-                >
-                    <option value="">All Categories</option>
-                    <option value="india">India</option>
-                    <option value="business">Business</option>
-                    <option value="technology">Technology</option>
-                    <option value="entertainment">Entertainment</option>
-                    <option value="sports">Sports</option>
-                    <option value="belgaum">Belgaum</option>
-                </select>
-            </div>
+            <Card>
+                <div className="p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <Filter className="w-4 h-4 text-gray-400" />
+                        
+                        {/* Date Range */}
+                        <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+                                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                                aria-label="Start date"
+                            />
+                            <span className="text-sm text-gray-500">to</span>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+                                className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                                aria-label="End date"
+                            />
+                        </div>
+                        
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                            aria-label="Filter by status"
+                        >
+                            <option value="">All Status</option>
+                            <option value="success">Success</option>
+                            <option value="error">Error</option>
+                            <option value="fallback">Fallback</option>
+                        </select>
+                        <select
+                            value={categoryFilter}
+                            onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+                            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                            aria-label="Filter by category"
+                        >
+                            <option value="">All Categories</option>
+                            <option value="india">India</option>
+                            <option value="business">Business</option>
+                            <option value="technology">Technology</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="sports">Sports</option>
+                            <option value="belgaum">Belgaum</option>
+                        </select>
+                        
+                        {/* Reset to Today Button */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                const today = getTodayDate();
+                                setStartDate(today);
+                                setEndDate(today);
+                                setPage(1);
+                            }}
+                        >
+                            Today
+                        </Button>
+                        
+                        {/* Clear All Filters */}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setStatusFilter('');
+                                setCategoryFilter('');
+                                const today = getTodayDate();
+                                setStartDate(today);
+                                setEndDate(today);
+                                setPage(1);
+                            }}
+                        >
+                            Clear Filters
+                        </Button>
+                    </div>
+                </div>
+            </Card>
 
             {/* Logs Table */}
             <Card>
@@ -233,7 +284,7 @@ export default function AgentLogsPage() {
                             <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
                                 <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 w-8"></th>
                                 <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Status</th>
-                                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Provider / Model</th>
+                                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Model</th>
                                 <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Category</th>
                                 <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">Articles</th>
                                 <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-right">Trending</th>
@@ -264,9 +315,8 @@ export default function AgentLogsPage() {
                                     const isExpanded = expandedId === log.id;
                                     const sc = statusConfig[log.status] || statusConfig.success;
                                     return (
-                                        <>
+                                        <React.Fragment key={log.id}>
                                             <tr
-                                                key={log.id}
                                                 className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer"
                                                 onClick={() => setExpandedId(isExpanded ? null : log.id)}
                                             >
@@ -283,14 +333,9 @@ export default function AgentLogsPage() {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="custom" color={providerColors[log.provider] || '#6b7280'} size="sm">
-                                                            {log.provider}
-                                                        </Badge>
-                                                        <span className="text-gray-600 dark:text-gray-300 text-xs">
-                                                            {log.model}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-gray-600 dark:text-gray-300 text-xs">
+                                                        {log.model}
+                                                    </span>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className="capitalize text-gray-700 dark:text-gray-300">{log.category}</span>
@@ -320,7 +365,7 @@ export default function AgentLogsPage() {
                                                 </td>
                                             </tr>
                                             {isExpanded && (
-                                                <tr key={`${log.id}-detail`} className="bg-gray-50 dark:bg-gray-800/70">
+                                                <tr className="bg-gray-50 dark:bg-gray-800/70">
                                                     <td colSpan={9} className="px-6 py-4">
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                             {log.request_summary && (
@@ -351,7 +396,7 @@ export default function AgentLogsPage() {
                                                     </td>
                                                 </tr>
                                             )}
-                                        </>
+                                        </React.Fragment>
                                     );
                                 })
                             )}
