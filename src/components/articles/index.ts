@@ -6,4 +6,6 @@ export { NewsFallbackImage } from './NewsFallbackImage';
 export { ArticleList } from './ArticleList';
 export { CategoryArticleList } from './CategoryArticleList';
 export { CategorySearchHeader } from './CategorySearchHeader';
+export { CategoryPageClient } from './CategoryPageClient';
 export type { SubCategory } from './CategorySearchHeader';
+
