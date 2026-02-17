@@ -95,11 +95,32 @@ function extractImageUrl(itemXml: string): string | null {
 }
 
 /**
+ * Parse Google News description HTML to extract title, link, and source
+ */
+function parseGoogleNewsDescription(html: string): { title: string; link: string; source: string } | null {
+    // Google News format: <a href="URL" target="_blank">Title</a> <font color="#6f6f6f">Source</font>
+    const linkMatch = html.match(/<a\s+href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/);
+    const sourceMatch = html.match(/<font[^>]*>([^<]+)<\/font>/);
+    
+    if (linkMatch) {
+        return {
+            title: stripHtml(linkMatch[2]),
+            link: linkMatch[1],
+            source: sourceMatch ? stripHtml(sourceMatch[1]) : 'News.google.com',
+        };
+    }
+    
+    return null;
+}
+
+/**
  * Derive source name from feed URL
  */
 function getSourceName(feedUrl: string): string {
     if (feedUrl.includes('hindustantimes.com')) return 'Hindustan Times';
     if (feedUrl.includes('thehindu.com')) return 'The Hindu';
+    if (feedUrl.includes('news.google.com')) return 'News.google.com';
+    if (feedUrl.includes('oneindia.com')) return 'OneIndia';
     // Fallback: extract domain name
     try {
         const domain = new URL(feedUrl).hostname.replace('www.', '');
@@ -134,15 +155,30 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
     const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
     let match;
 
+    const isGoogleNews = feedUrl.includes('news.google.com');
+
     while ((match = itemRegex.exec(xml)) !== null) {
         const itemXml = match[1];
 
         // Extract fields
-        const title = extractTag(itemXml, 'title');
-        const link = extractTag(itemXml, 'link');
-        const description = extractTag(itemXml, 'description');
+        let title = extractTag(itemXml, 'title');
+        let link = extractTag(itemXml, 'link');
+        let description = extractTag(itemXml, 'description');
         const pubDateStr = extractTag(itemXml, 'pubDate');
-        const guid = extractTag(itemXml, 'guid') || link;
+        let guid = extractTag(itemXml, 'guid') || link;
+        let itemSourceName = sourceName;
+
+        // Special handling for Google News feeds
+        if (isGoogleNews && description) {
+            const googleNewsData = parseGoogleNewsDescription(description);
+            if (googleNewsData) {
+                title = googleNewsData.title;
+                link = googleNewsData.link;
+                itemSourceName = googleNewsData.source;
+                // Clean description becomes just the title
+                description = googleNewsData.title;
+            }
+        }
 
         // Validation: must have title and link at minimum
         if (!title || !link) {
@@ -163,9 +199,9 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
         // Extract image
         const imageUrl = extractImageUrl(itemXml);
 
-        // Clean title and description
-        const cleanTitle = stripHtml(title);
-        const cleanDescription = description ? stripHtml(description) : cleanTitle;
+        // Clean title and description (if not already cleaned by Google News parser)
+        const cleanTitle = isGoogleNews ? title : stripHtml(title);
+        const cleanDescription = description ? (isGoogleNews ? description : stripHtml(description)) : cleanTitle;
 
         // Skip if title is too short (likely invalid)
         if (cleanTitle.length < 10) {
@@ -181,7 +217,7 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
             imageUrl,
             pubDate,
             guid: guid || link,
-            sourceName,
+            sourceName: itemSourceName,
         });
     }
 
