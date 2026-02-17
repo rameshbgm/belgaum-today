@@ -35,7 +35,7 @@ export async function GET() {
 
     try {
         articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 50`
+            `SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 250`
         );
     } catch {
         articles = mockArticles;

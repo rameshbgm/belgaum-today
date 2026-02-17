@@ -22,6 +22,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: 'daily',
             priority: 0.8,
         },
+        {
+            url: `${siteUrl}/about`,
+            lastModified: now,
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: `${siteUrl}/privacy-policy`,
+            lastModified: now,
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        },
+        {
+            url: `${siteUrl}/terms-of-service`,
+            lastModified: now,
+            changeFrequency: 'yearly',
+            priority: 0.3,
+        },
     ];
 
     // Category pages
