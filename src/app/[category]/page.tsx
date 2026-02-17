@@ -1,24 +1,18 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import {
-    ChevronRight,
     Briefcase,
     Cpu,
     Trophy,
     Film,
     Globe,
     MapPin,
-    Clock,
-    Newspaper,
 } from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { CategoryArticleList } from '@/components/articles';
-import { Sidebar } from '@/components/layout';
+import { CategoryPageClient } from '@/components/articles';
 import { getSubCategories } from '@/lib/category-filters';
-import { TrendingCarousel, TrendingArticle } from '@/components/TrendingCarousel';
-import { TrackingProvider } from '@/components/TrackingProvider';
+import { TrendingArticle } from '@/components/TrendingCarousel';
 
 const validCategories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
 
@@ -105,7 +99,7 @@ export async function generateStaticParams() {
 async function getCategoryArticles(category: Category): Promise<Article[]> {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' AND category = ? ORDER BY published_at DESC LIMIT 20`,
+            `SELECT * FROM articles WHERE status = 'published' AND category = ? ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`,
             [category]
         );
         return articles;
@@ -166,9 +160,7 @@ export default async function CategoryPage({ params }: Props) {
     }
 
     const typedCategory = category as Category;
-    const meta = CATEGORY_META[typedCategory];
     const theme = CATEGORY_THEME[typedCategory];
-    const Icon = theme.icon;
 
     const [articles, trendingArticles, lastUpdated, sourceCount] = await Promise.all([
         getCategoryArticles(typedCategory),
@@ -180,88 +172,17 @@ export default async function CategoryPage({ params }: Props) {
     const subCategories = getSubCategories(typedCategory);
 
     return (
-        <TrackingProvider category={typedCategory}>
-            {/* ── Themed Gradient Header ── */}
-            <section className={`relative bg-gradient-to-r ${theme.gradient} text-white overflow-hidden`}>
-                {/* Background decoration */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-white rounded-full blur-3xl" />
-                </div>
-
-                <div className="container mx-auto px-4 py-10 md:py-14 relative z-10">
-                    {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm text-white/70 mb-4">
-                        <Link href="/" className="hover:text-white transition-colors">
-                            Home
-                        </Link>
-                        <ChevronRight className="w-4 h-4" />
-                        <span className="font-medium text-white">{meta.name}</span>
-                    </nav>
-
-                    <div className="flex items-center gap-4 mb-3">
-                        <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                            <Icon className="w-8 h-8" />
-                        </div>
-                        <div>
-                            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                                {theme.title}
-                            </h1>
-                            <p className="text-white/80 text-base md:text-lg mt-1">
-                                {theme.tagline}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-white/70">
-                        <span className="flex items-center gap-1.5">
-                            <Newspaper className="w-4 h-4" />
-                            {articles.length} articles
-                        </span>
-                        {sourceCount > 0 && (
-                            <span className="flex items-center gap-1.5">
-                                <Globe className="w-4 h-4" />
-                                {sourceCount} sources
-                            </span>
-                        )}
-                        {lastUpdated && (
-                            <span className="flex items-center gap-1.5">
-                                <Clock className="w-4 h-4" />
-                                Updated {new Date(lastUpdated).toLocaleTimeString('en-IN', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                })}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            <div className="container mx-auto px-4 py-8">
-                {/* ── Trending Carousel ── */}
-                {trendingArticles.length > 0 && (
-                    <div className="mb-10">
-                        <TrendingCarousel articles={trendingArticles} accentColor={theme.accentColor} />
-                    </div>
-                )}
-
-                <div className="lg:grid lg:grid-cols-4 lg:gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-3">
-                        <CategoryArticleList
-                            initialArticles={articles}
-                            category={typedCategory}
-                            subCategories={subCategories}
-                        />
-                    </div>
-
-                    {/* Sidebar */}
-                    <aside className="lg:col-span-1 mt-8 lg:mt-0">
-                        <Sidebar showCategories />
-                    </aside>
-                </div>
-            </div>
-        </TrackingProvider>
+        <CategoryPageClient
+            category={typedCategory}
+            initialArticles={articles}
+            subCategories={subCategories}
+            trendingArticles={trendingArticles}
+            theme={theme}
+            stats={{
+                articleCount: articles.length,
+                sourceCount,
+                lastUpdated,
+            }}
+        />
     );
 }

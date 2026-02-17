@@ -25,11 +25,11 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         // Add date filter for loading previous days
         if (before) {
-            sql += ` AND DATE(published_at) < ?`;
+            sql += ` AND DATE(COALESCE(published_at, created_at)) < ?`;
             params.push(before);
         }
 
-        sql += ` ORDER BY published_at DESC LIMIT ? OFFSET ?`;
+        sql += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ? OFFSET ?`;
         params.push(limit, offset);
 
         const articles = await query<Article[]>(sql, params);
@@ -42,7 +42,7 @@ export const GET = withLogging(async (request: NextRequest) => {
             countParams.push(category);
         }
         if (before) {
-            countSql += ` AND DATE(published_at) < ?`;
+            countSql += ` AND DATE(COALESCE(published_at, created_at)) < ?`;
             countParams.push(before);
         }
         const countResult = await query<[{ total: number }]>(countSql, countParams);
