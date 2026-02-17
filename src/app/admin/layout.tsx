@@ -6,13 +6,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
     LayoutDashboard, FileText, Rss, Brain,
     Settings, ChevronLeft, ChevronRight, LogOut, ExternalLink,
-    Menu, X
+    Menu, X, Database
 } from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/articles', icon: FileText, label: 'Articles' },
     { href: '/admin/feeds', icon: Rss, label: 'RSS Feeds' },
+    { href: '/admin/rss-logs', icon: Database, label: 'RSS Logs' },
     { href: '/admin/agents-log', icon: Brain, label: 'Agent Logs' },
 ];
 
