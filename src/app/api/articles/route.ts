@@ -9,6 +9,7 @@ import { withLogging } from '@/lib/withLogging';
 export const GET = withLogging(async (request: NextRequest) => {
     const searchParams = request.nextUrl.searchParams;
     const category = searchParams.get('category');
+    const before = searchParams.get('before'); // Date filter for loading previous days
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
@@ -17,9 +18,15 @@ export const GET = withLogging(async (request: NextRequest) => {
         let sql = `SELECT * FROM articles WHERE status = 'published'`;
         const params: unknown[] = [];
 
-        if (category) {
+        if (category && category !== 'all') {
             sql += ` AND category = ?`;
             params.push(category);
+        }
+
+        // Add date filter for loading previous days
+        if (before) {
+            sql += ` AND DATE(published_at) < ?`;
+            params.push(before);
         }
 
         sql += ` ORDER BY published_at DESC LIMIT ? OFFSET ?`;
@@ -30,9 +37,13 @@ export const GET = withLogging(async (request: NextRequest) => {
         // Get total count
         let countSql = `SELECT COUNT(*) as total FROM articles WHERE status = 'published'`;
         const countParams: unknown[] = [];
-        if (category) {
+        if (category && category !== 'all') {
             countSql += ` AND category = ?`;
             countParams.push(category);
+        }
+        if (before) {
+            countSql += ` AND DATE(published_at) < ?`;
+            countParams.push(before);
         }
         const countResult = await query<[{ total: number }]>(countSql, countParams);
         const total = countResult[0]?.total || 0;

@@ -1,6 +1,6 @@
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { FeaturedArticle, ArticleGrid } from '@/components/articles';
+import { FeaturedArticle, ArticleList } from '@/components/articles';
 import { Sidebar } from '@/components/layout';
 
 async function getArticles(): Promise<{ featured: Article | null; articles: Article[] }> {
@@ -56,7 +56,7 @@ export default async function HomePage() {
                 ))}
               </div>
             </div>
-            <ArticleGrid articles={regularArticles} priority />
+            <ArticleList initialArticles={regularArticles} category="all" />
           </section>
         </div>
 
