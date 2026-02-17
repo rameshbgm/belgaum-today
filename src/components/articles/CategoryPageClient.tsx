@@ -95,13 +95,10 @@ export function CategoryPageClient({
             const oldestArticle = articles[articles.length - 1];
             // Use published_at if available, fallback to created_at
             const dateToUse = oldestArticle.published_at || oldestArticle.created_at;
-            const beforeDate = new Date(dateToUse);
-            
-            // Format as YYYY-MM-DD for the API
-            const beforeDateStr = beforeDate.toISOString().split('T')[0];
+            const beforeTimestamp = new Date(dateToUse).toISOString();
 
             const params = new URLSearchParams({
-                before: beforeDateStr,
+                before: beforeTimestamp,
                 limit: '20',
                 category: category,
             });

@@ -9,7 +9,7 @@ import { withLogging } from '@/lib/withLogging';
 export const GET = withLogging(async (request: NextRequest) => {
     const searchParams = request.nextUrl.searchParams;
     const category = searchParams.get('category');
-    const before = searchParams.get('before'); // Date filter for loading previous days
+    const before = searchParams.get('before'); // Timestamp filter for loading previous articles
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
@@ -23,9 +23,9 @@ export const GET = withLogging(async (request: NextRequest) => {
             params.push(category);
         }
 
-        // Add date filter for loading previous days
+        // Add date filter for loading previous articles
         if (before) {
-            sql += ` AND DATE(COALESCE(published_at, created_at)) < ?`;
+            sql += ` AND COALESCE(published_at, created_at) < ?`;
             params.push(before);
         }
 
@@ -42,7 +42,7 @@ export const GET = withLogging(async (request: NextRequest) => {
             countParams.push(category);
         }
         if (before) {
-            countSql += ` AND DATE(COALESCE(published_at, created_at)) < ?`;
+            countSql += ` AND COALESCE(published_at, created_at) < ?`;
             countParams.push(before);
         }
         const countResult = await query<[{ total: number }]>(countSql, countParams);
