@@ -51,54 +51,63 @@ export const GET = withLogging(async () => {
             `SELECT id, title, view_count FROM articles WHERE view_count > 0 ORDER BY view_count DESC LIMIT 5`
         );
 
-        // Top articles with date-wise views (last 7 days)
-        const topArticlesWithDateViews = await query<Array<{
+        // Top 10 articles by views for each day (last 7 days)
+        const topArticlesByDay = await query<Array<{
+            view_date: string;
             article_id: number;
             title: string;
-            view_date: string;
             daily_views: number;
+            rank_position: number;
         }>>(
             `SELECT 
-                a.id as article_id,
-                a.title,
-                DATE(av.created_at) as view_date,
-                COUNT(*) as daily_views
-             FROM articles a
-             INNER JOIN article_views av ON a.id = av.article_id
-             WHERE av.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-             GROUP BY a.id, a.title, DATE(av.created_at)
-             ORDER BY a.id, view_date DESC`
+                view_date,
+                article_id,
+                title,
+                daily_views,
+                rank_position
+             FROM (
+                 SELECT 
+                     DATE(av.created_at) as view_date,
+                     a.id as article_id,
+                     a.title,
+                     COUNT(*) as daily_views,
+                     ROW_NUMBER() OVER (PARTITION BY DATE(av.created_at) ORDER BY COUNT(*) DESC) as rank_position
+                 FROM article_views av
+                 INNER JOIN articles a ON av.article_id = a.id
+                 WHERE av.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                 GROUP BY DATE(av.created_at), a.id, a.title
+             ) ranked
+             WHERE rank_position <= 10
+             ORDER BY view_date DESC, rank_position ASC`
         );
 
-        // Group by article for easier frontend consumption
-        const topArticlesByDateMap = new Map<number, {
+        // Group by date for easier frontend consumption
+        const topArticlesByDateMap = new Map<string, Array<{
             id: number;
             title: string;
-            totalViews: number;
-            viewsByDate: Array<{ date: string; count: number }>;
-        }>();
+            views: number;
+            rank: number;
+        }>>();
 
-        topArticlesWithDateViews.forEach(row => {
-            if (!topArticlesByDateMap.has(row.article_id)) {
-                topArticlesByDateMap.set(row.article_id, {
-                    id: row.article_id,
-                    title: row.title,
-                    totalViews: 0,
-                    viewsByDate: []
-                });
+        topArticlesByDay.forEach(row => {
+            if (!topArticlesByDateMap.has(row.view_date)) {
+                topArticlesByDateMap.set(row.view_date, []);
             }
-            const article = topArticlesByDateMap.get(row.article_id)!;
-            article.totalViews += row.daily_views;
-            article.viewsByDate.push({
-                date: row.view_date,
-                count: row.daily_views
+            topArticlesByDateMap.get(row.view_date)!.push({
+                id: row.article_id,
+                title: row.title,
+                views: row.daily_views,
+                rank: row.rank_position
             });
         });
 
-        // Convert to array and sort by total views, limit to top 5
-        const topArticlesByDate = Array.from(topArticlesByDateMap.values())
-            .sort((a, b) => b.totalViews - a.totalViews)
-            .slice(0, 5);
+        // Convert to array sorted by date (most recent first)
+        const topArticlesByDate = Array.from(topArticlesByDateMap.entries())
+            .map(([date, articles]) => ({
+                date,
+                articles: articles.sort((a, b) => a.rank - b.rank)
+            }))
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         // Articles per day (last 30 days)
         const articlesPerDay = await query<Array<{ date: string; count: number }>>(
