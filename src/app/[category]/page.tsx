@@ -6,6 +6,7 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { CategoryArticleList } from '@/components/articles';
 import { Sidebar } from '@/components/layout';
+import { getSubCategories } from '@/lib/category-filters';
 
 const validCategories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
 
@@ -58,6 +59,7 @@ export default async function CategoryPage({ params }: Props) {
     const typedCategory = category as Category;
     const meta = CATEGORY_META[typedCategory];
     const articles = await getCategoryArticles(typedCategory);
+    const subCategories = getSubCategories(typedCategory);
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -70,26 +72,14 @@ export default async function CategoryPage({ params }: Props) {
                 <span className="font-medium text-gray-900 dark:text-white">{meta.name}</span>
             </nav>
 
-            {/* Category Header */}
-            <header className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                    <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: meta.color }}
-                    />
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        {meta.name} News
-                    </h1>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
-                    {meta.description}
-                </p>
-            </header>
-
             <div className="lg:grid lg:grid-cols-4 lg:gap-8">
                 {/* Main Content */}
                 <div className="lg:col-span-3">
-                    <CategoryArticleList initialArticles={articles} category={typedCategory} />
+                    <CategoryArticleList 
+                        initialArticles={articles} 
+                        category={typedCategory}
+                        subCategories={subCategories}
+                    />
                 </div>
 
                 {/* Sidebar */}

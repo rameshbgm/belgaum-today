@@ -23,6 +23,11 @@ export interface AiConfig {
     temperature: number;
     maxTokens: number;
     requestTimeoutMs: number;
+    responseFormat?: 'json_object' | 'text';
+    effort?: 'low' | 'medium' | 'high';
+    verbosity?: 'low' | 'medium' | 'high';
+    store?: boolean;
+    enableWebSearch?: boolean;
     isValid: boolean;
 }
 
@@ -30,7 +35,7 @@ export interface AiConfig {
 function loadConfig(): AiConfig {
     const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
 
-    const model = (process.env.OPENAI_MODEL || 'gpt-5-neno').trim();
+    const model = (process.env.OPENAI_MODEL || 'gpt-5-nano').trim();
     const temperature = parseFloat(process.env.OPENAI_TEMPERATURE || '0.3');
     const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS || '1000', 10);
     const requestTimeoutMs = parseInt(process.env.OPENAI_REQUEST_TIMEOUT_MS || '45000', 10);
@@ -50,6 +55,11 @@ function loadConfig(): AiConfig {
         temperature: Math.min(2, Math.max(0, temperature)),
         maxTokens: maxTokens > 0 ? maxTokens : 1000,
         requestTimeoutMs,
+        responseFormat: 'json_object',
+        effort: 'low',
+        verbosity: 'low',
+        store: false,
+        enableWebSearch: true,
         isValid: apiKey.length > 0,
     };
 

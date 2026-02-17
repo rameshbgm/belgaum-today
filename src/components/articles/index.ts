@@ -5,3 +5,5 @@ export { ShareButtons } from './ShareButtons';
 export { NewsFallbackImage } from './NewsFallbackImage';
 export { ArticleList } from './ArticleList';
 export { CategoryArticleList } from './CategoryArticleList';
+export { CategorySearchHeader } from './CategorySearchHeader';
+export type { SubCategory } from './CategorySearchHeader';
