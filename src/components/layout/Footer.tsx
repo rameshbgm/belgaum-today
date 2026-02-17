@@ -69,8 +69,13 @@ export function Footer() {
                         <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
                         <ul className="space-y-2">
                             <li>
+                                <Link href="/about" className="text-sm text-gray-400 hover:text-white transition-colors">
+                                    About Us
+                                </Link>
+                            </li>
+                            <li>
                                 <Link href="/search" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                    Advanced Search
+                                    Search News
                                 </Link>
                             </li>
                             <li>
@@ -78,20 +83,24 @@ export function Footer() {
                                     <Rss className="w-4 h-4" /> RSS Feed
                                 </Link>
                             </li>
+                        </ul>
+
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-4">Legal</h3>
+                        <ul className="space-y-2">
                             <li>
-                                <Link href="/admin/login" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                    Admin Login
+                                <Link href="/privacy-policy" className="text-sm text-gray-400 hover:text-white transition-colors">
+                                    Privacy Policy
                                 </Link>
                             </li>
                             <li>
-                                <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                    Privacy Policy
-                                </a>
+                                <Link href="/terms-of-service" className="text-sm text-gray-400 hover:text-white transition-colors">
+                                    Terms of Service
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                    Terms of Service
-                                </a>
+                                <Link href="/terms-of-service#disclaimer" className="text-sm text-gray-400 hover:text-white transition-colors">
+                                    Disclaimer
+                                </Link>
                             </li>
                         </ul>
                     </div>
@@ -102,15 +111,15 @@ export function Footer() {
                         <ul className="space-y-3">
                             <li className="flex items-start gap-3 text-sm text-gray-400">
                                 <MapPin className="w-5 h-5 flex-shrink-0 text-blue-400" />
-                                <span>Belgaum, Karnataka, India - 590001</span>
+                                <span>Belgaum (Belagavi), Karnataka, India — 590001</span>
                             </li>
                             <li className="flex items-center gap-3 text-sm text-gray-400">
                                 <Phone className="w-5 h-5 flex-shrink-0 text-blue-400" />
-                                <span>+91 123 456 7890</span>
+                                <a href="tel:+91123456789" className="hover:text-white transition-colors">+91 12345 6789</a>
                             </li>
                             <li className="flex items-center gap-3 text-sm text-gray-400">
                                 <Mail className="w-5 h-5 flex-shrink-0 text-blue-400" />
-                                <span>contact@belgaum.today</span>
+                                <a href="mailto:ask@belgaum.today" className="hover:text-white transition-colors">ask@belgaum.today</a>
                             </li>
                         </ul>
                     </div>
@@ -122,6 +131,13 @@ export function Footer() {
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
                         <p>© {currentYear} Belgaum Today. All rights reserved.</p>
+                        <div className="flex items-center gap-4">
+                            <Link href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+                            <span className="text-gray-700">·</span>
+                            <Link href="/terms-of-service" className="hover:text-gray-300 transition-colors">Terms</Link>
+                            <span className="text-gray-700">·</span>
+                            <Link href="/about" className="hover:text-gray-300 transition-colors">About</Link>
+                        </div>
                         <p>Made with ❤️ in Belgaum</p>
                     </div>
                 </div>
