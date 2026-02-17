@@ -130,7 +130,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         // Insert new feed
-        const result = await execute(
+        await execute(
             `INSERT INTO rss_feed_config (name, feed_url, category, fetch_interval_minutes, is_active)
              VALUES (?, ?, ?, ?, ?)`,
             [name, feed_url, category.toLowerCase(), fetch_interval_minutes, is_active]
@@ -139,7 +139,6 @@ export const POST = withLogging(async (request: NextRequest) => {
         return NextResponse.json({ 
             success: true, 
             message: 'Feed created successfully',
-            data: { id: result.insertId }
         }, { status: 201 });
     } catch (error) {
         console.error('Error creating feed:', error);
