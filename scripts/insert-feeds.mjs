@@ -10,6 +10,10 @@ for (const line of envFile.split('\n')) {
 
 
 const feeds = [
+    // Belgaum/Belagavi - LOCAL NEWS
+    { name: 'Google News - Belagavi', feed_url: 'https://news.google.com/rss/search?q=Belagavi&hl=en-IN&gl=IN&ceid=IN:en', category: 'belgaum' },
+    { name: 'Google News - Belgaum', feed_url: 'https://news.google.com/rss/search?q=Belgaum&hl=en-IN&gl=IN&ceid=IN:en', category: 'belgaum' },
+    { name: 'OneIndia Kannada - Belagavi', feed_url: 'https://kannada.oneindia.com/rss/feeds/kannada-belagavi-fb.xml', category: 'belgaum' },
     // Technology
     { name: 'Hindustan Times - Technology', feed_url: 'https://www.hindustantimes.com/feeds/rss/technology/rssfeed.xml', category: 'technology' },
     { name: 'The Hindu - Science', feed_url: 'https://www.thehindu.com/sci-tech/science/feeder/default.rss', category: 'technology' },
