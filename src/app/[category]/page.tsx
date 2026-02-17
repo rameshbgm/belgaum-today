@@ -1,13 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import {
-    Briefcase,
-    Cpu,
-    Trophy,
-    Film,
-    Globe,
-    MapPin,
-} from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { CategoryPageClient } from '@/components/articles';
@@ -19,49 +11,49 @@ const validCategories: Category[] = ['india', 'business', 'technology', 'enterta
 /* ── Per-category theme configuration ── */
 const CATEGORY_THEME: Record<Category, {
     gradient: string;
-    icon: React.ElementType;
+    iconName: string;
     accentColor: string;
     title: string;
     tagline: string;
 }> = {
     business: {
         gradient: 'from-emerald-700 via-emerald-600 to-teal-500',
-        icon: Briefcase,
+        iconName: 'Briefcase',
         accentColor: 'emerald',
         title: 'Business News',
         tagline: 'Markets, Economy & Industry Updates',
     },
     technology: {
         gradient: 'from-blue-700 via-cyan-600 to-blue-500',
-        icon: Cpu,
+        iconName: 'Cpu',
         accentColor: 'blue',
         title: 'Technology News',
         tagline: 'Latest Tech, Science & Innovation',
     },
     sports: {
         gradient: 'from-red-700 via-red-600 to-orange-500',
-        icon: Trophy,
+        iconName: 'Trophy',
         accentColor: 'red',
         title: 'Sports News',
         tagline: 'Cricket, Football, Tennis & More',
     },
     entertainment: {
         gradient: 'from-rose-700 via-pink-600 to-fuchsia-500',
-        icon: Film,
+        iconName: 'Film',
         accentColor: 'rose',
         title: 'Entertainment News',
         tagline: 'Bollywood, Movies, Music & TV',
     },
     india: {
         gradient: 'from-orange-600 via-orange-500 to-amber-500',
-        icon: Globe,
+        iconName: 'Globe',
         accentColor: 'orange',
         title: 'India News',
         tagline: 'Latest Headlines & Breaking Stories',
     },
     belgaum: {
         gradient: 'from-purple-700 via-purple-600 to-indigo-500',
-        icon: MapPin,
+        iconName: 'MapPin',
         accentColor: 'orange',
         title: 'Belgaum News',
         tagline: 'Local News from Belgaum Region',
