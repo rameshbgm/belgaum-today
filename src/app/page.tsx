@@ -59,17 +59,6 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Latest News
               </h2>
-              <div className="flex gap-2">
-                {(Object.keys(CATEGORY_META) as Category[]).slice(0, 4).map((cat) => (
-                  <a
-                    key={cat}
-                    href={`/${cat}`}
-                    className="px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hidden md:block"
-                  >
-                    {CATEGORY_META[cat].name}
-                  </a>
-                ))}
-              </div>
             </div>
             <ArticleList initialArticles={regularArticles} category="all" />
           </section>
@@ -77,7 +66,7 @@ export default async function HomePage() {
 
         {/* Sidebar */}
         <aside className="lg:col-span-1 mt-8 lg:mt-0">
-          <Sidebar />
+          <Sidebar showCategories={false} showRss={false} />
         </aside>
       </div>
     </div>
