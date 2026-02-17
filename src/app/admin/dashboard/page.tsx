@@ -341,8 +341,8 @@ export default function AdminDashboardPage() {
                                     No article views recorded in the last 7 days.
                                 </p>
                             ) : (
-                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; views: number; rank: number }> }) => (
-                                    <div key={dayData.date} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; views: number; rank: number }> }, dayIndex: number) => (
+                                    <div key={`day-${dayIndex}-${dayData.date}`} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                                 {new Date(dayData.date).toLocaleDateString('en-IN', { 
