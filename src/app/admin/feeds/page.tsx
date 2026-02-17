@@ -693,8 +693,8 @@ export default function RSSFeedsPage() {
                                 <Input
                                     type="number"
                                     value={formData.fetch_interval_minutes}
-                                    onChange={(e) => setFormData({ ...formData, fetch_interval_minutes: parseInt(e.target.value) || 60 })}
-                                    min="15"
+                                    onChange={(e) => setFormData({ ...formData, fetch_interval_minutes: parseInt(e.target.value) || 1 })}
+                                    min="1"
                                     max="1440"
                                 />
                             </div>

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, execute } from '@/lib/db';
+import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
-import { insert } from '@/lib/db';
-import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { logger } from '@/lib/logger';
 import { fileLogger } from '@/lib/fileLogger';
 import { withLogging } from '@/lib/withLogging';
@@ -41,15 +39,20 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         fileLogger.info('cron', '✓ Authentication successful');
 
-        // Get active RSS feed configs
+        // Get active RSS feed configs that need fetching based on interval
+        // Only fetch feeds where: last_fetched_at IS NULL (never fetched) 
+        // OR time since last_fetched_at >= fetch_interval_minutes
         const feeds = await query<RssFeedConfig[]>(
-            'SELECT * FROM rss_feed_config WHERE is_active = true'
+            `SELECT * FROM rss_feed_config 
+             WHERE is_active = true 
+             AND (last_fetched_at IS NULL 
+                  OR TIMESTAMPDIFF(MINUTE, last_fetched_at, NOW()) >= fetch_interval_minutes)`
         );
 
         if (feeds.length === 0) {
-            fileLogger.warn('cron', '⚠ No active RSS feeds configured. Exiting.');
+            fileLogger.info('cron', '✓ No feeds need fetching at this time (all intervals not elapsed yet)');
             return NextResponse.json({
-                message: 'No active feeds configured',
+                message: 'No feeds need fetching - all intervals not elapsed',
                 feedsProcessed: 0,
                 newArticles: 0,
                 skipped: 0,
@@ -57,8 +60,15 @@ export const GET = withLogging(async (request: NextRequest) => {
         }
 
         await logger.cronStart(feeds.length);
-        fileLogger.info('cron', `📡 Found ${feeds.length} active RSS feeds`, {
-            feeds: feeds.map(f => ({ id: f.id, name: f.name, category: f.category, feedUrl: f.feed_url?.substring(0, 80) })),
+        fileLogger.info('cron', `📡 Found ${feeds.length} active RSS feeds ready for fetching`, {
+            feeds: feeds.map(f => ({ 
+                id: f.id, 
+                name: f.name, 
+                category: f.category, 
+                interval: f.fetch_interval_minutes,
+                lastFetched: f.last_fetched_at,
+                feedUrl: f.feed_url?.substring(0, 80) 
+            })),
         });
 
         // Fetch all feeds in parallel
@@ -83,6 +93,7 @@ export const GET = withLogging(async (request: NextRequest) => {
             const feedStart = Date.now();
             let feedNew = 0;
             let feedSkipped = 0;
+            const feedErrors: string[] = [];
 
             fileLogger.info('cron', `  ┌─ Feed: "${feed.name}" (${feed.category})`, {
                 feedId: feed.id,
@@ -142,6 +153,7 @@ export const GET = withLogging(async (request: NextRequest) => {
                         error: errMsg,
                         sourceUrl: item.link,
                     });
+                    feedErrors.push(`${item.title.substring(0, 100)}: ${errMsg}`);
                     errors.push(`Failed to insert: ${item.title}`);
                 }
             }
@@ -155,12 +167,42 @@ export const GET = withLogging(async (request: NextRequest) => {
             totalNew += feedNew;
             totalSkipped += feedSkipped;
 
+            // Insert RSS fetch log to database
+            const logStatus = feedErrors.length === items.length ? 'error' : 
+                             (feedErrors.length > 0 ? 'partial' : 'success');
+            try {
+                await insert(
+                    `INSERT INTO rss_fetch_logs 
+                    (feed_id, feed_name, category, status, items_fetched, new_articles, 
+                     skipped_articles, errors_count, error_details, duration_ms, started_at, completed_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [
+                        feed.id,
+                        feed.name,
+                        feed.category,
+                        logStatus,
+                        items.length,
+                        feedNew,
+                        feedSkipped,
+                        feedErrors.length,
+                        feedErrors.length > 0 ? feedErrors.join('\n---\n') : null,
+                        feedDuration,
+                        new Date(feedStart)
+                    ]
+                );
+            } catch (logError) {
+                fileLogger.error('cron', `  │ ⚠ Failed to log RSS fetch to database`, {
+                    error: logError instanceof Error ? logError.message : String(logError),
+                });
+            }
+
             await logger.cronFeedFetch(feed.name, feedNew, feedSkipped);
-            fileLogger.info('cron', `  └─ Feed "${feed.name}": ${feedNew} new, ${feedSkipped} skipped (${feedDuration}ms)`, {
+            fileLogger.info('cron', `  └─ Feed "${feed.name}": ${feedNew} new, ${feedSkipped} skipped, ${feedErrors.length} errors (${feedDuration}ms)`, {
                 feedId: feed.id,
                 category: feed.category,
                 newArticles: feedNew,
                 skipped: feedSkipped,
+                errors: feedErrors.length,
                 durationMs: feedDuration,
             });
         }
@@ -169,55 +211,8 @@ export const GET = withLogging(async (request: NextRequest) => {
         fileLogger.info('cron', `  RSS Summary: ${totalNew} new articles, ${totalSkipped} skipped from ${feedResults.length} feeds`);
         fileLogger.info('cron', '───────────────────────────────────────────────────');
 
-        // Update trending articles per category
-        const categoriesWithFeeds = [...new Set(feeds.map((f) => f.category))];
-        fileLogger.info('cron', `🤖 Starting AI trending analysis for ${categoriesWithFeeds.length} categories: [${categoriesWithFeeds.join(', ')}]`);
-
-        for (const category of categoriesWithFeeds) {
-            const trendingStart = Date.now();
-            try {
-                const recentArticles = await query<ArticleForAnalysis[]>(
-                    `SELECT id, title, excerpt, source_name, published_at 
-                     FROM articles 
-                     WHERE category = ? AND status = 'published' 
-                     ORDER BY published_at DESC LIMIT 50`,
-                    [category]
-                );
-
-                fileLogger.info('cron', `  🔍 [${category}] Found ${recentArticles.length} recent articles for trending analysis`);
-
-                if (recentArticles.length > 0) {
-                    const trending = await analyzeTrendingArticles(recentArticles, category, 7);
-                    const batchId = `${category}-${Date.now()}`;
-
-                    await execute('DELETE FROM trending_articles WHERE category = ?', [category]);
-
-                    for (const t of trending) {
-                        await insert(
-                            `INSERT INTO trending_articles (article_id, category, rank_position, ai_score, ai_reasoning, batch_id, expires_at)
-                             VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 4 HOUR))`,
-                            [t.articleId, category, t.rank, t.score, t.reasoning, batchId]
-                        );
-                    }
-
-                    const trendDuration = Date.now() - trendingStart;
-                    fileLogger.info('cron', `  ✓ [${category}] Trending updated: ${trending.length} articles, batch=${batchId} (${trendDuration}ms)`, {
-                        category,
-                        trendingCount: trending.length,
-                        batchId,
-                        durationMs: trendDuration,
-                        trending: trending.map(t => ({ rank: t.rank, articleId: t.articleId, score: t.score })),
-                    });
-                }
-            } catch (trendErr) {
-                const errMsg = trendErr instanceof Error ? trendErr.message : String(trendErr);
-                fileLogger.error('cron', `  ✕ [${category}] Trending analysis FAILED: ${errMsg}`, {
-                    error: errMsg,
-                    stack: trendErr instanceof Error ? trendErr.stack?.split('\n').slice(0, 5).join('\n') : undefined,
-                });
-                errors.push(`Trending for ${category}: ${String(trendErr)}`);
-            }
-        }
+        // Note: Trending analysis is handled by separate cron endpoint (/api/cron/trending-analysis)
+        // This keeps RSS fetching fast and independent from AI processing
 
         const durationMs = Date.now() - cronStart;
         await logger.cronComplete(feedResults.length, totalNew, durationMs);
@@ -225,7 +220,6 @@ export const GET = withLogging(async (request: NextRequest) => {
         fileLogger.info('cron', '═══════════════════════════════════════════════════');
         fileLogger.info('cron', `  RSS FEED FETCH — Completed in ${durationMs}ms`);
         fileLogger.info('cron', `  Feeds: ${feedResults.length} | New: ${totalNew} | Skipped: ${totalSkipped} | Errors: ${errors.length}`);
-        fileLogger.info('cron', `  Trending updated: [${categoriesWithFeeds.join(', ')}]`);
         fileLogger.info('cron', '═══════════════════════════════════════════════════');
 
         return NextResponse.json({
@@ -233,7 +227,6 @@ export const GET = withLogging(async (request: NextRequest) => {
             feedsProcessed: feedResults.length,
             newArticles: totalNew,
             skipped: totalSkipped,
-            trendingUpdated: categoriesWithFeeds,
             errors: errors.length > 0 ? errors : undefined,
             timestamp: new Date().toISOString(),
         });

@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS rss_feed_config (
     name VARCHAR(100) NOT NULL,
     feed_url VARCHAR(500) NOT NULL UNIQUE,
     category ENUM('india', 'business', 'technology', 'entertainment', 'sports', 'belgaum') NOT NULL,
-    fetch_interval_minutes INT DEFAULT 120,
+    fetch_interval_minutes INT DEFAULT 15,
     is_active BOOLEAN DEFAULT TRUE,
     last_fetched_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -193,6 +193,28 @@ CREATE TABLE IF NOT EXISTS trending_articles (
     INDEX idx_batch (batch_id),
     INDEX idx_expires (expires_at),
     UNIQUE KEY uk_cat_rank (category, rank_position)
+);
+
+-- RSS Fetch Logs table
+CREATE TABLE IF NOT EXISTS rss_fetch_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    feed_id INT NOT NULL,
+    feed_name VARCHAR(100) NOT NULL,
+    category ENUM('india','business','technology','entertainment','sports','belgaum') NOT NULL,
+    status ENUM('success','partial','error') NOT NULL DEFAULT 'success',
+    items_fetched INT DEFAULT 0,
+    new_articles INT DEFAULT 0,
+    skipped_articles INT DEFAULT 0,
+    errors_count INT DEFAULT 0,
+    error_details TEXT,
+    duration_ms INT DEFAULT 0,
+    started_at TIMESTAMP NOT NULL,
+    completed_at TIMESTAMP NULL,
+    FOREIGN KEY (feed_id) REFERENCES rss_feed_config(id) ON DELETE CASCADE,
+    INDEX idx_feed_id (feed_id),
+    INDEX idx_category (category),
+    INDEX idx_status (status),
+    INDEX idx_started_at (started_at)
 );
 
 -- Unified AI Providers (single source of truth per provider)
