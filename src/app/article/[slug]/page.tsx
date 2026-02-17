@@ -205,13 +205,7 @@ export default async function ArticlePage({ params }: Props) {
                                 {categoryMeta.name}
                             </Badge>
                         </Link>
-                        {article.ai_generated && (
-                            <Badge variant="info" size="md" className="flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                AI Enhanced
-                                {article.ai_confidence && ` (${Math.round(article.ai_confidence * 100)}%)`}
-                            </Badge>
-                        )}
+
                     </div>
 
                     {/* Title */}
