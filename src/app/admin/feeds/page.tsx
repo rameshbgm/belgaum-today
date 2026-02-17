@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X
+    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X, Search, ArrowUpDown
 } from 'lucide-react';
 import { Button, Card, CardContent, Badge, Input, useToast } from '@/components/ui';
 
@@ -23,6 +23,11 @@ export default function RSSFeedsPage() {
     const [loading, setLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);
     const [selectedFeeds, setSelectedFeeds] = useState<number[]>([]);
+    
+    // Search and sort state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortField, setSortField] = useState<'name' | 'category' | 'last_fetched_at'>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     
     // Feed form state
     const [showFeedModal, setShowFeedModal] = useState(false);
@@ -295,6 +300,50 @@ export default function RSSFeedsPage() {
         belgaum: '#9C27B0',
     };
 
+    // Filter and sort feeds
+    const filteredAndSortedFeeds = useMemo(() => {
+        let result = [...feeds];
+
+        // Filter by search query
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(feed =>
+                feed.name.toLowerCase().includes(query) ||
+                feed.feed_url.toLowerCase().includes(query) ||
+                feed.category.toLowerCase().includes(query)
+            );
+        }
+
+        // Sort
+        result.sort((a, b) => {
+            let aVal: any = a[sortField];
+            let bVal: any = b[sortField];
+
+            if (sortField === 'last_fetched_at') {
+                aVal = aVal ? new Date(aVal).getTime() : 0;
+                bVal = bVal ? new Date(bVal).getTime() : 0;
+            } else if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    }, [feeds, searchQuery, sortField, sortDirection]);
+
+    const toggleSort = (field: 'name' | 'category' | 'last_fetched_at') => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -359,6 +408,35 @@ export default function RSSFeedsPage() {
                 </Card>
             </div>
 
+            {/* Search Bar */}
+            <Card>
+                <CardContent className="p-4">
+                    <div className="relative">
+                        <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                        <Input
+                            type="text"
+                            placeholder="Search feeds by name, URL, or category..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-10"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <p className="text-xs text-gray-500 mt-2">
+                            Showing {filteredAndSortedFeeds.length} of {feeds.length} feeds
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Bulk Actions */}
             {selectedFeeds.length > 0 && (
                 <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
@@ -421,10 +499,10 @@ export default function RSSFeedsPage() {
                                     <input
                                         type="checkbox"
                                         aria-label="Select all feeds"
-                                        checked={selectedFeeds.length === feeds.length && feeds.length > 0}
+                                        checked={selectedFeeds.length === filteredAndSortedFeeds.length && filteredAndSortedFeeds.length > 0}
                                         onChange={(e) => {
                                             if (e.target.checked) {
-                                                setSelectedFeeds(feeds.map(f => f.id));
+                                                setSelectedFeeds(filteredAndSortedFeeds.map(f => f.id));
                                             } else {
                                                 setSelectedFeeds([]);
                                             }
@@ -432,15 +510,46 @@ export default function RSSFeedsPage() {
                                         className="rounded border-gray-300"
                                     />
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Feed</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+                                <th 
+                                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                    onClick={() => toggleSort('name')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Feed
+                                        <ArrowUpDown className="w-3 h-3" />
+                                    </div>
+                                </th>
+                                <th 
+                                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                    onClick={() => toggleSort('category')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Category
+                                        <ArrowUpDown className="w-3 h-3" />
+                                    </div>
+                                </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Last Fetched</th>
+                                <th 
+                                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                    onClick={() => toggleSort('last_fetched_at')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Last Fetched
+                                        <ArrowUpDown className="w-3 h-3" />
+                                    </div>
+                                </th>
                                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {feeds.map(feed => (
+                            {filteredAndSortedFeeds.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        {searchQuery ? 'No feeds match your search' : 'No feeds yet. Add your first feed to get started.'}
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredAndSortedFeeds.map(feed => (
                                 <tr key={feed.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                     <td className="px-4 py-3">
                                         <input
@@ -508,7 +617,8 @@ export default function RSSFeedsPage() {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            ))
+                            )}
                         </tbody>
                     </table>
                 </div>
