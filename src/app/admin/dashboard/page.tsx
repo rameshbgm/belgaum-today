@@ -333,43 +333,43 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-6">
                         <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
                             <TrendingUp className="w-5 h-5 text-green-500" />
-                            Top Articles by Views (Last 7 Days)
+                            Top 10 Articles by Views (Each Day)
                         </h3>
-                        <div className="space-y-6">
+                        <div className="space-y-6 max-h-[600px] overflow-y-auto">
                             {!stats?.topArticlesByDate || stats.topArticlesByDate.length === 0 ? (
                                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                                     No article views recorded in the last 7 days.
                                 </p>
                             ) : (
-                                stats.topArticlesByDate.map((article, index) => (
-                                    <div key={article.id} className="space-y-2">
-                                        <div className="flex items-center gap-3">
-                                            <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium flex-shrink-0">
-                                                {index + 1}
-                                            </span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                    {article.title}
-                                                </p>
-                                            </div>
+                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; views: number; rank: number }> }) => (
+                                    <div key={dayData.date} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                                {new Date(dayData.date).toLocaleDateString('en-IN', { 
+                                                    weekday: 'short',
+                                                    day: '2-digit', 
+                                                    month: 'short',
+                                                    year: 'numeric'
+                                                })}
+                                            </h4>
                                             <Badge variant="default" size="sm">
-                                                {formatNumber(article.totalViews)} total
+                                                {dayData.articles.length} articles
                                             </Badge>
                                         </div>
-                                        {/* Date-wise breakdown */}
-                                        <div className="ml-9 space-y-1">
-                                            {article.viewsByDate.map((dateView: { date: string; count: number }) => (
-                                                <div key={dateView.date} className="flex items-center justify-between text-xs">
-                                                    <span className="text-gray-500 dark:text-gray-400">
-                                                        {new Date(dateView.date).toLocaleDateString('en-IN', { 
-                                                            day: '2-digit', 
-                                                            month: 'short',
-                                                            year: 'numeric'
-                                                        })}
+                                        <div className="space-y-2">
+                                            {dayData.articles.map((article) => (
+                                                <div key={article.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium flex-shrink-0 mt-0.5">
+                                                        {article.rank}
                                                     </span>
-                                                    <span className="text-gray-600 dark:text-gray-300 font-medium">
-                                                        {formatNumber(dateView.count)} views
-                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+                                                            {article.title}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            {formatNumber(article.views)} views
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

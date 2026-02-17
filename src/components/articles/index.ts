@@ -7,5 +7,6 @@ export { ArticleList } from './ArticleList';
 export { CategoryArticleList } from './CategoryArticleList';
 export { CategorySearchHeader } from './CategorySearchHeader';
 export { CategoryPageClient } from './CategoryPageClient';
+export { ArticleViewTracker } from './ArticleViewTracker';
 export type { SubCategory } from './CategorySearchHeader';
 

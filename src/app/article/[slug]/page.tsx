@@ -8,7 +8,7 @@ import { ChevronRight, Clock, Eye, Calendar, ExternalLink, Sparkles } from 'luci
 import { query, execute } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
-import { ShareButtons, ArticleCard } from '@/components/articles';
+import { ShareButtons, ArticleCard, ArticleViewTracker } from '@/components/articles';
 import { formatDate, formatRelativeTime, formatNumber } from '@/lib/utils';
 
 type Props = {
@@ -178,6 +178,9 @@ export default async function ArticlePage({ params }: Props) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+            
+            {/* Client-side view tracking */}
+            <ArticleViewTracker articleId={article.id} category={article.category} />
 
             <article className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Breadcrumb */}

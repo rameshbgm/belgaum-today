@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Twitter, Facebook, Linkedin, Share2, Link2, MessageCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui';
 
@@ -12,6 +12,11 @@ interface ShareButtonsProps {
 export function ShareButtons({ url, title }: ShareButtonsProps) {
     const { showToast } = useToast();
     const [copied, setCopied] = useState(false);
+    const [canShare, setCanShare] = useState(false);
+
+    useEffect(() => {
+        setCanShare('share' in navigator);
+    }, []);
 
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
@@ -95,7 +100,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
                 {copied ? <CheckCircle className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
             </button>
 
-            {'share' in navigator && (
+            {canShare && (
                 <button
                     onClick={handleShare}
                     className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-all duration-200"
