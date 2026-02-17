@@ -46,18 +46,7 @@ export function Header() {
                     : 'bg-white dark:bg-gray-900'
             )}
         >
-            {/* Top Bar */}
-            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white py-1.5">
-                <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-                    <span className="font-medium">Your trusted source for Belgaum news</span>
-                    <div className="hidden md:flex items-center gap-4">
-                        <Link href="/feed.xml" className="flex items-center gap-1 hover:opacity-80 transition">
-                            <Rss className="w-4 h-4" />
-                            RSS
-                        </Link>
-                    </div>
-                </div>
-            </div>
+            {/* Top Bar removed per request */}
 
             {/* Main Header */}
             <div className="container mx-auto px-4 py-4">
