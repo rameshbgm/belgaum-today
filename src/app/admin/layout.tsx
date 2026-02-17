@@ -125,9 +125,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </header>
 
                 {/* Page content */}
-                <div className="admin-content">
+                <main id="main-content" className="admin-content">
                     {children}
-                </div>
+                </main>
             </div>
         </div>
     );

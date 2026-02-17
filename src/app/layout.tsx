@@ -91,10 +91,10 @@ export default async function RootLayout({
             Skip to main content
           </a>
           {isAdmin ? (
-            <main id="main-content">
-              {children}
-            </main>
+            // Admin routes: render children directly (admin layout handles its own structure)
+            children
           ) : (
+            // Public routes: wrap with header and footer
             <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
               <Header />
               <main id="main-content" className="flex-1">
