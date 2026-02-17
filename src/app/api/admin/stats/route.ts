@@ -51,11 +51,60 @@ export const GET = withLogging(async () => {
             `SELECT id, title, view_count FROM articles WHERE view_count > 0 ORDER BY view_count DESC LIMIT 5`
         );
 
-        // Articles per day (last 7 days)
+        // Top articles with date-wise views (last 7 days)
+        const topArticlesWithDateViews = await query<Array<{
+            article_id: number;
+            title: string;
+            view_date: string;
+            daily_views: number;
+        }>>(
+            `SELECT 
+                a.id as article_id,
+                a.title,
+                DATE(av.created_at) as view_date,
+                COUNT(*) as daily_views
+             FROM articles a
+             INNER JOIN article_views av ON a.id = av.article_id
+             WHERE av.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+             GROUP BY a.id, a.title, DATE(av.created_at)
+             ORDER BY a.id, view_date DESC`
+        );
+
+        // Group by article for easier frontend consumption
+        const topArticlesByDateMap = new Map<number, {
+            id: number;
+            title: string;
+            totalViews: number;
+            viewsByDate: Array<{ date: string; count: number }>;
+        }>();
+
+        topArticlesWithDateViews.forEach(row => {
+            if (!topArticlesByDateMap.has(row.article_id)) {
+                topArticlesByDateMap.set(row.article_id, {
+                    id: row.article_id,
+                    title: row.title,
+                    totalViews: 0,
+                    viewsByDate: []
+                });
+            }
+            const article = topArticlesByDateMap.get(row.article_id)!;
+            article.totalViews += row.daily_views;
+            article.viewsByDate.push({
+                date: row.view_date,
+                count: row.daily_views
+            });
+        });
+
+        // Convert to array and sort by total views, limit to top 5
+        const topArticlesByDate = Array.from(topArticlesByDateMap.values())
+            .sort((a, b) => b.totalViews - a.totalViews)
+            .slice(0, 5);
+
+        // Articles per day (last 30 days)
         const articlesPerDay = await query<Array<{ date: string; count: number }>>(
             `SELECT DATE(published_at) as date, COUNT(*) as count 
              FROM articles 
-             WHERE status = 'published' AND published_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+             WHERE status = 'published' AND published_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
              GROUP BY DATE(published_at)
              ORDER BY date`
         );
@@ -81,13 +130,18 @@ export const GET = withLogging(async () => {
             `SELECT id, name, category, is_active, last_fetched_at FROM rss_feed_config ORDER BY category, name`
         );
 
-        const stats: DashboardStats & { totalClicks: number; feedStatus: typeof feedStatus } = {
+        const stats: DashboardStats & { 
+            totalClicks: number; 
+            feedStatus: typeof feedStatus;
+            topArticlesByDate: typeof topArticlesByDate;
+        } = {
             totalArticles,
             draftCount,
             publishedToday,
             totalViews,
             totalClicks,
             topArticles,
+            topArticlesByDate,
             articlesPerDay,
             categoryStats,
             sourceStats,

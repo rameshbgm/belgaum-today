@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink
+    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X
 } from 'lucide-react';
 import { Button, Card, CardContent, Badge, Input, useToast } from '@/components/ui';
 
@@ -23,6 +23,22 @@ export default function RSSFeedsPage() {
     const [loading, setLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);
     const [selectedFeeds, setSelectedFeeds] = useState<number[]>([]);
+    
+    // Feed form state
+    const [showFeedModal, setShowFeedModal] = useState(false);
+    const [editingFeed, setEditingFeed] = useState<Feed | null>(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        feed_url: '',
+        category: 'india',
+        fetch_interval_minutes: 60,
+        is_active: true
+    });
+    const [formSubmitting, setFormSubmitting] = useState(false);
+    
+    // Delete confirmation state
+    const [deletingFeed, setDeletingFeed] = useState<Feed | null>(null);
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
     const fetchFeeds = useCallback(async () => {
         try {
@@ -40,7 +56,7 @@ export default function RSSFeedsPage() {
         await fetch('/api/admin/feeds', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, is_active: !current }),
+            body: JSON.stringify({ feedId: id, is_active: !current }),
         });
         showToast(`Feed ${current ? 'disabled' : 'enabled'}`, 'success');
         fetchFeeds();
@@ -73,6 +89,194 @@ export default function RSSFeedsPage() {
         setSelectedFeeds(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
+    };
+
+    const openAddModal = () => {
+        setEditingFeed(null);
+        setFormData({
+            name: '',
+            feed_url: '',
+            category: 'india',
+            fetch_interval_minutes: 60,
+            is_active: true
+        });
+        setShowFeedModal(true);
+    };
+
+    const openEditModal = (feed: Feed) => {
+        setEditingFeed(feed);
+        setFormData({
+            name: feed.name,
+            feed_url: feed.feed_url,
+            category: feed.category,
+            fetch_interval_minutes: feed.fetch_interval_minutes,
+            is_active: feed.is_active
+        });
+        setShowFeedModal(true);
+    };
+
+    const handleSubmitFeed = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormSubmitting(true);
+        
+        try {
+            const url = '/api/admin/feeds';
+            const method = editingFeed ? 'PUT' : 'POST';
+            const body = editingFeed 
+                ? { id: editingFeed.id, ...formData }
+                : formData;
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                showToast(editingFeed ? 'Feed updated successfully' : 'Feed created successfully', 'success');
+                setShowFeedModal(false);
+                fetchFeeds();
+            } else {
+                showToast(data.error || 'Operation failed', 'error');
+            }
+        } catch (error) {
+            showToast('Operation failed', 'error');
+        } finally {
+            setFormSubmitting(false);
+        }
+    };
+
+    const confirmDelete = (feed: Feed) => {
+        setDeletingFeed(feed);
+    };
+
+    const handleDelete = async () => {
+        if (!deletingFeed) return;
+        
+        setDeleteSubmitting(true);
+        try {
+            const res = await fetch(`/api/admin/feeds?id=${deletingFeed.id}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await res.json();
+            
+            if (data.success) {
+                showToast('Feed deleted successfully', 'success');
+                setDeletingFeed(null);
+                fetchFeeds();
+            } else {
+                showToast(data.error || 'Delete failed', 'error');
+            }
+        } catch (error) {
+            showToast('Delete failed', 'error');
+        } finally {
+            setDeleteSubmitting(false);
+        }
+    };
+
+    // Bulk operations
+    const handleEnableAll = async () => {
+        try {
+            for (const feed of feeds) {
+                if (!feed.is_active) {
+                    await fetch('/api/admin/feeds', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ feedId: feed.id, is_active: true }),
+                    });
+                }
+            }
+            showToast('All feeds enabled', 'success');
+            fetchFeeds();
+        } catch {
+            showToast('Failed to enable all feeds', 'error');
+        }
+    };
+
+    const handleDisableAll = async () => {
+        try {
+            for (const feed of feeds) {
+                if (feed.is_active) {
+                    await fetch('/api/admin/feeds', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ feedId: feed.id, is_active: false }),
+                    });
+                }
+            }
+            showToast('All feeds disabled', 'success');
+            setSelectedFeeds([]);
+            fetchFeeds();
+        } catch {
+            showToast('Failed to disable all feeds', 'error');
+        }
+    };
+
+    const handleEnableSelected = async () => {
+        if (selectedFeeds.length === 0) {
+            showToast('No feeds selected', 'warning');
+            return;
+        }
+        try {
+            for (const id of selectedFeeds) {
+                await fetch('/api/admin/feeds', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedId: id, is_active: true }),
+                });
+            }
+            showToast(`${selectedFeeds.length} feeds enabled`, 'success');
+            setSelectedFeeds([]);
+            fetchFeeds();
+        } catch {
+            showToast('Failed to enable selected feeds', 'error');
+        }
+    };
+
+    const handleDisableSelected = async () => {
+        if (selectedFeeds.length === 0) {
+            showToast('No feeds selected', 'warning');
+            return;
+        }
+        try {
+            for (const id of selectedFeeds) {
+                await fetch('/api/admin/feeds', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedId: id, is_active: false }),
+                });
+            }
+            showToast(`${selectedFeeds.length} feeds disabled`, 'success');
+            setSelectedFeeds([]);
+            fetchFeeds();
+        } catch {
+            showToast('Failed to disable selected feeds', 'error');
+        }
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedFeeds.length === 0) {
+            showToast('No feeds selected', 'warning');
+            return;
+        }
+        if (!confirm(`Are you sure you want to delete ${selectedFeeds.length} selected feeds?`)) {
+            return;
+        }
+        try {
+            for (const id of selectedFeeds) {
+                await fetch(`/api/admin/feeds?id=${id}`, {
+                    method: 'DELETE'
+                });
+            }
+            showToast(`${selectedFeeds.length} feeds deleted`, 'success');
+            setSelectedFeeds([]);
+            fetchFeeds();
+        } catch {
+            showToast('Failed to delete selected feeds', 'error');
+        }
     };
 
     const formatDate = (d: string | null) => {
@@ -110,6 +314,10 @@ export default function RSSFeedsPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    <Button onClick={openAddModal}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add New Feed
+                    </Button>
                     <Button
                         variant="outline"
                         onClick={runCron}
@@ -151,6 +359,58 @@ export default function RSSFeedsPage() {
                 </Card>
             </div>
 
+            {/* Bulk Actions */}
+            {selectedFeeds.length > 0 && (
+                <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {selectedFeeds.length} feed{selectedFeeds.length !== 1 ? 's' : ''} selected
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={handleEnableSelected}>
+                                    <Power className="w-4 h-4 mr-1" />
+                                    Enable
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handleDisableSelected}>
+                                    <PowerOff className="w-4 h-4 mr-1" />
+                                    Disable
+                                </Button>
+                                <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
+                                    <Trash2 className="w-4 h-4 mr-1" />
+                                    Delete
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setSelectedFeeds([])}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Bulk All Actions */}
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleEnableAll}>
+                        <Power className="w-4 h-4 mr-1" />
+                        Enable All
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleDisableAll}>
+                        <PowerOff className="w-4 h-4 mr-1" />
+                        Disable All
+                    </Button>
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {selectedFeeds.length > 0 
+                        ? `${selectedFeeds.length} of ${feeds.length} feeds selected`
+                        : `${feeds.length} total feeds`
+                    }
+                </div>
+            </div>
+
             {/* Feed Table */}
             <Card>
                 <div className="overflow-x-auto">
@@ -161,10 +421,10 @@ export default function RSSFeedsPage() {
                                     <input
                                         type="checkbox"
                                         aria-label="Select all feeds"
-                                        checked={selectedFeeds.length === feeds.filter(f => f.is_active).length && feeds.length > 0}
+                                        checked={selectedFeeds.length === feeds.length && feeds.length > 0}
                                         onChange={(e) => {
                                             if (e.target.checked) {
-                                                setSelectedFeeds(feeds.filter(f => f.is_active).map(f => f.id));
+                                                setSelectedFeeds(feeds.map(f => f.id));
                                             } else {
                                                 setSelectedFeeds([]);
                                             }
@@ -188,7 +448,6 @@ export default function RSSFeedsPage() {
                                             aria-label={`Select ${feed.name}`}
                                             checked={selectedFeeds.includes(feed.id)}
                                             onChange={() => toggleSelect(feed.id)}
-                                            disabled={!feed.is_active}
                                             className="rounded border-gray-300"
                                         />
                                     </td>
@@ -226,11 +485,25 @@ export default function RSSFeedsPage() {
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
                                             <button
+                                                onClick={() => openEditModal(feed)}
+                                                className="p-1.5 rounded text-gray-400 hover:text-blue-500 transition"
+                                                aria-label="Edit feed"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => toggleFeed(feed.id, feed.is_active)}
                                                 className={`p-1.5 rounded transition ${feed.is_active ? 'text-green-500 hover:text-red-500' : 'text-red-500 hover:text-green-500'}`}
                                                 aria-label={feed.is_active ? 'Disable feed' : 'Enable feed'}
                                             >
                                                 {feed.is_active ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+                                            </button>
+                                            <button
+                                                onClick={() => confirmDelete(feed)}
+                                                className="p-1.5 rounded text-gray-400 hover:text-red-500 transition"
+                                                aria-label="Delete feed"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -240,6 +513,161 @@ export default function RSSFeedsPage() {
                     </table>
                 </div>
             </Card>
+
+            {/* Add/Edit Feed Modal */}
+            {showFeedModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                {editingFeed ? 'Edit Feed' : 'Add New Feed'}
+                            </h2>
+                            <button
+                                onClick={() => setShowFeedModal(false)}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleSubmitFeed} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Feed Name *
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder="e.g., The Hindu - India News"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Feed URL *
+                                </label>
+                                <Input
+                                    type="url"
+                                    value={formData.feed_url}
+                                    onChange={(e) => setFormData({ ...formData, feed_url: e.target.value })}
+                                    placeholder="https://example.com/rss"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Category *
+                                </label>
+                                <select
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    required
+                                >
+                                    <option value="india">India</option>
+                                    <option value="business">Business</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="sports">Sports</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="world">World</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Fetch Interval (minutes)
+                                </label>
+                                <Input
+                                    type="number"
+                                    value={formData.fetch_interval_minutes}
+                                    onChange={(e) => setFormData({ ...formData, fetch_interval_minutes: parseInt(e.target.value) || 60 })}
+                                    min="15"
+                                    max="1440"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="is_active"
+                                    checked={formData.is_active}
+                                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Active (fetch this feed automatically)
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowFeedModal(false)}
+                                    disabled={formSubmitting}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={formSubmitting}>
+                                    {formSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            {editingFeed ? 'Updating...' : 'Creating...'}
+                                        </>
+                                    ) : (
+                                        editingFeed ? 'Update Feed' : 'Create Feed'
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deletingFeed && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                Delete Feed
+                            </h2>
+                            <p className="text-gray-600 dark:text-gray-400 mb-6">
+                                Are you sure you want to delete <strong>{deletingFeed.name}</strong>? This action cannot be undone.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setDeletingFeed(null)}
+                                    disabled={deleteSubmitting}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="danger"
+                                    onClick={handleDelete}
+                                    disabled={deleteSubmitting}
+                                >
+                                    {deleteSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Delete Feed
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
