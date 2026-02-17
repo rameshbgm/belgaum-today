@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Search, X } from 'lucide-react';
+import { ChevronRight, Search, X, Briefcase, Cpu, Trophy, Film, Globe, MapPin } from 'lucide-react';
 import { Article, Category, CATEGORY_META } from '@/types';
 import { ArticleGrid } from './ArticleGrid';
 import { Button } from '@/components/ui';
@@ -11,6 +11,16 @@ import { TrendingCarousel, TrendingArticle } from '@/components/TrendingCarousel
 import { Sidebar } from '@/components/layout';
 import { TrackingProvider } from '@/components/TrackingProvider';
 
+// Icon mapping
+const ICON_MAP: Record<string, React.ElementType> = {
+    Briefcase,
+    Cpu,
+    Trophy,
+    Film,
+    Globe,
+    MapPin,
+};
+
 interface CategoryPageClientProps {
     category: Category;
     initialArticles: Article[];
@@ -18,7 +28,7 @@ interface CategoryPageClientProps {
     trendingArticles: TrendingArticle[];
     theme: {
         gradient: string;
-        icon: React.ElementType;
+        iconName: string;
         accentColor: string;
         title: string;
         tagline: string;
@@ -46,7 +56,7 @@ export function CategoryPageClient({
     const [showSearch, setShowSearch] = useState(false);
 
     const categoryMeta = CATEGORY_META[category];
-    const Icon = theme.icon;
+    const Icon = ICON_MAP[theme.iconName] || MapPin; // Fallback to MapPin if icon not found
 
     // Client-side filtering
     const filteredArticles = useMemo(() => {
