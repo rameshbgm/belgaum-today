@@ -56,6 +56,7 @@ export const GET = withLogging(async () => {
             view_date: string;
             article_id: number;
             title: string;
+            slug: string;
             daily_views: number;
             rank_position: number;
         }>>(
@@ -63,6 +64,7 @@ export const GET = withLogging(async () => {
                 view_date,
                 article_id,
                 title,
+                slug,
                 daily_views,
                 rank_position
              FROM (
@@ -70,12 +72,13 @@ export const GET = withLogging(async () => {
                      DATE(av.created_at) as view_date,
                      a.id as article_id,
                      a.title,
+                     a.slug,
                      COUNT(*) as daily_views,
                      ROW_NUMBER() OVER (PARTITION BY DATE(av.created_at) ORDER BY COUNT(*) DESC) as rank_position
                  FROM article_views av
                  INNER JOIN articles a ON av.article_id = a.id
                  WHERE av.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                 GROUP BY DATE(av.created_at), a.id, a.title
+                 GROUP BY DATE(av.created_at), a.id, a.title, a.slug
              ) ranked
              WHERE rank_position <= 10
              ORDER BY view_date DESC, rank_position ASC`
@@ -85,6 +88,7 @@ export const GET = withLogging(async () => {
         const topArticlesByDateMap = new Map<string, Array<{
             id: number;
             title: string;
+            slug: string;
             views: number;
             rank: number;
         }>>();
@@ -96,6 +100,7 @@ export const GET = withLogging(async () => {
             topArticlesByDateMap.get(row.view_date)!.push({
                 id: row.article_id,
                 title: row.title,
+                slug: row.slug,
                 views: row.daily_views,
                 rank: row.rank_position
             });

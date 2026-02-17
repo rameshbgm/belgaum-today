@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
                                     No article views recorded in the last 7 days.
                                 </p>
                             ) : (
-                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; views: number; rank: number }> }, dayIndex: number) => (
+                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; slug: string; views: number; rank: number }> }, dayIndex: number) => (
                                     <div key={`day-${dayIndex}-${dayData.date}`} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -358,19 +358,25 @@ export default function AdminDashboardPage() {
                                         </div>
                                         <div className="space-y-2">
                                             {dayData.articles.map((article) => (
-                                                <div key={article.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                                                <a
+                                                    key={article.id}
+                                                    href={`/article/${article.slug}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer group"
+                                                >
                                                     <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium flex-shrink-0 mt-0.5">
                                                         {article.rank}
                                                     </span>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                                                             {article.title}
                                                         </p>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                             {formatNumber(article.views)} views
                                                         </p>
                                                     </div>
-                                                </div>
+                                                </a>
                                             ))}
                                         </div>
                                     </div>
