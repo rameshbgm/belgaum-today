@@ -28,14 +28,12 @@ export const GET = withLogging(async (request: NextRequest) => {
             params.push(before);
         }
 
-        sql += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ?`;
-        params.push(limit);
+        sql += ` ORDER BY COALESCE(published_at, created_at) DESC LIMIT ${limit}`;
 
         // Only use OFFSET for page-based pagination (not timestamp-based)
         if (!before && page > 1) {
-            sql += ` OFFSET ?`;
             const offset = (page - 1) * limit;
-            params.push(offset);
+            sql += ` OFFSET ${offset}`;
         }
 
         const articles = await query<Article[]>(sql, params);
