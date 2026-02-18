@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Clock, ExternalLink, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { Clock, ArrowRight, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 
 export interface TrendingArticle {
     id: number;
     title: string;
+    slug: string;
     excerpt: string;
     featured_image: string | null;
     source_name: string;
@@ -90,10 +92,8 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
             onMouseLeave={() => setPaused(false)}
         >
             {/* Carousel slide */}
-            <a
-                href={article.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
+            <Link
+                href={`/article/${article.slug}`}
                 data-article-id={article.id}
                 data-source-name={article.source_name}
                 className="block relative aspect-[16/8] md:aspect-[16/7]"
@@ -146,12 +146,12 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
                             {formatRelativeTime(article.published_at)}
                         </span>
                         <span className={`flex items-center gap-1.5 ${colors.btn} font-medium`}>
-                            Read Full Story
-                            <ExternalLink className="w-4 h-4" />
+                            Read Article
+                            <ArrowRight className="w-4 h-4" />
                         </span>
                     </div>
                 </div>
-            </a>
+            </Link>
 
             {/* Navigation arrows */}
             {total > 1 && (

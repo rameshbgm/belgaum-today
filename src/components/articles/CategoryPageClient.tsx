@@ -255,7 +255,7 @@ export function CategoryPageClient({
 
                     {/* Sidebar */}
                     <aside className="lg:col-span-1 mt-8 lg:mt-0">
-                        <Sidebar showCategories={false} showRss={false} />
+                        <Sidebar showCategories={false} showRss={false} showAds={true} />
                     </aside>
                 </div>
             </div>
