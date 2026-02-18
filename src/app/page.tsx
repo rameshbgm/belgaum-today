@@ -139,7 +139,7 @@ export default async function HomePage() {
                 Latest News
               </h2>
             </div>
-            <ArticleList initialArticles={regularArticles} category="all" columns={2} />
+            <ArticleList initialArticles={regularArticles} category="all" />
           </section>
         </div>
 
