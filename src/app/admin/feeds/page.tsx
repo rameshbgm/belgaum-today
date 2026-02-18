@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X, Search, ArrowUpDown
+    Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X, Search, ArrowUpDown, Sparkles
 } from 'lucide-react';
 import { Button, Card, CardContent, Badge, Input, useToast } from '@/components/ui';
 
@@ -22,7 +22,14 @@ export default function RSSFeedsPage() {
     const [feeds, setFeeds] = useState<Feed[]>([]);
     const [loading, setLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);
+    const [aiRunning, setAiRunning] = useState(false);
     const [selectedFeeds, setSelectedFeeds] = useState<number[]>([]);
+
+    // Run scope state
+    const [feedScope, setFeedScope] = useState<'all' | 'selected' | 'category'>('all');
+    const [feedCategory, setFeedCategory] = useState('');
+    const [aiScope, setAiScope] = useState<'all' | 'category'>('all');
+    const [aiCategory, setAiCategory] = useState('');
     
     // Search and sort state
     const [searchQuery, setSearchQuery] = useState('');
@@ -70,23 +77,65 @@ export default function RSSFeedsPage() {
     const runCron = async () => {
         setCronRunning(true);
         try {
-            const feedIds = selectedFeeds.length > 0 ? selectedFeeds : undefined;
+            let body: Record<string, unknown> = {};
+            if (feedScope === 'selected') {
+                if (selectedFeeds.length === 0) {
+                    showToast('No feeds selected', 'warning');
+                    setCronRunning(false);
+                    return;
+                }
+                body = { feedIds: selectedFeeds };
+            } else if (feedScope === 'category' && feedCategory) {
+                body = { categories: [feedCategory] };
+            }
+            // else all: empty body = all active feeds
+
             const res = await fetch('/api/admin/cron', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ feed_ids: feedIds }),
+                body: JSON.stringify(body),
             });
             const data = await res.json();
             if (data.success) {
-                showToast(`Cron complete: ${data.newArticles || 0} new articles`, 'success');
+                showToast(`Feeds done: ${data.newArticles ?? 0} new articles from ${data.feedsProcessed ?? 0} feeds`, 'success');
                 fetchFeeds();
             } else {
-                showToast(data.error || 'Cron failed', 'error');
+                showToast(data.error || 'Feed run failed', 'error');
             }
         } catch {
-            showToast('Cron failed', 'error');
+            showToast('Feed run failed', 'error');
         } finally {
             setCronRunning(false);
+        }
+    };
+
+    const runAiAnalysis = async () => {
+        setAiRunning(true);
+        try {
+            let body: Record<string, unknown> = {};
+            if (aiScope === 'category' && aiCategory) {
+                body = { categories: [aiCategory] };
+            }
+            // else all: empty body = all categories
+
+            const res = await fetch('/api/admin/trending', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(
+                    `AI done: trending updated for ${data.categoriesProcessed ?? 0} categor${data.categoriesProcessed === 1 ? 'y' : 'ies'} (${data.totalTrendingArticles ?? 0} articles)`,
+                    'success'
+                );
+            } else {
+                showToast(data.error || 'AI analysis failed', 'error');
+            }
+        } catch {
+            showToast('AI analysis failed', 'error');
+        } finally {
+            setAiRunning(false);
         }
     };
 
@@ -344,6 +393,9 @@ export default function RSSFeedsPage() {
         }
     };
 
+    // Unique categories from feeds list
+    const feedCategories = useMemo(() => [...new Set(feeds.map(f => f.category))].sort(), [feeds]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -359,23 +411,103 @@ export default function RSSFeedsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">RSS Feeds</h1>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Manage news sources and trigger RSS fetching
+                        Manage news sources, trigger RSS fetching, and run AI trending analysis
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button onClick={openAddModal}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add New Feed
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={runCron}
-                        disabled={cronRunning}
-                    >
-                        {cronRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                        {selectedFeeds.length > 0 ? `Run Selected (${selectedFeeds.length})` : 'Run All Feeds'}
-                    </Button>
-                </div>
+                <Button onClick={openAddModal}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Feed
+                </Button>
+            </div>
+
+            {/* Action Panels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Run RSS Feeds */}
+                <Card className="border-blue-200 dark:border-blue-800">
+                    <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Rss className="w-4 h-4 text-blue-500" />
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Run RSS Feeds</h3>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Fetch new articles from sources. No AI analysis.</p>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={feedScope}
+                                onChange={(e) => setFeedScope(e.target.value as 'all' | 'selected' | 'category')}
+                                className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="all">All Active Feeds</option>
+                                <option value="selected">Selected Feeds ({selectedFeeds.length})</option>
+                                <option value="category">By Category</option>
+                            </select>
+                            {feedScope === 'category' && (
+                                <select
+                                    value={feedCategory}
+                                    onChange={(e) => setFeedCategory(e.target.value)}
+                                    className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Pick category…</option>
+                                    {feedCategories.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        <Button
+                            className="w-full"
+                            onClick={runCron}
+                            disabled={cronRunning || (feedScope === 'selected' && selectedFeeds.length === 0) || (feedScope === 'category' && !feedCategory)}
+                        >
+                            {cronRunning
+                                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running Feeds…</>
+                                : <><RefreshCw className="w-4 h-4 mr-2" />Run Feeds</>
+                            }
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* Run AI Analysis */}
+                <Card className="border-purple-200 dark:border-purple-800">
+                    <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-4 h-4 text-purple-500" />
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Run AI Analysis</h3>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Update trending articles using AI. Runs independently of feed fetch.</p>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={aiScope}
+                                onChange={(e) => setAiScope(e.target.value as 'all' | 'category')}
+                                className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="all">All Categories</option>
+                                <option value="category">By Category</option>
+                            </select>
+                            {aiScope === 'category' && (
+                                <select
+                                    value={aiCategory}
+                                    onChange={(e) => setAiCategory(e.target.value)}
+                                    className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="">Pick category…</option>
+                                    {feedCategories.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        <Button
+                            className="w-full bg-purple-600 hover:bg-purple-700"
+                            onClick={runAiAnalysis}
+                            disabled={aiRunning || (aiScope === 'category' && !aiCategory)}
+                        >
+                            {aiRunning
+                                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analysing…</>
+                                : <><Sparkles className="w-4 h-4 mr-2" />Run AI Analysis</>
+                            }
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Stats */}
