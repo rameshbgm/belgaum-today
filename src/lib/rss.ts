@@ -177,6 +177,9 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
                 itemSourceName = googleNewsData.source;
                 // Clean description becomes just the title
                 description = googleNewsData.title;
+            } else {
+                // Fallback: strip HTML even if parser didn't match
+                description = stripHtml(description);
             }
         }
 
@@ -199,9 +202,9 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
         // Extract image
         const imageUrl = extractImageUrl(itemXml);
 
-        // Clean title and description (if not already cleaned by Google News parser)
-        const cleanTitle = isGoogleNews ? title : stripHtml(title);
-        const cleanDescription = description ? (isGoogleNews ? description : stripHtml(description)) : cleanTitle;
+        // Always strip HTML from title and description to prevent raw markup in DB
+        const cleanTitle = stripHtml(title);
+        const cleanDescription = description ? stripHtml(description) : cleanTitle;
 
         // Skip if title is too short (likely invalid)
         if (cleanTitle.length < 10) {
