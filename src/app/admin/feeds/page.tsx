@@ -28,7 +28,7 @@ export default function RSSFeedsPage() {
     // Run scope state
     const [feedScope, setFeedScope] = useState<'all' | 'selected' | 'category'>('all');
     const [feedCategory, setFeedCategory] = useState('');
-    const [aiScope, setAiScope] = useState<'all' | 'category'>('all');
+    const [aiScope, setAiScope] = useState<'all' | 'selected' | 'category'>('all');
     const [aiCategory, setAiCategory] = useState('');
     
     // Search and sort state
@@ -113,7 +113,18 @@ export default function RSSFeedsPage() {
         setAiRunning(true);
         try {
             let body: Record<string, unknown> = {};
-            if (aiScope === 'category' && aiCategory) {
+            if (aiScope === 'selected') {
+                if (selectedFeeds.length === 0) {
+                    showToast('No feeds selected', 'warning');
+                    setAiRunning(false);
+                    return;
+                }
+                // Derive unique categories from the selected feeds
+                const selectedCategories = [...new Set(
+                    feeds.filter(f => selectedFeeds.includes(f.id)).map(f => f.category)
+                )];
+                body = { categories: selectedCategories };
+            } else if (aiScope === 'category' && aiCategory) {
                 body = { categories: [aiCategory] };
             }
             // else all: empty body = all categories
@@ -477,10 +488,11 @@ export default function RSSFeedsPage() {
                         <div className="flex items-center gap-2">
                             <select
                                 value={aiScope}
-                                onChange={(e) => setAiScope(e.target.value as 'all' | 'category')}
+                                onChange={(e) => setAiScope(e.target.value as 'all' | 'selected' | 'category')}
                                 className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                             >
                                 <option value="all">All Categories</option>
+                                <option value="selected">Selected Feeds ({selectedFeeds.length})</option>
                                 <option value="category">By Category</option>
                             </select>
                             {aiScope === 'category' && (
@@ -499,7 +511,7 @@ export default function RSSFeedsPage() {
                         <Button
                             className="w-full bg-purple-600 hover:bg-purple-700"
                             onClick={runAiAnalysis}
-                            disabled={aiRunning || (aiScope === 'category' && !aiCategory)}
+                            disabled={aiRunning || (aiScope === 'selected' && selectedFeeds.length === 0) || (aiScope === 'category' && !aiCategory)}
                         >
                             {aiRunning
                                 ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analysing…</>
