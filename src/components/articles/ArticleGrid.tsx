@@ -4,10 +4,11 @@ import { ArticleCard } from './ArticleCard';
 interface ArticleGridProps {
     articles: Article[];
     priority?: boolean;
-    columns?: 2 | 3;
+    columns?: 1 | 2 | 3;
+    compact?: boolean;
 }
 
-export function ArticleGrid({ articles, priority = false, columns = 3 }: ArticleGridProps) {
+export function ArticleGrid({ articles, priority = false, columns = 3, compact = false }: ArticleGridProps) {
     if (articles.length === 0) {
         return (
             <div className="text-center py-12">
@@ -22,9 +23,9 @@ export function ArticleGrid({ articles, priority = false, columns = 3 }: Article
         );
     }
 
-    const gridClass = columns === 2 
-        ? "grid grid-cols-1 md:grid-cols-2 gap-6"
-        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+    const gridClass = columns === 1
+        ? "flex flex-col gap-4"
+        : "grid grid-cols-2 gap-3 sm:gap-4 md:gap-5";
 
     return (
         <div className={gridClass}>
@@ -33,6 +34,7 @@ export function ArticleGrid({ articles, priority = false, columns = 3 }: Article
                     key={article.id}
                     article={article}
                     priority={priority && index < 3}
+                    compact={compact}
                 />
             ))}
         </div>

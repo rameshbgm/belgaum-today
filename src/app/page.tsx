@@ -125,28 +125,52 @@ export default async function HomePage() {
         </section>
       )}
 
-      <div className="lg:grid lg:grid-cols-6 lg:gap-8">
-        {/* Left Sidebar - Most Viewed */}
-        <aside className="lg:col-span-1 mb-8 lg:mb-0">
-          <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
-        </aside>
+      {/* Mobile-First Layout */}
+      <div className="space-y-8 lg:space-y-0">
+        {/* Main Content - Shows first on mobile */}
+        <section className="lg:hidden mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Latest News
+            </h2>
+          </div>
+          <ArticleList initialArticles={regularArticles} category="all" compact={true} />
+        </section>
 
-        {/* Main Content */}
-        <div className="lg:col-span-4">
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Latest News
-              </h2>
-            </div>
-            <ArticleList initialArticles={regularArticles} category="all" />
-          </section>
+        {/* Sidebars on Mobile (stacked) */}
+        <div className="lg:hidden space-y-6">
+          {mostViewedArticles.length > 0 && (
+            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+          )}
+          {trendingArticles.length > 0 && (
+            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
+          )}
         </div>
 
-        {/* Right Sidebar - Trending */}
-        <aside className="lg:col-span-1 mt-8 lg:mt-0">
-          <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
-        </aside>
+        {/* Desktop/Tablet Layout (3 columns with sidebars) */}
+        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8">
+          {/* Left Sidebar - Most Viewed */}
+          <aside className="lg:col-span-3">
+            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+          </aside>
+
+          {/* Main Content - Single column for better sidebar visibility */}
+          <div className="lg:col-span-6">
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Latest News
+                </h2>
+              </div>
+              <ArticleList initialArticles={regularArticles} category="all" columns={2} compact={true} />
+            </section>
+          </div>
+
+          {/* Right Sidebar - Trending */}
+          <aside className="lg:col-span-3">
+            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
+          </aside>
+        </div>
       </div>
     </div>
     </>
