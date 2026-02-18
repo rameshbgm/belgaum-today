@@ -8,10 +8,13 @@ const pool = mysql.createPool({
     password: process.env.DATABASE_PASSWORD || '',
     database: process.env.DATABASE_NAME || 'belgaum_today',
     waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+    connectionLimit: 50, // Increased from 10 to handle concurrent requests
+    maxIdle: 10, // Maximum idle connections
+    idleTimeout: 60000, // Close idle connections after 60 seconds
+    queueLimit: 0, // Unlimited queue
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    connectTimeout: 10000, // 10 second connection timeout
 });
 
 // Detailed error logger for DB operations
