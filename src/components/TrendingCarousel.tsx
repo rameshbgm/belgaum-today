@@ -96,7 +96,7 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
                 href={`/article/${article.slug}`}
                 data-article-id={article.id}
                 data-source-name={article.source_name}
-                className="block relative aspect-[16/8] md:aspect-[16/7]"
+                className="block relative aspect-[16/6] md:aspect-[16/5]"
             >
                 {/* Image */}
                 {article.featured_image ? (
