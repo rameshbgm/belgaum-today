@@ -5,18 +5,18 @@ import { Newspaper, Zap, MapPin, Globe, Cpu, Users } from 'lucide-react';
 export const metadata: Metadata = {
     title: 'About Us',
     description:
-        'Learn about Belgaum Today — your trusted AI-curated news platform delivering the latest local and national news from Belgaum (Belagavi) and beyond.',
+        'Learn about Belgaum Today — your trusted curated news platform delivering the latest local and national news from Belgaum (Belagavi) and beyond.',
     openGraph: {
         title: 'About Us | Belgaum Today',
         description:
-            'Learn about Belgaum Today — your trusted AI-curated news platform delivering the latest local and national news.',
+            'Learn about Belgaum Today — your trusted curated news platform delivering the latest local and national news.',
     },
 };
 
 const features = [
     {
         icon: Cpu,
-        title: 'AI-Curated News',
+        title: 'Curated News',
         description:
             'Our intelligent algorithms sift through hundreds of sources to bring you the most relevant and trending stories, ranked by significance and timeliness.',
     },
@@ -73,7 +73,7 @@ export default function AboutPage() {
                 </div>
 
                 <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                    We are a modern, AI-curated news platform dedicated to delivering accurate, timely, and
+                    We are a modern, curated news platform dedicated to delivering accurate, timely, and
                     relevant news from Belgaum (Belagavi) and across India — every single day.
                 </p>
             </div>
