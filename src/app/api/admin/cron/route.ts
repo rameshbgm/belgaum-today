@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, execute } from '@/lib/db';
+import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
-import { insert } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { withLogging } from '@/lib/withLogging';
 
 export const dynamic = 'force-dynamic';
@@ -23,13 +21,19 @@ export const POST = withLogging(async (request: NextRequest) => {
 
         const body = await request.json().catch(() => ({}));
         const feedIds: number[] | undefined = body.feedIds;
+        const categories: string[] | undefined = body.categories;
 
-        // Get feeds to process
+        // Get feeds to process — by explicit IDs, by categories, or all active
         let feeds: RssFeedConfig[];
         if (feedIds && feedIds.length > 0) {
             feeds = await query<RssFeedConfig[]>(
                 `SELECT * FROM rss_feed_config WHERE id IN (${feedIds.map(() => '?').join(',')}) AND is_active = true`,
                 feedIds
+            );
+        } else if (categories && categories.length > 0) {
+            feeds = await query<RssFeedConfig[]>(
+                `SELECT * FROM rss_feed_config WHERE category IN (${categories.map(() => '?').join(',')}) AND is_active = true`,
+                categories
             );
         } else {
             feeds = await query<RssFeedConfig[]>(
@@ -47,12 +51,12 @@ export const POST = withLogging(async (request: NextRequest) => {
             });
         }
 
-        // Fetch all feeds in parallel
+        // Fetch all feeds in parallel — NO AI analysis here
         const feedResults = await fetchAllFeeds(feeds);
 
         let totalNew = 0;
         let totalSkipped = 0;
-        const feedSummaries: Array<{ name: string; fetched: number; new: number; skipped: number }> = [];
+        const feedSummaries: Array<{ name: string; category: string; fetched: number; new: number; skipped: number }> = [];
         const errors: string[] = [];
 
         for (const { feedId, items } of feedResults) {
@@ -110,53 +114,20 @@ export const POST = withLogging(async (request: NextRequest) => {
             totalSkipped += feedSkipped;
             feedSummaries.push({
                 name: feed.name,
+                category: feed.category,
                 fetched: items.length,
                 new: feedNew,
                 skipped: feedSkipped,
             });
         }
 
-        // Run trending analysis for each category that had new articles
-        const categoriesUpdated = [...new Set(feeds.map((f) => f.category))];
-        for (const category of categoriesUpdated) {
-            try {
-                const recentArticles = await query<ArticleForAnalysis[]>(
-                    `SELECT id, title, excerpt, source_name, published_at 
-                     FROM articles 
-                     WHERE category = ? AND status = 'published' 
-                     ORDER BY published_at DESC LIMIT 50`,
-                    [category]
-                );
-
-                if (recentArticles.length > 0) {
-                    const trending = await analyzeTrendingArticles(recentArticles, category, 7);
-                    const batchId = `${category}-${Date.now()}`;
-
-                    // Clear old trending for this category
-                    await execute('DELETE FROM trending_articles WHERE category = ?', [category]);
-
-                    // Insert new trending
-                    for (const t of trending) {
-                        await insert(
-                            `INSERT INTO trending_articles (article_id, category, rank_position, ai_score, ai_reasoning, batch_id, expires_at)
-                             VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 4 HOUR))`,
-                            [t.articleId, category, t.rank, t.score, t.reasoning, batchId]
-                        );
-                    }
-                }
-            } catch (trendErr) {
-                errors.push(`Trending analysis failed for ${category}: ${String(trendErr)}`);
-            }
-        }
-
         return NextResponse.json({
             success: true,
-            message: 'Cron completed',
+            message: 'RSS fetch completed',
             feedsProcessed: feedSummaries.length,
             newArticles: totalNew,
             skipped: totalSkipped,
             feeds: feedSummaries,
-            trendingUpdated: categoriesUpdated,
             errors: errors.length > 0 ? errors : undefined,
         });
     } catch (error) {
