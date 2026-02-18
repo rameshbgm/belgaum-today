@@ -5,134 +5,110 @@ import { withLogging } from '@/lib/withLogging';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/admin/rss-logs — Fetch RSS feed fetch logs with filtering and pagination
+ * GET /api/admin/rss-logs — Fetch RSS runs, feeds within runs, or items within feeds
+ * 
+ * Query modes:
+ * 1. No runId: fetch all runs with pagination and stats
+ * 2. runId only: fetch feed logs for that run
+ * 3. runId + feedId + action: fetch item details for that feed/action
  */
 export const GET = withLogging(async (request: NextRequest) => {
     try {
         const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '30');
-        const status = searchParams.get('status');
-        const category = searchParams.get('category');
+        const runId = searchParams.get('runId');
         const feedId = searchParams.get('feedId');
-        const feedName = searchParams.get('feedName'); // For search
-        const startDate = searchParams.get('startDate');
-        const endDate = searchParams.get('endDate');
+        const action = searchParams.get('action');
+
+        // Mode 3: Fetch items for specific run/feed/action
+        if (runId && feedId && action) {
+            const items = await query(
+                `SELECT * FROM rss_fetch_items 
+                WHERE run_id = ? AND feed_id = ? AND action = ?
+                ORDER BY created_at DESC`,
+                [runId, parseInt(feedId), action]
+            );
+
+            return NextResponse.json({
+                success: true,
+                data: { items },
+            });
+        }
+
+        // Mode 2: Fetch feed logs for specific run
+        if (runId) {
+            const feeds = await query(
+                `SELECT * FROM rss_fetch_logs 
+                WHERE run_id = ?
+                ORDER BY started_at ASC`,
+                [runId]
+            );
+
+            return NextResponse.json({
+                success: true,
+                data: { feeds },
+            });
+        }
+
+        // Mode 1: Fetch all runs with pagination and stats
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '20');
         const offset = (page - 1) * limit;
 
-        let countSql = 'SELECT COUNT(*) as total FROM rss_fetch_logs WHERE 1=1';
-        let dataSql = 'SELECT * FROM rss_fetch_logs WHERE 1=1';
-        let statsSql = `SELECT 
-            COUNT(*) as total_fetches,
-            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
-            SUM(CASE WHEN status = 'partial' THEN 1 ELSE 0 END) as partial_count,
-            SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error_count,
-            ROUND(AVG(duration_ms)) as avg_duration,
-            SUM(new_articles) as total_new_articles,
-            SUM(items_fetched) as total_items_fetched,
-            SUM(skipped_articles) as total_skipped,
-            SUM(errors_count) as total_errors
-            FROM rss_fetch_logs WHERE 1=1`;
-        
-        const params: (string | number)[] = [];
-        const countParams: (string | number)[] = [];
-        const statsParams: (string | number)[] = [];
-
-        if (status) {
-            countSql += ' AND status = ?';
-            dataSql += ' AND status = ?';
-            statsSql += ' AND status = ?';
-            params.push(status);
-            countParams.push(status);
-            statsParams.push(status);
-        }
-
-        if (category) {
-            countSql += ' AND category = ?';
-            dataSql += ' AND category = ?';
-            statsSql += ' AND category = ?';
-            params.push(category);
-            countParams.push(category);
-            statsParams.push(category);
-        }
-
-        if (feedId) {
-            countSql += ' AND feed_id = ?';
-            dataSql += ' AND feed_id = ?';
-            statsSql += ' AND feed_id = ?';
-            params.push(parseInt(feedId));
-            countParams.push(parseInt(feedId));
-            statsParams.push(parseInt(feedId));
-        }
-
-        if (feedName) {
-            countSql += ' AND feed_name LIKE ?';
-            dataSql += ' AND feed_name LIKE ?';
-            statsSql += ' AND feed_name LIKE ?';
-            const searchTerm = `%${feedName}%`;
-            params.push(searchTerm);
-            countParams.push(searchTerm);
-            statsParams.push(searchTerm);
-        }
-
-        if (startDate) {
-            countSql += ' AND DATE(started_at) >= ?';
-            dataSql += ' AND DATE(started_at) >= ?';
-            statsSql += ' AND DATE(started_at) >= ?';
-            params.push(startDate);
-            countParams.push(startDate);
-            statsParams.push(startDate);
-        }
-
-        if (endDate) {
-            countSql += ' AND DATE(started_at) <= ?';
-            dataSql += ' AND DATE(started_at) <= ?';
-            statsSql += ' AND DATE(started_at) <= ?';
-            params.push(endDate);
-            countParams.push(endDate);
-            statsParams.push(endDate);
-        }
-
-        dataSql += ` ORDER BY started_at DESC LIMIT ${limit} OFFSET ${offset}`;
-
-        const [countResult, logs, statsResult] = await Promise.all([
-            query<Array<{ total: number }>>(countSql, countParams),
-            query(dataSql, params),
+        const [runsResult, countResult, statsResult] = await Promise.all([
+            query(
+                `SELECT id, run_id, trigger_type, triggered_by, 
+                    total_feeds as total_feeds_processed, 
+                    total_items_fetched, total_new_articles, total_skipped, total_errors, 
+                    overall_status, duration_ms, started_at, completed_at
+                FROM rss_fetch_runs 
+                ORDER BY started_at DESC 
+                LIMIT ${limit} OFFSET ${offset}`
+            ),
+            query<Array<{ total: number }>>(
+                'SELECT COUNT(*) as total FROM rss_fetch_runs',
+                []
+            ),
             query<Array<{
-                total_fetches: number;
-                success_count: number;
-                partial_count: number;
-                error_count: number;
-                avg_duration: number;
+                total_runs: number;
+                total_feeds_processed: number;
                 total_new_articles: number;
-                total_items_fetched: number;
                 total_skipped: number;
                 total_errors: number;
-            }>>(statsSql, statsParams),
+                avg_duration: number;
+                success_count: number;
+            }>>(
+                `SELECT 
+                    COUNT(*) as total_runs,
+                    SUM(total_feeds) as total_feeds_processed,
+                    SUM(total_new_articles) as total_new_articles,
+                    SUM(total_skipped) as total_skipped,
+                    SUM(total_errors) as total_errors,
+                    AVG(duration_ms) as avg_duration,
+                    SUM(CASE WHEN overall_status = 'success' THEN 1 ELSE 0 END) as success_count
+                FROM rss_fetch_runs`
+            ),
         ]);
 
         const total = countResult[0]?.total || 0;
         const stats = statsResult[0] || {
-            total_fetches: 0,
-            success_count: 0,
-            partial_count: 0,
-            error_count: 0,
-            avg_duration: 0,
+            total_runs: 0,
+            total_feeds_processed: 0,
             total_new_articles: 0,
-            total_items_fetched: 0,
             total_skipped: 0,
             total_errors: 0,
+            avg_duration: 0,
+            success_count: 0,
         };
 
         // Calculate success rate
-        const successRate = stats.total_fetches > 0 
-            ? ((stats.success_count / stats.total_fetches) * 100).toFixed(1)
+        const successRate = stats.total_runs > 0
+            ? ((stats.success_count / stats.total_runs) * 100).toFixed(1)
             : '0.0';
 
         return NextResponse.json({
             success: true,
             data: {
-                items: logs,
+                runs: runsResult,
                 total,
                 page,
                 totalPages: Math.ceil(total / limit),

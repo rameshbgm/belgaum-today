@@ -13,6 +13,8 @@ export const maxDuration = 60;
  * Body: { feedIds?: number[] } — if empty, runs all active feeds
  */
 export const POST = withLogging(async (request: NextRequest) => {
+    const runStart = Date.now();
+    
     try {
         const user = await getCurrentUser();
         if (!user || user.role !== 'admin') {
@@ -22,6 +24,9 @@ export const POST = withLogging(async (request: NextRequest) => {
         const body = await request.json().catch(() => ({}));
         const feedIds: number[] | undefined = body.feedIds;
         const categories: string[] | undefined = body.categories;
+
+        // Generate unique run ID
+        const runId = `manual-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
         // Get feeds to process — by explicit IDs, by categories, or all active
         let feeds: RssFeedConfig[];
@@ -51,11 +56,20 @@ export const POST = withLogging(async (request: NextRequest) => {
             });
         }
 
+        // Create run record
+        await insert(
+            `INSERT INTO rss_fetch_runs (run_id, trigger_type, triggered_by, total_feeds, started_at)
+             VALUES (?, ?, ?, ?, ?)`,
+            [runId, 'manual', user.email, feeds.length, new Date(runStart)]
+        );
+
         // Fetch all feeds in parallel — NO AI analysis here
         const feedResults = await fetchAllFeeds(feeds);
 
         let totalNew = 0;
         let totalSkipped = 0;
+        let totalItemsFetched = 0;
+        let totalErrors = 0;
         const feedSummaries: Array<{ name: string; category: string; fetched: number; new: number; skipped: number }> = [];
         const errors: string[] = [];
 
@@ -67,6 +81,7 @@ export const POST = withLogging(async (request: NextRequest) => {
             let feedNew = 0;
             let feedSkipped = 0;
             const feedErrors: string[] = [];
+            totalItemsFetched += items.length;
 
             for (const item of items) {
                 try {
@@ -77,6 +92,12 @@ export const POST = withLogging(async (request: NextRequest) => {
 
                     if (existing.length > 0) {
                         feedSkipped++;
+                        // Log skipped item
+                        await insert(
+                            `INSERT INTO rss_fetch_items (run_id, feed_id, feed_name, item_title, item_url, item_pub_date, action, skip_reason)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                            [runId, feed.id, feed.name, item.title, item.link, item.pubDate, 'skipped', 'Duplicate: Article already exists in database']
+                        );
                         continue;
                     }
 
@@ -91,7 +112,7 @@ export const POST = withLogging(async (request: NextRequest) => {
 
                     const readingTime = calculateReadingTime(item.description || item.title);
 
-                    await insert(
+                    const articleId = await insert(
                         `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
@@ -102,10 +123,23 @@ export const POST = withLogging(async (request: NextRequest) => {
                     );
 
                     feedNew++;
+                    // Log new item
+                    await insert(
+                        `INSERT INTO rss_fetch_items (run_id, feed_id, feed_name, item_title, item_url, item_pub_date, action, article_id)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [runId, feed.id, feed.name, item.title, item.link, item.pubDate, 'new', articleId]
+                    );
                 } catch (itemError) {
                     const errMsg = itemError instanceof Error ? itemError.message : String(itemError);
                     feedErrors.push(`${item.title.substring(0, 100)}: ${errMsg}`);
                     errors.push(`Failed: ${item.title}`);
+                    totalErrors++;
+                    // Log error item
+                    await insert(
+                        `INSERT INTO rss_fetch_items (run_id, feed_id, feed_name, item_title, item_url, item_pub_date, action, error_message)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [runId, feed.id, feed.name, item.title, item.link, item.pubDate, 'error', errMsg]
+                    ).catch(() => {}); // Ignore logging errors for error logs
                 }
             }
 
@@ -118,16 +152,17 @@ export const POST = withLogging(async (request: NextRequest) => {
             totalNew += feedNew;
             totalSkipped += feedSkipped;
 
-            // Insert RSS fetch log to database
+            // Insert RSS fetch log to database with run_id
             const logStatus = feedErrors.length === items.length ? 'error' : 
                              (feedErrors.length > 0 ? 'partial' : 'success');
             try {
                 await insert(
                     `INSERT INTO rss_fetch_logs 
-                    (feed_id, feed_name, category, status, items_fetched, new_articles, 
+                    (run_id, feed_id, feed_name, category, status, items_fetched, new_articles, 
                      skipped_articles, errors_count, error_details, duration_ms, started_at, completed_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
                     [
+                        runId,
                         feed.id,
                         feed.name,
                         feed.category,
@@ -154,14 +189,27 @@ export const POST = withLogging(async (request: NextRequest) => {
             });
         }
 
+        // Update run record with totals
+        const runDuration = Date.now() - runStart;
+        const overallStatus = totalErrors === totalItemsFetched ? 'error' : 
+                             (totalErrors > 0 ? 'partial' : 'success');
+        await execute(
+            `UPDATE rss_fetch_runs 
+             SET total_items_fetched = ?, total_new_articles = ?, total_skipped = ?, 
+                 total_errors = ?, overall_status = ?, duration_ms = ?, completed_at = NOW()
+             WHERE run_id = ?`,
+            [totalItemsFetched, totalNew, totalSkipped, totalErrors, overallStatus, runDuration, runId]
+        );
+
         return NextResponse.json({
             success: true,
             message: 'RSS fetch completed',
+            runId,
             feedsProcessed: feedSummaries.length,
             newArticles: totalNew,
             skipped: totalSkipped,
+            errors: totalErrors,
             feeds: feedSummaries,
-            errors: errors.length > 0 ? errors : undefined,
         });
     } catch (error) {
         console.error('Admin cron error:', error);
