@@ -214,7 +214,7 @@ export function CategoryPageClient({
                     {/* Main Content */}
                     <div className="lg:col-span-3">
                         {/* Article Grid */}
-                        <ArticleGrid articles={filteredArticles} />
+                        <ArticleGrid articles={filteredArticles} columns={2} />
 
                         {/* No results message */}
                         {filteredArticles.length === 0 && (
