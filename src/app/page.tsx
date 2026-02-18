@@ -6,6 +6,15 @@ import { BreakingNewsTicker, TickerArticle } from '@/components/BreakingNewsTick
 import { TrendingCarousel } from '@/components/TrendingCarousel';
 import type { TrendingArticle as TrendingCarouselArticle } from '@/components/TrendingCarousel';
 
+interface MostViewedArticle {
+  id: number;
+  title: string;
+  slug: string;
+  source_name: string;
+  published_at: string;
+  view_count: number;
+}
+
 interface TrendingArticle {
   id: number;
   title: string;
@@ -26,6 +35,7 @@ async function getArticles(): Promise<{
   articles: Article[];
   tickerArticles: TickerArticle[];
   trendingArticles: TrendingCarouselArticle[];
+  mostViewedArticles: MostViewedArticle[];
 }> {
   try {
     const featured = await query<Article[]>(
@@ -59,20 +69,34 @@ async function getArticles(): Promise<{
       published_at: new Date(row.published_at).toISOString(),
     }));
 
+    // Get most viewed articles from last 10 days
+    const mostViewed = await query<MostViewedArticle[]>(
+      `SELECT id, title, slug, source_name, published_at, view_count
+       FROM articles
+       WHERE status = 'published'
+         AND published_at >= DATE_SUB(NOW(), INTERVAL 10 DAY)
+       ORDER BY view_count DESC
+       LIMIT 15`
+    );
+
     return {
       featured: featured.length > 0 ? featured[0] : null,
       articles: articles,
       tickerArticles: ticker,
       trendingArticles: trending,
+      mostViewedArticles: mostViewed.map(row => ({
+        ...row,
+        published_at: new Date(row.published_at).toISOString(),
+      })),
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { featured: null, articles: [], tickerArticles: [], trendingArticles: [] };
+    return { featured: null, articles: [], tickerArticles: [], trendingArticles: [], mostViewedArticles: [] };
   }
 }
 
 export default async function HomePage() {
-  const { featured, articles, tickerArticles, trendingArticles } = await getArticles();
+  const { featured, articles, tickerArticles, trendingArticles, mostViewedArticles } = await getArticles();
   const regularArticles = articles.filter(a => !featured || a.id !== featured.id);
 
   return (
@@ -101,9 +125,14 @@ export default async function HomePage() {
         </section>
       )}
 
-      <div className="lg:grid lg:grid-cols-4 lg:gap-8">
+      <div className="lg:grid lg:grid-cols-6 lg:gap-8">
+        {/* Left Sidebar - Most Viewed */}
+        <aside className="lg:col-span-1 mb-8 lg:mb-0">
+          <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+        </aside>
+
         {/* Main Content */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <section>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -114,7 +143,7 @@ export default async function HomePage() {
           </section>
         </div>
 
-        {/* Sidebar */}
+        {/* Right Sidebar - Trending */}
         <aside className="lg:col-span-1 mt-8 lg:mt-0">
           <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
         </aside>
