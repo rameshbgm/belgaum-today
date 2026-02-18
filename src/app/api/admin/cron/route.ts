@@ -63,8 +63,10 @@ export const POST = withLogging(async (request: NextRequest) => {
             const feed = feeds.find((f) => f.id === feedId);
             if (!feed) continue;
 
+            const feedStart = Date.now();
             let feedNew = 0;
             let feedSkipped = 0;
+            const feedErrors: string[] = [];
 
             for (const item of items) {
                 try {
@@ -101,6 +103,8 @@ export const POST = withLogging(async (request: NextRequest) => {
 
                     feedNew++;
                 } catch (itemError) {
+                    const errMsg = itemError instanceof Error ? itemError.message : String(itemError);
+                    feedErrors.push(`${item.title.substring(0, 100)}: ${errMsg}`);
                     errors.push(`Failed: ${item.title}`);
                 }
             }
@@ -110,8 +114,37 @@ export const POST = withLogging(async (request: NextRequest) => {
                 [feedId]
             );
 
+            const feedDuration = Date.now() - feedStart;
             totalNew += feedNew;
             totalSkipped += feedSkipped;
+
+            // Insert RSS fetch log to database
+            const logStatus = feedErrors.length === items.length ? 'error' : 
+                             (feedErrors.length > 0 ? 'partial' : 'success');
+            try {
+                await insert(
+                    `INSERT INTO rss_fetch_logs 
+                    (feed_id, feed_name, category, status, items_fetched, new_articles, 
+                     skipped_articles, errors_count, error_details, duration_ms, started_at, completed_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [
+                        feed.id,
+                        feed.name,
+                        feed.category,
+                        logStatus,
+                        items.length,
+                        feedNew,
+                        feedSkipped,
+                        feedErrors.length,
+                        feedErrors.length > 0 ? feedErrors.join('\n---\n') : null,
+                        feedDuration,
+                        new Date(feedStart)
+                    ]
+                );
+            } catch (logError) {
+                console.error('Failed to log RSS fetch to database:', logError);
+            }
+
             feedSummaries.push({
                 name: feed.name,
                 category: feed.category,
