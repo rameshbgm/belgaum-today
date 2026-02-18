@@ -8,9 +8,10 @@ import { Button } from '@/components/ui';
 interface ArticleListProps {
     initialArticles: Article[];
     category?: string;
+    columns?: 2 | 3;
 }
 
-export function ArticleList({ initialArticles, category }: ArticleListProps) {
+export function ArticleList({ initialArticles, category, columns = 3 }: ArticleListProps) {
     const [articles, setArticles] = useState<Article[]>(initialArticles);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(initialArticles.length >= 20);
@@ -53,7 +54,7 @@ export function ArticleList({ initialArticles, category }: ArticleListProps) {
 
     return (
         <div>
-            <ArticleGrid articles={articles} />
+            <ArticleGrid articles={articles} columns={columns} />
             
             {hasMore && (
                 <div className="mt-8 text-center">
