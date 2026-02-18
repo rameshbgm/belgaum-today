@@ -2,88 +2,106 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { TrendingUp, Tag, Rss, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { TrendingUp, Tag, Rss, Loader2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { CATEGORY_META, Category } from '@/types';
+import { formatRelativeTime, truncate } from '@/lib/utils';
+import { NewsFallbackImage } from '@/components/articles';
 
 const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
 
-interface TrendingTopic {
-    name: string;
-    count: number;
+interface TrendingArticle {
+    id: number;
+    title: string;
+    slug: string;
+    excerpt: string;
+    featured_image: string | null;
+    source_name: string;
+    published_at: string;
 }
 
 interface SidebarProps {
     showCategories?: boolean;
     showRss?: boolean;
+    trendingArticles?: TrendingArticle[];
+    showAds?: boolean;
 }
 
 export function Sidebar({
-    showCategories = true,
+    showCategories = false,
     showRss = true,
+    trendingArticles = [],
+    showAds = false,
 }: SidebarProps) {
-    const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchTrending() {
-            try {
-                const res = await fetch('/api/trending-topics');
-                const data = await res.json();
-                if (data.success && data.data.length > 0) {
-                    setTrendingTopics(data.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch trending topics:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-        fetchTrending();
-    }, []);
 
     return (
         <aside className="space-y-6">
-            {/* Trending Topics */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    <TrendingUp className="w-5 h-5 text-blue-500" />
-                    Trending Topics
-                </h3>
-
-                {loading ? (
-                    <div className="flex items-center justify-center py-6">
-                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            {/* Advertisement Space */}
+            {showAds && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-8">
+                    <div className="text-center">
+                        <div className="mb-3">
+                            <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2" />
+                                <path d="M9 9h6v6H9z" strokeWidth="2" />
+                            </svg>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                            Advertisement
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                            Google/Meta Ads
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-600 mt-2">
+                            300 × 600
+                        </p>
                     </div>
-                ) : trendingTopics.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
-                        No trending topics yet
-                    </p>
-                ) : (
-                    <ul className="space-y-3">
-                        {trendingTopics.map((topic, index) => (
-                            <li key={topic.name}>
-                                <Link
-                                    href={`/search?q=${encodeURIComponent(topic.name)}`}
-                                    className="flex items-center justify-between group"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium">
+                </div>
+            )}
+
+            {/* Trending Articles */}
+            {trendingArticles.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <TrendingUp className="w-5 h-5 text-red-500" />
+                        Trending News
+                    </h3>
+                    <div className="space-y-4">
+                        {trendingArticles.slice(0, 15).map((article, index) => (
+                            <Link
+                                key={article.id}
+                                href={`/article/${article.slug}`}
+                                className="group block"
+                            >
+                                <div className="flex gap-3">
+                                    {/* Rank Badge */}
+                                    <div className="flex-shrink-0">
+                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-orange-500 text-white text-xs flex items-center justify-center font-bold">
                                             {index + 1}
                                         </span>
-                                        <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                            {topic.name}
-                                        </span>
-                                    </span>
-                                    <Badge variant="default" size="sm">
-                                        {topic.count}
-                                    </Badge>
-                                </Link>
-                            </li>
+                                    </div>
+                                    
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-1">
+                                            {article.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                            <span className="truncate">{article.source_name}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {formatRelativeTime(article.published_at)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
                         ))}
-                    </ul>
-                )}
-            </div>
+                    </div>
+                </div>
+            )}
 
             {/* Categories */}
             {showCategories && (

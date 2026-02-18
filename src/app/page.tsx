@@ -116,7 +116,7 @@ export default async function HomePage() {
 
         {/* Sidebar */}
         <aside className="lg:col-span-1 mt-8 lg:mt-0">
-          <Sidebar showCategories={false} showRss={false}   />
+          <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
         </aside>
       </div>
     </div>
