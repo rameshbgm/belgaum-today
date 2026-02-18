@@ -8,7 +8,7 @@ import { ChevronRight, Clock, Eye, Calendar, ExternalLink, Sparkles } from 'luci
 import { query, execute } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
-import { ShareButtons, ArticleCard, ArticleViewTracker } from '@/components/articles';
+import { ShareButtons, ArticleCard, ArticleViewTracker, NewsFallbackImage } from '@/components/articles';
 import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent } from '@/lib/utils';
 
 type Props = {
@@ -237,8 +237,8 @@ export default async function ArticlePage({ params }: Props) {
                 </header>
 
                 {/* Featured Image */}
-                {article.featured_image && (
-                    <div className="relative aspect-video rounded-xl overflow-hidden mb-8">
+                <div className="relative aspect-video rounded-xl overflow-hidden mb-8">
+                    {article.featured_image ? (
                         <Image
                             src={article.featured_image}
                             alt={article.title}
@@ -247,8 +247,10 @@ export default async function ArticlePage({ params }: Props) {
                             priority
                             sizes="(max-width: 768px) 100vw, 800px"
                         />
-                    </div>
-                )}
+                    ) : (
+                        <NewsFallbackImage seed={article.id} />
+                    )}
+                </div>
 
                 {/* Article Content */}
                 {(() => {

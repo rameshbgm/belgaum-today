@@ -6,6 +6,7 @@ import { Eye, Clock, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
+import { NewsFallbackImage } from './NewsFallbackImage';
 
 interface FeaturedArticleProps {
     article: Article;
@@ -28,7 +29,9 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
                         sizes="100vw"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-900 to-purple-900" />
+                    <div className="w-full h-full opacity-40">
+                        <NewsFallbackImage seed={article.id} />
+                    </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent" />
             </div>
