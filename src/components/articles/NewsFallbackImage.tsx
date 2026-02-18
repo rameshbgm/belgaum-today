@@ -18,7 +18,8 @@ export function NewsFallbackImage({
         '/images/image-not-available/image-not-available2.jpeg'
     ];
 
-    // Select image deterministically based on seed, or randomly if no seed
+    // Select image deterministically based on seed
+    // Always use first image as default to prevent hydration mismatch
     const getImageIndex = () => {
         if (seed !== undefined) {
             // Use seed to deterministically select an image
@@ -27,8 +28,8 @@ export function NewsFallbackImage({
                 : seed;
             return Math.abs(hash) % fallbackImages.length;
         }
-        // Random selection for cases without seed
-        return Math.floor(Math.random() * fallbackImages.length);
+        // Default to first image for consistent SSR/client rendering
+        return 0;
     };
 
     const selectedImage = fallbackImages[getImageIndex()];
