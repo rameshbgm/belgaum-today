@@ -6,6 +6,7 @@ import { Eye, Clock, Info, ExternalLink } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
 import { Article } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
+import { NewsFallbackImage } from './NewsFallbackImage';
 
 interface ArticleCardProps {
     article: Article;
@@ -27,9 +28,7 @@ export function ArticleCard({ article, priority = false }: ArticleCardProps) {
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                        <span className="text-4xl">📰</span>
-                    </div>
+                    <NewsFallbackImage seed={article.id} />
                 )}
                 {/* AI Badge */}
                 {article.ai_generated && (

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Menu, X, Sun, Moon, Search, Rss } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -53,13 +54,24 @@ export function Header() {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                            B
+                        <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+                            <Image
+                                src="/images/logo.jpeg"
+                                alt="Belgaum Today Logo"
+                                fill
+                                className="object-cover"
+                                priority
+                            />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+
+                            <span className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-center tracking-wide drop-shadow-[0_0_8px_rgba(147,51,234,0.5)]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', textShadow: '0 0 10px rgba(147,51,234,0.6), 0 0 20px rgba(147,51,234,0.4), 0 0 30px rgba(147,51,234,0.2)' }}>
+                             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                                 Belgaum <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Today</span>
                             </h1>
+                        </span>
+
+                           
                             <p className="text-xs text-gray-500 dark:text-gray-400 -mt-0.5">Local News, Global Standards</p>
                         </div>
                     </Link>

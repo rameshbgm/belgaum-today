@@ -1,29 +1,47 @@
+import Image from 'next/image';
+
 /**
- * Fallback SVG image for news articles without featured images
+ * Fallback image for news articles without featured images
+ * Randomly selects from available fallback images
  */
-export function NewsFallbackImage({ className = '' }: { className?: string }) {
+export function NewsFallbackImage({ 
+    className = '', 
+    seed 
+}: { 
+    className?: string;
+    seed?: string | number;
+}) {
+    // Available fallback images
+    const fallbackImages = [
+        '/images/image-not-available/image-not-available.jpeg',
+        '/images/image-not-available/image-not-available1.jpeg',
+        '/images/image-not-available/image-not-available2.jpeg'
+    ];
+
+    // Select image deterministically based on seed, or randomly if no seed
+    const getImageIndex = () => {
+        if (seed !== undefined) {
+            // Use seed to deterministically select an image
+            const hash = typeof seed === 'string' 
+                ? seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+                : seed;
+            return Math.abs(hash) % fallbackImages.length;
+        }
+        // Random selection for cases without seed
+        return Math.floor(Math.random() * fallbackImages.length);
+    };
+
+    const selectedImage = fallbackImages[getImageIndex()];
+
     return (
-        <div className={`w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center ${className}`}>
-            <svg
-                width="80"
-                height="80"
-                viewBox="0 0 80 80"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="opacity-40"
-            >
-                {/* Newspaper icon */}
-                <rect x="12" y="16" width="56" height="48" rx="4" stroke="currentColor" strokeWidth="2" fill="none" className="text-gray-400 dark:text-gray-600" />
-                <line x1="20" y1="28" x2="44" y2="28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-gray-400 dark:text-gray-600" />
-                <line x1="20" y1="36" x2="60" y2="36" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-gray-300 dark:text-gray-700" />
-                <line x1="20" y1="42" x2="55" y2="42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-gray-300 dark:text-gray-700" />
-                <line x1="20" y1="48" x2="58" y2="48" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-gray-300 dark:text-gray-700" />
-                <line x1="20" y1="54" x2="45" y2="54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-gray-300 dark:text-gray-700" />
-                {/* Image placeholder box */}
-                <rect x="48" y="24" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none" className="text-gray-400 dark:text-gray-600" />
-                <circle cx="52" cy="28" r="1.5" fill="currentColor" className="text-gray-400 dark:text-gray-600" />
-                <polyline points="49,33 53,29 56,31 61,27" stroke="currentColor" strokeWidth="1" fill="none" className="text-gray-400 dark:text-gray-600" />
-            </svg>
+        <div className={`w-full h-full bg-[#F5F1E8] dark:bg-gray-800 flex items-center justify-center ${className}`}>
+            <Image
+                src={selectedImage}
+                alt="Image not available"
+                fill
+                className="object-contain p-4"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
         </div>
     );
 }
