@@ -368,31 +368,102 @@ export default function RssLogsPage() {
                                                 {formatDate(log.started_at)}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {log.error_details && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
-                                                    >
-                                                        {expandedId === log.id ? (
-                                                            <ChevronDown className="w-4 h-4" />
-                                                        ) : (
-                                                            <ChevronRight className="w-4 h-4" />
-                                                        )}
-                                                    </Button>
-                                                )}
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                                                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                >
+                                                    {expandedId === log.id ? (
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    ) : (
+                                                        <ChevronRight className="w-4 h-4" />
+                                                    )}
+                                                </Button>
                                             </td>
                                         </tr>
-                                        {expandedId === log.id && log.error_details && (
+                                        {expandedId === log.id && (
                                             <tr>
-                                                <td colSpan={7} className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
-                                                    <div className="space-y-2">
-                                                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                                                            Error Details:
+                                                <td colSpan={7} className="px-4 py-4 bg-gray-50 dark:bg-gray-800/50">
+                                                    <div className="space-y-4">
+                                                        <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
+                                                            Full Run Results
                                                         </h4>
-                                                        <pre className="text-xs text-red-600 dark:text-red-400 bg-white dark:bg-gray-900 p-3 rounded border border-red-200 dark:border-red-900 overflow-x-auto whitespace-pre-wrap">
-                                                            {log.error_details}
-                                                        </pre>
+                                                        
+                                                        {/* Run Statistics */}
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Items Fetched</div>
+                                                                <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{log.items_fetched}</div>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">New Articles</div>
+                                                                <div className="text-xl font-bold text-green-600 dark:text-green-400">{log.new_articles}</div>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Skipped</div>
+                                                                <div className="text-xl font-bold text-gray-600 dark:text-gray-400">{log.skipped_articles}</div>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Errors</div>
+                                                                <div className="text-xl font-bold text-red-600 dark:text-red-400">{log.errors_count}</div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Timing Information */}
+                                                        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                            <h5 className="font-semibold text-gray-900 dark:text-white mb-3">Timing Information</h5>
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                                                                <div>
+                                                                    <span className="text-gray-500 dark:text-gray-400">Started:</span>
+                                                                    <span className="ml-2 text-gray-900 dark:text-white font-mono">
+                                                                        {new Date(log.started_at).toLocaleString()}
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-500 dark:text-gray-400">Completed:</span>
+                                                                    <span className="ml-2 text-gray-900 dark:text-white font-mono">
+                                                                        {log.completed_at ? new Date(log.completed_at).toLocaleString() : 'N/A'}
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-500 dark:text-gray-400">Duration:</span>
+                                                                    <span className="ml-2 text-gray-900 dark:text-white font-mono">
+                                                                        {formatDuration(log.duration_ms)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Error Details */}
+                                                        {log.error_details && (
+                                                            <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-red-200 dark:border-red-900">
+                                                                <h5 className="font-semibold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
+                                                                    <XCircle className="w-4 h-4" />
+                                                                    Error Details
+                                                                </h5>
+                                                                <pre className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 p-3 rounded overflow-x-auto whitespace-pre-wrap">
+                                                                    {log.error_details}
+                                                                </pre>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Feed Information */}
+                                                        <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                            <h5 className="font-semibold text-gray-900 dark:text-white mb-3">Feed Information</h5>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                                <div>
+                                                                    <span className="text-gray-500 dark:text-gray-400">Feed ID:</span>
+                                                                    <span className="ml-2 text-gray-900 dark:text-white font-mono">#{log.feed_id}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                                                                    <span className="ml-2">
+                                                                        <Badge variant="custom" color="blue" size="sm">{log.category}</Badge>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
