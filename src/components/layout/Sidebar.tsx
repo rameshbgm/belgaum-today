@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { TrendingUp, Tag, Rss, Loader2, Clock } from 'lucide-react';
+import { TrendingUp, Tag, Rss, Loader2, Clock, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { CATEGORY_META, Category } from '@/types';
-import { formatRelativeTime, truncate } from '@/lib/utils';
+import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 
 const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
@@ -21,10 +21,20 @@ interface TrendingArticle {
     published_at: string;
 }
 
+interface MostViewedArticle {
+    id: number;
+    title: string;
+    slug: string;
+    source_name: string;
+    published_at: string;
+    view_count: number;
+}
+
 interface SidebarProps {
     showCategories?: boolean;
     showRss?: boolean;
     trendingArticles?: TrendingArticle[];
+    mostViewedArticles?: MostViewedArticle[];
     showAds?: boolean;
 }
 
@@ -32,11 +42,58 @@ export function Sidebar({
     showCategories = false,
     showRss = true,
     trendingArticles = [],
+    mostViewedArticles = [],
     showAds = false,
 }: SidebarProps) {
 
     return (
         <aside className="space-y-6">
+            {/* Most Viewed Articles */}
+            {mostViewedArticles.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        <Eye className="w-5 h-5 text-blue-500" />
+                        Most Viewed
+                    </h3>
+                    <div className="space-y-4">
+                        {mostViewedArticles.slice(0, 15).map((article, index) => (
+                            <Link
+                                key={article.id}
+                                href={`/article/${article.slug}`}
+                                className="group block"
+                            >
+                                <div className="flex gap-3">
+                                    {/* Rank Badge */}
+                                    <div className="flex-shrink-0">
+                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs flex items-center justify-center font-bold">
+                                            {index + 1}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-1">
+                                            {article.title}
+                                        </h4>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                            <span className="flex items-center gap-1">
+                                                <Eye className="w-3 h-3" />
+                                                {formatNumber(article.view_count)}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {formatRelativeTime(article.published_at)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Advertisement Space */}
             {showAds && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-8">
