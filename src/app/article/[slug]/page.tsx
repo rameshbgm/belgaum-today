@@ -9,7 +9,7 @@ import { query, execute } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
 import { ShareButtons, ArticleCard, ArticleViewTracker } from '@/components/articles';
-import { formatDate, formatRelativeTime, formatNumber } from '@/lib/utils';
+import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent } from '@/lib/utils';
 
 type Props = {
     params: Promise<{ slug: string }>;
@@ -251,11 +251,24 @@ export default async function ArticlePage({ params }: Props) {
                 )}
 
                 {/* Article Content */}
-                <div className="prose dark:prose-invert max-w-none mb-8">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {article.content}
-                    </ReactMarkdown>
-                </div>
+                {(() => {
+                    const cleanContent = sanitizeArticleContent(article.content, article.title);
+                    if (cleanContent) {
+                        return (
+                            <div className="prose dark:prose-invert max-w-none mb-8">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {cleanContent}
+                                </ReactMarkdown>
+                            </div>
+                        );
+                    }
+                    // Fallback: show excerpt when content is empty/just a title repeat
+                    return article.excerpt ? (
+                        <div className="prose dark:prose-invert max-w-none mb-8">
+                            <p>{article.excerpt}</p>
+                        </div>
+                    ) : null;
+                })()}
 
                 {/* Source Attribution Box */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 mb-8 border border-blue-200 dark:border-blue-800">

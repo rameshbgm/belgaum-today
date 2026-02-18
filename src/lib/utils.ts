@@ -6,6 +6,68 @@ export function cn(...inputs: ClassValue[]): string {
     return clsx(inputs);
 }
 
+/**
+ * Strip HTML tags, decode entities, and collapse whitespace.
+ * Use this to sanitise RSS/HTML content for plain-text rendering.
+ */
+export function stripHtml(html: string): string {
+    // Remove CDATA wrappers
+    let text = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+    // Remove HTML tags
+    text = text.replace(/<[^>]*>/g, '');
+    // Decode common HTML entities
+    text = text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#x27;/g, "'")
+        .replace(/&#x2F;/g, '/');
+    // Collapse whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+    return text;
+}
+
+/**
+ * Detect whether a string contains HTML tags.
+ */
+export function containsHtml(text: string): boolean {
+    return /<[a-z][\s\S]*>/i.test(text);
+}
+
+/**
+ * Sanitise article content for display.
+ * - Strips HTML if present
+ * - Returns null if the cleaned text is empty or essentially just the title
+ *   (common with Google News RSS snippets)
+ */
+export function sanitizeArticleContent(
+    content: string | null | undefined,
+    title?: string,
+): string | null {
+    if (!content) return null;
+
+    // If it contains HTML, strip it
+    let clean = containsHtml(content) ? stripHtml(content) : content;
+    clean = clean.trim();
+
+    // If empty after stripping, nothing to show
+    if (!clean) return null;
+
+    // If the cleaned content essentially equals/repeats the title, it's not real content
+    if (title) {
+        const normClean = clean.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (normClean === normTitle || normClean.length < normTitle.length * 1.15) {
+            return null;
+        }
+    }
+
+    return clean;
+}
+
 // Generate URL-friendly slug
 export function generateSlug(text: string): string {
     return slugify(text, {
