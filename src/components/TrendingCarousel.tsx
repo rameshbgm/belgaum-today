@@ -110,7 +110,7 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
                         unoptimized
                     />
                 ) : (
-                    <NewsFallbackImage seed={article.id} />
+                    <NewsFallbackImage />
                 )}
 
                 {/* Gradient overlay */}
