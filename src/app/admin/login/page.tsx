@@ -140,7 +140,8 @@ function LoginForm() {
                     </Button>
                 </form>
 
-                {/* Demo Credentials - Quick Fill */}
+                {/* Demo Credentials - Quick Fill (development only) */}
+                {process.env.NODE_ENV === 'development' && (
                 <div className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <button
                         type="button"
@@ -154,6 +155,7 @@ function LoginForm() {
                         <strong>🚀 Demo:</strong> Click to fill — admin@belgaum.today / admin123
                     </button>
                 </div>
+                )}
             </CardContent>
         </Card>
     );
