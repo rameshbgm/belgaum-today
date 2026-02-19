@@ -10,6 +10,13 @@ export const GET = withLogging(async (request: NextRequest, context) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 
+    if (!id) {
+        return NextResponse.json(
+            { success: false, error: 'Missing article ID', code: 400 },
+            { status: 400 }
+        );
+    }
+
     try {
         const articles = await query<Article[]>(
             `SELECT * FROM articles WHERE id = ? LIMIT 1`,
@@ -40,6 +47,13 @@ export const GET = withLogging(async (request: NextRequest, context) => {
 export const PUT = withLogging(async (request: NextRequest, context) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
+
+    if (!id) {
+        return NextResponse.json(
+            { success: false, error: 'Missing article ID', code: 400 },
+            { status: 400 }
+        );
+    }
 
     try {
         const user = await getCurrentUser();
@@ -168,6 +182,13 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
 export const DELETE = withLogging(async (request: NextRequest, context) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
+
+    if (!id) {
+        return NextResponse.json(
+            { success: false, error: 'Missing article ID', code: 400 },
+            { status: 400 }
+        );
+    }
 
     try {
         const user = await getCurrentUser();

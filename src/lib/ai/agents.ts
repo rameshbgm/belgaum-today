@@ -359,7 +359,7 @@ export async function analyzeTrendingArticles(
 function fallbackTrending(articles: ArticleForAnalysis[], count: number): TrendingResult[] {
     fileLogger.info('ai', `📋 Fallback trending: selecting ${count} most recent articles by date`);
     return articles
-        .sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+        .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
         .slice(0, count)
         .map((a, i) => ({
             articleId: a.id, rank: i + 1, score: 90 - i * 5,
