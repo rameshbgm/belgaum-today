@@ -138,45 +138,45 @@ export function CategoryPageClient({
                     <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-white rounded-full blur-3xl" />
                 </div>
 
-                <div className="container mx-auto px-4 py-3 md:py-6 relative z-10">
+                <div className="container mx-auto px-4 py-4 md:py-6 relative z-10">
                     {/* Breadcrumb */}
-                    <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-white/70 mb-2 md:mb-3">
+                    <nav className="flex items-center gap-2 text-sm text-white/70 mb-3">
                         <Link href="/" className="hover:text-white transition-colors">
                             Home
                         </Link>
-                        <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <ChevronRight className="w-4 h-4" />
                         <span className="font-medium text-white">{categoryMeta.name}</span>
                     </nav>
 
                     {/* Title Row with Search */}
-                    <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3 md:mb-4">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                             {categoryMeta.name}
                         </h1>
 
                         {/* Search Button */}
                         <button
                             onClick={() => setShowSearch(!showSearch)}
-                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-all border border-white/20"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-all border border-white/20"
                         >
-                            {showSearch ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Search className="w-4 h-4 sm:w-5 sm:h-5" />}
-                            <span className="hidden sm:inline text-sm">Search</span>
+                            {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                            <span className="hidden sm:inline">Search</span>
                         </button>
                     </div>
 
                     {/* Expandable Search Input */}
                     {showSearch && (
-                        <div className="mb-3 md:mb-4">
+                        <div className="mb-4">
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={`Search in ${categoryMeta.name}...`}
-                                className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                className="w-full px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
                                 autoFocus
                             />
                             {searchQuery && (
-                                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-white/70">
+                                <p className="mt-2 text-sm text-white/70">
                                     Found {filteredArticles.length} {filteredArticles.length === 1 ? 'article' : 'articles'}
                                 </p>
                             )}
@@ -184,12 +184,12 @@ export function CategoryPageClient({
                     )}
 
                     {/* Subcategory Filter Pills */}
-                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1">
+                    <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
                         {subCategories.map((sub) => (
                             <button
                                 key={sub.id}
                                 onClick={() => setSelectedSubCategory(sub.id)}
-                                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                                     selectedSubCategory === sub.id
                                         ? 'bg-white text-gray-900 shadow-lg'
                                         : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20'
@@ -214,7 +214,7 @@ export function CategoryPageClient({
                     {/* Main Content */}
                     <div className="lg:col-span-3">
                         {/* Article Grid */}
-                        <ArticleGrid articles={filteredArticles} columns={2} compact={true} />
+                        <ArticleGrid articles={filteredArticles} columns={2} />
 
                         {/* No results message */}
                         {filteredArticles.length === 0 && (

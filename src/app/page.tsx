@@ -1,65 +1,178 @@
-import Image from "next/image";
+import { query } from '@/lib/db';
+import { Article, CATEGORY_META, Category } from '@/types';
+import { FeaturedArticle, ArticleList } from '@/components/articles';
+import { Sidebar } from '@/components/layout';
+import { BreakingNewsTicker, TickerArticle } from '@/components/BreakingNewsTicker';
+import { TrendingCarousel } from '@/components/TrendingCarousel';
+import type { TrendingArticle as TrendingCarouselArticle } from '@/components/TrendingCarousel';
 
-export default function Home() {
+interface MostViewedArticle {
+  id: number;
+  title: string;
+  slug: string;
+  source_name: string;
+  published_at: string;
+  view_count: number;
+}
+
+interface TrendingArticle {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featured_image: string | null;
+  category: string;
+  source_name: string;
+  source_url: string;
+  published_at: Date;
+  ai_score: number;
+  ai_reasoning: string;
+  rank_position: number;
+}
+
+async function getArticles(): Promise<{ 
+  featured: Article | null; 
+  articles: Article[];
+  tickerArticles: TickerArticle[];
+  trendingArticles: TrendingCarouselArticle[];
+  mostViewedArticles: MostViewedArticle[];
+}> {
+  try {
+    const featured = await query<Article[]>(
+      `SELECT * FROM articles WHERE status = 'published' AND featured = true ORDER BY COALESCE(published_at, created_at) DESC LIMIT 1`
+    );
+
+    const articles = await query<Article[]>(
+      `SELECT * FROM articles WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
+    );
+
+    // Get recent articles for ticker (latest 10)
+    const ticker = await query<TickerArticle[]>(
+      `SELECT id, title, source_url, source_name FROM articles WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 10`
+    );
+
+    // Get trending articles across all categories (top 10)
+    const trendingRows = await query<TrendingArticle[]>(
+      `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.category,
+              a.source_name, a.source_url, a.published_at,
+              ta.ai_score, ta.ai_reasoning, ta.rank_position
+       FROM trending_articles ta
+       JOIN articles a ON ta.article_id = a.id
+       WHERE a.status = 'published'
+       ORDER BY ta.rank_position ASC
+       LIMIT 10`
+    );
+
+    // Convert Date objects to strings for TrendingCarousel component
+    const trending: TrendingCarouselArticle[] = trendingRows.map(row => ({
+      ...row,
+      published_at: new Date(row.published_at).toISOString(),
+    }));
+
+    // Get most viewed articles from last 10 days
+    const mostViewed = await query<MostViewedArticle[]>(
+      `SELECT id, title, slug, source_name, published_at, view_count
+       FROM articles
+       WHERE status = 'published'
+         AND published_at >= DATE_SUB(NOW(), INTERVAL 10 DAY)
+       ORDER BY view_count DESC
+       LIMIT 15`
+    );
+
+    return {
+      featured: featured.length > 0 ? featured[0] : null,
+      articles: articles,
+      tickerArticles: ticker,
+      trendingArticles: trending,
+      mostViewedArticles: mostViewed.map(row => ({
+        ...row,
+        published_at: new Date(row.published_at).toISOString(),
+      })),
+    };
+  } catch (error) {
+    console.error('Homepage DB error:', error instanceof Error ? error.message : error);
+    return { featured: null, articles: [], tickerArticles: [], trendingArticles: [], mostViewedArticles: [] };
+  }
+}
+
+export default async function HomePage() {
+  const { featured, articles, tickerArticles, trendingArticles, mostViewedArticles } = await getArticles();
+  const regularArticles = articles.filter(a => !featured || a.id !== featured.id);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      {/* Breaking News Ticker */}
+      <BreakingNewsTicker articles={tickerArticles} />
+
+      <div className="container mx-auto px-4 py-8">
+      {/* Trending Carousel */}
+      {trendingArticles.length > 0 && (
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🔥</span>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Trending Now
+            </h2>
+          </div>
+          <TrendingCarousel articles={trendingArticles} accentColor="#3b82f6" />
+        </section>
+      )}
+
+      {/* Featured Article */}
+      {featured && (
+        <section className="mb-10">
+          <FeaturedArticle article={featured} />
+        </section>
+      )}
+
+      {/* Mobile-First Layout */}
+      <div className="space-y-8 lg:space-y-0">
+        {/* Main Content - Shows first on mobile */}
+        <section className="lg:hidden mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Latest News
+            </h2>
+          </div>
+          <ArticleList initialArticles={regularArticles} category="all" compact={true} />
+        </section>
+
+        {/* Sidebars on Mobile (stacked) */}
+        <div className="lg:hidden space-y-6">
+          {mostViewedArticles.length > 0 && (
+            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+          )}
+          {trendingArticles.length > 0 && (
+            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Desktop/Tablet Layout (3 columns with sidebars) */}
+        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8">
+          {/* Left Sidebar - Most Viewed */}
+          <aside className="lg:col-span-3">
+            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+          </aside>
+
+          {/* Main Content - Single column for better sidebar visibility */}
+          <div className="lg:col-span-6">
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Latest News
+                </h2>
+              </div>
+              <ArticleList initialArticles={regularArticles} category="all" columns={2} compact={true} />
+            </section>
+          </div>
+
+          {/* Right Sidebar - Trending */}
+          <aside className="lg:col-span-3">
+            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
+          </aside>
         </div>
-      </main>
+      </div>
     </div>
+    </>
   );
 }
