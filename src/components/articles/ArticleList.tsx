@@ -24,7 +24,7 @@ export function ArticleList({ initialArticles, category, columns = 3, compact = 
         try {
             // Get the oldest article's published_at date
             const oldestArticle = articles[articles.length - 1];
-            const beforeDate = new Date(oldestArticle.published_at);
+            const beforeDate = oldestArticle.published_at ? new Date(oldestArticle.published_at) : new Date();
             const beforeDateStr = beforeDate.toISOString().split('T')[0]; // YYYY-MM-DD format
 
             const params = new URLSearchParams({

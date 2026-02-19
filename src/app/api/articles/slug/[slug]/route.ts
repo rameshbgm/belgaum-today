@@ -8,6 +8,13 @@ export const GET = withLogging(async (request: NextRequest, context) => {
     const resolvedParams = await context?.params;
     const slug = resolvedParams?.slug;
 
+    if (!slug) {
+        return NextResponse.json(
+            { success: false, error: 'Missing article slug', code: 400 },
+            { status: 400 }
+        );
+    }
+
     try {
         const articles = await query<Article[]>(
             `SELECT * FROM articles WHERE slug = ? AND status = 'published' LIMIT 1`,

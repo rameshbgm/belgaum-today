@@ -8,6 +8,7 @@ import {
     Settings, ChevronLeft, ChevronRight, LogOut, ExternalLink,
     Menu, X, Database
 } from 'lucide-react';
+import { ToastProvider } from '@/components/ui/Toast';
 
 const NAV_ITEMS = [
     { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -25,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     // If on login page, render without sidebar
     if (pathname === '/admin/login') {
-        return <>{children}</>;
+        return <ToastProvider>{children}</ToastProvider>;
     }
 
     const handleLogout = async () => {
@@ -34,6 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     return (
+        <ToastProvider>
         <div className="admin-layout">
             {/* Mobile overlay */}
             {mobileOpen && (
@@ -130,5 +132,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </main>
             </div>
         </div>
+        </ToastProvider>
     );
 }
