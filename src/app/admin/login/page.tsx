@@ -141,7 +141,7 @@ function LoginForm() {
                 </form>
 
                 {/* Demo Credentials - Quick Fill (development only) */}
-                {process.env.NODE_ENV === 'development' && (
+                {process.env.NEXT_PUBLIC_APP_ENV !== 'production' && (
                 <div className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
                     <button
                         type="button"
