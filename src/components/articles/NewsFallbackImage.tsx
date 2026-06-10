@@ -1,8 +1,10 @@
 import Image from 'next/image';
 
 /**
- * Fallback image for news articles without featured images
- * Randomly selects from available fallback images
+ * Fallback image for news articles without featured images.
+ * Deterministically selects from available fallback images using the optional
+ * seed (e.g. article id). Without a seed it always uses the first image so the
+ * server and client render identically (no hydration mismatch).
  */
 export function NewsFallbackImage({ 
     className = '', 
@@ -27,14 +29,14 @@ export function NewsFallbackImage({
                 : seed;
             return Math.abs(hash) % fallbackImages.length;
         }
-        // Random selection for cases without seed
-        return Math.floor(Math.random() * fallbackImages.length);
+        // No seed: always use the first image (deterministic → no hydration mismatch)
+        return 0;
     };
 
     const selectedImage = fallbackImages[getImageIndex()];
 
     return (
-        <div className={`w-full h-full bg-[#F5F1E8] dark:bg-gray-800 flex items-center justify-center ${className}`}>
+        <div className={`w-full h-full bg-[#F5F1E8] dark:bg-[#211D17] flex items-center justify-center ${className}`}>
             <Image
                 src={selectedImage}
                 alt="Image not available"
