@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Header, Footer } from "@/components/layout";
 import { ToastProvider } from "@/components/ui";
@@ -10,6 +10,13 @@ const inter = Inter({
   subsets: ["latin"],
   display: 'swap',
   variable: '--font-inter',
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '900'],
+  variable: '--font-fraunces',
 });
 
 export const metadata: Metadata = {
@@ -98,7 +105,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${fraunces.variable} font-sans antialiased`}>
         <ToastProvider>
           <a href="#main-content" className="skip-link">
             Skip to main content
@@ -110,7 +117,7 @@ export default async function RootLayout({
             // Public routes: wrap with header, footer, and ad scripts
             <>
               <AdScripts />
-              <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+              <div className="min-h-screen flex flex-col bg-background">
                 <Header />
                 <main id="main-content" className="flex-1">
                   {children}

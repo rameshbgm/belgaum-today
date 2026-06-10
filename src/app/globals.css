@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFFBF5;
+  --surface: #FFFFFF;
+  --ink: #1A1A1A;
+  --muted: #6B6B66;
+  --primary: #E8590C;
+  --primary-hover: #C2410C;
+  --accent: #0F766E;
+  --hairline: #ECE7DD;
+  /* legacy alias kept so existing utilities don't break */
+  --foreground: #1A1A1A;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #15130F;
+  --surface: #211D17;
+  --ink: #F5F0E8;
+  --muted: #A7A095;
+  --primary: #E8590C;
+  --primary-hover: #F97316;
+  --accent: #2DD4BF;
+  --hairline: #322C24;
+  --foreground: #F5F0E8;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-hairline: var(--hairline);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-fraunces);
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Scrollbar Styling */
@@ -30,16 +53,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+  background: #E8590C;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2563eb, #7c3aed);
+  background: #C2410C;
 }
 
 /* Custom Animations */
@@ -91,10 +114,16 @@ body {
 
 /* Gradient Text */
 .gradient-text {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  background: linear-gradient(135deg, #E8590C, #C2410C);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Editorial serif display */
+.font-display {
+  font-family: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.02em;
 }
 
 /* Line Clamp */
@@ -145,12 +174,12 @@ body {
 }
 
 .prose a {
-  color: #3b82f6;
+  color: #0F766E;
   text-decoration: underline;
 }
 
 .prose a:hover {
-  color: #2563eb;
+  color: #115E59;
 }
 
 .prose ul,
@@ -188,7 +217,7 @@ body {
 }
 
 .prose blockquote {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #E8590C;
   padding-left: 1em;
   margin: 1em 0;
   font-style: italic;
@@ -236,7 +265,7 @@ body {
   position: absolute;
   top: -100%;
   left: 0;
-  background: #3b82f6;
+  background: #E8590C;
   color: white;
   padding: 0.5rem 1rem;
   z-index: 100;
@@ -249,7 +278,7 @@ body {
 
 /* Focus indicators */
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #E8590C;
   outline-offset: 2px;
 }
 
