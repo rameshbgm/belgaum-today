@@ -1,9 +1,8 @@
+import Link from 'next/link';
 import { query } from '@/lib/db';
-import { Article, CATEGORY_META, Category } from '@/types';
-import { FeaturedArticle, ArticleList } from '@/components/articles';
-import { Sidebar } from '@/components/layout';
-import { BreakingNewsTicker, TickerArticle } from '@/components/BreakingNewsTicker';
-import { TrendingCarousel } from '@/components/TrendingCarousel';
+import { Article } from '@/types';
+import { LeadStory, LatestRail, MostRead, StoryCard, SectionHeading } from '@/components/articles';
+import { TickerArticle } from '@/components/BreakingNewsTicker';
 import type { TrendingArticle as TrendingCarouselArticle } from '@/components/TrendingCarousel';
 
 interface MostViewedArticle {
@@ -96,83 +95,88 @@ async function getArticles(): Promise<{
 }
 
 export default async function HomePage() {
-  const { featured, articles, tickerArticles, trendingArticles, mostViewedArticles } = await getArticles();
-  const regularArticles = articles.filter(a => !featured || a.id !== featured.id);
+  const { featured, articles, trendingArticles, mostViewedArticles } = await getArticles();
+
+  // The lead is the featured article, or the most recent one as fallback.
+  const lead = featured || articles[0] || null;
+  const rest = articles.filter((a) => !lead || a.id !== lead.id);
+
+  // Compose the broadsheet sections from the same data.
+  const latest = rest.slice(0, 6);                // "Latest" rail
+  const moreFeatures = rest.slice(6, 12);         // image story cards
+  const briefs = rest.slice(12, 18);              // text-only briefs
 
   return (
-    <>
-      {/* Breaking News Ticker */}
-      <BreakingNewsTicker articles={tickerArticles} />
+    <div className="container mx-auto px-4 py-8 md:py-10">
+      {/* ── Front page: lead + rails ── */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b-2 border-ink/85">
+        {/* Lead story */}
+        <div className="lg:col-span-8">
+          {lead && <LeadStory article={lead} />}
+        </div>
 
-      <div className="container mx-auto px-4 py-8">
-      {/* Trending Carousel */}
-      {trendingArticles.length > 0 && (
-        <section className="mb-12">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🔥</span>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-ink">
-              Trending Now
-            </h2>
-          </div>
-          <TrendingCarousel articles={trendingArticles} accentColor="saffron" />
-        </section>
-      )}
-
-      {/* Featured Article */}
-      {featured && (
-        <section className="mb-12">
-          <FeaturedArticle article={featured} />
-        </section>
-      )}
-
-      {/* Mobile-First Layout */}
-      <div className="space-y-8 lg:space-y-0">
-        {/* Main Content - Shows first on mobile */}
-        <section className="lg:hidden mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-ink">
-              Latest News
-            </h2>
-          </div>
-          <ArticleList initialArticles={regularArticles} category="all" compact={true} />
-        </section>
-
-        {/* Sidebars on Mobile (stacked) */}
-        <div className="lg:hidden space-y-6">
-          {mostViewedArticles.length > 0 && (
-            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
+        {/* Latest rail */}
+        <aside className="lg:col-span-4">
+          <SectionHeading accent>Latest</SectionHeading>
+          {latest.length > 0 ? (
+            <LatestRail articles={latest} />
+          ) : (
+            <p className="text-sm text-muted">No stories yet.</p>
           )}
-          {trendingArticles.length > 0 && (
-            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
+        </aside>
+      </section>
+
+      {/* ── More Stories + Most Read ── */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
+        <div className="lg:col-span-8">
+          <SectionHeading>More Stories</SectionHeading>
+
+          {/* Image features in a 2-col grid… */}
+          {moreFeatures.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
+              {moreFeatures.map((a) => (
+                <StoryCard key={a.id} article={a} variant="feature" />
+              ))}
+            </div>
+          )}
+
+          {/* …followed by a column of text-only briefs */}
+          {briefs.length > 0 && (
+            <div className="mt-12 space-y-7">
+              {briefs.map((a) => (
+                <StoryCard key={a.id} article={a} variant="brief" />
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Desktop/Tablet Layout (3 columns with sidebars) */}
-        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8">
-          {/* Left Sidebar - Most Viewed */}
-          <aside className="lg:col-span-3">
-            <Sidebar showCategories={false} showRss={false} mostViewedArticles={mostViewedArticles} />
-          </aside>
+        {/* Most Read sidebar */}
+        <aside className="lg:col-span-4">
+          <div className="lg:sticky lg:top-20">
+            <SectionHeading accent>Most Read</SectionHeading>
+            {mostViewedArticles.length > 0 ? (
+              <MostRead articles={mostViewedArticles.slice(0, 7)} />
+            ) : trendingArticles.length > 0 ? (
+              <MostRead articles={trendingArticles.slice(0, 7)} />
+            ) : (
+              <p className="text-sm text-muted">Nothing trending yet.</p>
+            )}
 
-          {/* Main Content - Single column for better sidebar visibility */}
-          <div className="lg:col-span-6">
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Latest News
-                </h2>
-              </div>
-              <ArticleList initialArticles={regularArticles} category="all" columns={2} compact={true} />
-            </section>
+            {/* RSS pull-quote block */}
+            <div className="mt-10 border-t-2 border-ink/85 pt-6">
+              <p className="font-display text-lg leading-snug text-ink">
+                Belagavi&rsquo;s news, gathered from across the web and delivered every day.
+              </p>
+              <Link
+                href="/feed.xml"
+                className="mt-3 inline-block text-xs font-bold uppercase tracking-[0.18em] text-accent hover:text-primary transition-colors"
+              >
+                Subscribe via RSS →
+              </Link>
+            </div>
           </div>
-
-          {/* Right Sidebar - Trending */}
-          <aside className="lg:col-span-3">
-            <Sidebar showCategories={false} showRss={false} trendingArticles={trendingArticles} />
-          </aside>
-        </div>
-      </div>
+        </aside>
+      </section>
     </div>
-    </>
   );
 }
