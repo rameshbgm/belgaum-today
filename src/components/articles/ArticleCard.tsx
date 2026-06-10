@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, Clock, Info, ExternalLink } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
-import { Article } from '@/types';
+import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 
@@ -16,7 +16,7 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article, priority = false, compact = false }: ArticleCardProps) {
     return (
-        <article className={`group bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg hover:border-blue-500/50 ${compact ? 'text-sm' : ''}`}>
+        <article className={`group bg-surface rounded-lg overflow-hidden border border-hairline transition-all duration-300 hover:shadow-md hover:border-primary/40 ${compact ? 'text-sm' : ''}`}>
             {/* Image */}
             <Link href={`/article/${article.slug}`} className={`block relative overflow-hidden ${compact ? 'aspect-square sm:aspect-[4/3] md:aspect-video' : 'aspect-video'}`}>
                 {article.featured_image ? (
@@ -43,22 +43,27 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
 
             {/* Content */}
             <div className={compact ? "p-1.5 sm:p-2 md:p-3" : "p-4"}>
+                {/* Category eyebrow */}
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">
+                    {CATEGORY_META[article.category]?.name}
+                </span>
+
                 {/* Title */}
                 <Link href={`/article/${article.slug}`}>
-                    <h3 className={`font-semibold text-gray-900 dark:text-white mb-1 line-clamp-3 sm:line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${compact ? 'text-[10px] leading-tight sm:text-xs md:text-sm' : 'text-lg'}`}>
+                    <h3 className={`font-display font-semibold text-ink mb-1 line-clamp-3 sm:line-clamp-2 group-hover:text-primary transition-colors ${compact ? 'text-[11px] leading-tight sm:text-xs md:text-sm' : 'text-lg'}`}>
                         {article.title}
                     </h3>
                 </Link>
 
                 {/* Excerpt - Hidden in compact mode */}
                 {!compact && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    <p className="text-sm text-muted mb-3 line-clamp-2">
                         {truncate(article.excerpt || '', 150)}
                     </p>
                 )}
 
                 {/* Meta */}
-                <div className={`flex items-center justify-between text-gray-500 dark:text-gray-400 ${compact ? 'text-xs' : 'text-xs'}`}>
+                <div className={`flex items-center justify-between text-muted ${compact ? 'text-xs' : 'text-xs'}`}>
                     <div className="flex items-center gap-3">
                         {/* Source with Tooltip */}
                         <Tooltip
@@ -69,7 +74,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                                         href={article.source_url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-blue-400 hover:underline"
+                                        className="flex items-center gap-1 text-accent hover:underline"
                                     >
                                         Read Original <ExternalLink className="w-3 h-3" />
                                     </a>
@@ -77,7 +82,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                             }
                             position="bottom"
                         >
-                            <span className="flex items-center gap-1 cursor-pointer hover:text-blue-500 transition-colors">
+                            <span className="flex items-center gap-1 cursor-pointer hover:text-accent transition-colors">
                                 {article.source_name}
                                 <Info className="w-3 h-3" />
                             </span>

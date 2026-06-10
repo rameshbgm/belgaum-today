@@ -16,7 +16,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
     const categoryMeta = CATEGORY_META[article.category];
 
     return (
-        <article className="group relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden">
+        <article className="group relative bg-gradient-to-br from-[#1A1712] to-[#2A251E] rounded-2xl overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0">
                 {article.featured_image ? (
@@ -33,15 +33,15 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
                         <NewsFallbackImage seed={article.id} />
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#120F0B] via-[#120F0B]/70 to-transparent" />
             </div>
 
             {/* Content */}
             <div className="relative z-10 p-6 md:p-10 min-h-[400px] md:min-h-[500px] flex flex-col justify-end">
                 {/* Badges */}
                 <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="danger" size="md" className="animate-pulse">
-                        🔥 Featured
+                    <Badge variant="custom" color="#E8590C" size="md">
+                        Featured
                     </Badge>
                     <Badge variant="custom" color={categoryMeta.color} size="md">
                         {categoryMeta.name}
@@ -55,7 +55,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
 
                 {/* Title */}
                 <Link href={`/article/${article.slug}`}>
-                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-blue-300 transition-colors">
+                    <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-[#FDBA74] transition-colors">
                         {article.title}
                     </h2>
                 </Link>
@@ -81,7 +81,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
 
                     <Link
                         href={`/article/${article.slug}`}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-blue-500 hover:text-white transition-all group/btn"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-all group/btn"
                     >
                         Read Full Story
                         <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
