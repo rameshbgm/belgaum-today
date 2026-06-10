@@ -1,0 +1,946 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "Belgaum Today Logo Belgaum Today Local News, Global Standards" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img "Belgaum Today Logo" [ref=e9]
+          - generic [ref=e10]:
+            - heading "Belgaum Today" [level=1] [ref=e12]
+            - paragraph [ref=e13]: Local News, Global Standards
+        - navigation [ref=e14]:
+          - link "India" [ref=e15] [cursor=pointer]:
+            - /url: /india
+          - link "Business" [ref=e16] [cursor=pointer]:
+            - /url: /business
+          - link "Technology" [ref=e17] [cursor=pointer]:
+            - /url: /technology
+          - link "Entertainment" [ref=e18] [cursor=pointer]:
+            - /url: /entertainment
+          - link "Sports" [ref=e19] [cursor=pointer]:
+            - /url: /sports
+          - link "Belgaum" [ref=e20] [cursor=pointer]:
+            - /url: /belgaum
+          - link "Search" [ref=e21] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e22]
+            - text: Search
+        - button "Toggle dark mode" [ref=e26]:
+          - img [ref=e27]
+    - main [ref=e29]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - img [ref=e33]
+          - text: Breaking
+        - generic [ref=e37]:
+          - link "Bangalore Astronomical Society featured in Mann Ki Baat" [ref=e38] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/cities/bangalore/bangalore-astronomical-society-featured-in-mann-ki-baat/article71045040.ece
+            - text: Bangalore Astronomical Society featured in Mann Ki Baat
+          - link "College student dies after getting stuck in temple car wheel in Tiruchengode" [ref=e40] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/college-student-dies-after-getting-stuck-in-temple-car-wheel-in-tiruchengode/article71044228.ece
+            - text: College student dies after getting stuck in temple car wheel in Tiruchengode
+          - link "APTF seeks local cadre status for ZP teachers, warns of agitations" [ref=e42] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/andhra-pradesh/aptf-seeks-local-cadre-status-for-zp-teachers-warns-of-agitations/article71045345.ece
+            - text: APTF seeks local cadre status for ZP teachers, warns of agitations
+          - link "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [ref=e44] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/uttar-pradesh/recruitment-exam-candidates-accuse-uttar-pradesh-govt-of-suppressing-drive-for-transparency/article71045372.ece
+            - text: Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency
+          - link "4 convicts booked for attacking accused in rape and murder case" [ref=e46] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/four-convicts-held-for-attacking-sulur-sexual-assault-case-accused/article71044656.ece
+            - text: 4 convicts booked for attacking accused in rape and murder case
+          - link "T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approv..." [ref=e48] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/tn-government-announces-zero-tolerance-approach-towards-delays-in-sanctioning-building-plan-approvals/article71044733.ece
+            - text: T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approv...
+          - link "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishn..." [ref=e50] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/palaniswami-did-not-build-a-strong-alliance-to-garner-anti-incumbency-votes-says-pt-chiefk-krishnasamy/article71041578.ece
+            - text: Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishn...
+          - link "BJP to host Nepal ruling party delegation in outreach to new govt." [ref=e52] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/bjp-to-host-nepal-ruling-party-delegation-in-outreach-to-new-govt/article71045466.ece
+            - text: BJP to host Nepal ruling party delegation in outreach to new govt.
+          - link "White Paper on State govt.’s finances is being finalised" [ref=e54] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/white-paper-on-state-govts-finances-is-being-finalised/article71045236.ece
+            - text: White Paper on State govt.’s finances is being finalised
+          - link "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [ref=e56] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/karnataka/uas-b-launches-new-ug-programmes-in-natural-farming-forestry-and-biotechnology/article71044959.ece
+            - text: UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology
+          - link "Bangalore Astronomical Society featured in Mann Ki Baat" [ref=e58] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/cities/bangalore/bangalore-astronomical-society-featured-in-mann-ki-baat/article71045040.ece
+            - text: Bangalore Astronomical Society featured in Mann Ki Baat
+          - link "College student dies after getting stuck in temple car wheel in Tiruchengode" [ref=e60] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/college-student-dies-after-getting-stuck-in-temple-car-wheel-in-tiruchengode/article71044228.ece
+            - text: College student dies after getting stuck in temple car wheel in Tiruchengode
+          - link "APTF seeks local cadre status for ZP teachers, warns of agitations" [ref=e62] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/andhra-pradesh/aptf-seeks-local-cadre-status-for-zp-teachers-warns-of-agitations/article71045345.ece
+            - text: APTF seeks local cadre status for ZP teachers, warns of agitations
+          - link "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [ref=e64] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/uttar-pradesh/recruitment-exam-candidates-accuse-uttar-pradesh-govt-of-suppressing-drive-for-transparency/article71045372.ece
+            - text: Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency
+          - link "4 convicts booked for attacking accused in rape and murder case" [ref=e66] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/four-convicts-held-for-attacking-sulur-sexual-assault-case-accused/article71044656.ece
+            - text: 4 convicts booked for attacking accused in rape and murder case
+          - link "T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approv..." [ref=e68] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/tn-government-announces-zero-tolerance-approach-towards-delays-in-sanctioning-building-plan-approvals/article71044733.ece
+            - text: T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approv...
+          - link "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishn..." [ref=e70] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/palaniswami-did-not-build-a-strong-alliance-to-garner-anti-incumbency-votes-says-pt-chiefk-krishnasamy/article71041578.ece
+            - text: Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishn...
+          - link "BJP to host Nepal ruling party delegation in outreach to new govt." [ref=e72] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/bjp-to-host-nepal-ruling-party-delegation-in-outreach-to-new-govt/article71045466.ece
+            - text: BJP to host Nepal ruling party delegation in outreach to new govt.
+          - link "White Paper on State govt.’s finances is being finalised" [ref=e74] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/tamil-nadu/white-paper-on-state-govts-finances-is-being-finalised/article71045236.ece
+            - text: White Paper on State govt.’s finances is being finalised
+          - link "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [ref=e76] [cursor=pointer]:
+            - /url: https://www.thehindu.com/news/national/karnataka/uas-b-launches-new-ug-programmes-in-natural-farming-forestry-and-biotechnology/article71044959.ece
+            - text: UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: 🔥
+            - heading "Trending Now" [level=2] [ref=e82]
+          - generic [ref=e83]:
+            - 'link "1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day Trending #1 Hindustan Times 1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day Modi said on this day in 1998, the nuclear tests conducted at Pokhran introduced the world to India''s remarkable capability. 1 month ago Read Article" [ref=e84] [cursor=pointer]':
+              - /url: /article/1998-pokhran-nuclear-tests-reflected-indias-scientific-excellence-pm-modi-on-national-technology-day
+              - 'img "1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day" [ref=e85]'
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - generic [ref=e89]:
+                    - img [ref=e90]
+                    - text: "Trending #1"
+                  - generic [ref=e93]: Hindustan Times
+                - 'heading "1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day" [level=2] [ref=e94]'
+                - paragraph [ref=e95]: Modi said on this day in 1998, the nuclear tests conducted at Pokhran introduced the world to India's remarkable capability.
+                - generic [ref=e96]:
+                  - generic [ref=e97]:
+                    - img [ref=e98]
+                    - text: 1 month ago
+                  - generic [ref=e101]:
+                    - text: Read Article
+                    - img [ref=e102]
+            - button "Previous slide" [ref=e104]:
+              - img [ref=e105]
+            - button "Next slide" [ref=e107]:
+              - img [ref=e108]
+            - generic [ref=e110]:
+              - button "Go to slide 1" [ref=e111]
+              - button "Go to slide 2" [ref=e112]
+              - button "Go to slide 3" [ref=e113]
+              - button "Go to slide 4" [ref=e114]
+              - button "Go to slide 5" [ref=e115]
+              - button "Go to slide 6" [ref=e116]
+              - button "Go to slide 7" [ref=e117]
+              - button "Go to slide 8" [ref=e118]
+              - button "Go to slide 9" [ref=e119]
+              - button "Go to slide 10" [ref=e120]
+        - generic [ref=e122]:
+          - complementary [ref=e123]:
+            - complementary [ref=e124]:
+              - generic [ref=e125]:
+                - heading "Most Viewed" [level=3] [ref=e126]:
+                  - img [ref=e127]
+                  - text: Most Viewed
+                - generic [ref=e130]:
+                  - link "1 4 convicts booked for attacking accused in rape and murder case 10 • 1 week ago" [ref=e131] [cursor=pointer]:
+                    - /url: /article/4-convicts-booked-for-attacking-accused-in-rape-and-murder-case
+                    - generic [ref=e132]:
+                      - generic [ref=e134]: "1"
+                      - generic [ref=e135]:
+                        - heading "4 convicts booked for attacking accused in rape and murder case" [level=4] [ref=e136]
+                        - generic [ref=e137]:
+                          - generic [ref=e138]:
+                            - img [ref=e139]
+                            - text: "10"
+                          - generic [ref=e142]: •
+                          - generic [ref=e143]:
+                            - img [ref=e144]
+                            - text: 1 week ago
+                  - link "2 College student dies after getting stuck in temple car wheel in Tiruchengode 8 • 1 week ago" [ref=e147] [cursor=pointer]:
+                    - /url: /article/college-student-dies-after-getting-stuck-in-temple-car-wheel-in-tiruchengode
+                    - generic [ref=e148]:
+                      - generic [ref=e150]: "2"
+                      - generic [ref=e151]:
+                        - heading "College student dies after getting stuck in temple car wheel in Tiruchengode" [level=4] [ref=e152]
+                        - generic [ref=e153]:
+                          - generic [ref=e154]:
+                            - img [ref=e155]
+                            - text: "8"
+                          - generic [ref=e158]: •
+                          - generic [ref=e159]:
+                            - img [ref=e160]
+                            - text: 1 week ago
+                  - link "3 APTF seeks local cadre status for ZP teachers, warns of agitations 8 • 1 week ago" [ref=e163] [cursor=pointer]:
+                    - /url: /article/aptf-seeks-local-cadre-status-for-zp-teachers-warns-of-agitations
+                    - generic [ref=e164]:
+                      - generic [ref=e166]: "3"
+                      - generic [ref=e167]:
+                        - heading "APTF seeks local cadre status for ZP teachers, warns of agitations" [level=4] [ref=e168]
+                        - generic [ref=e169]:
+                          - generic [ref=e170]:
+                            - img [ref=e171]
+                            - text: "8"
+                          - generic [ref=e174]: •
+                          - generic [ref=e175]:
+                            - img [ref=e176]
+                            - text: 1 week ago
+                  - link "4 Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency 8 • 1 week ago" [ref=e179] [cursor=pointer]:
+                    - /url: /article/recruitment-exam-candidates-accuse-uttar-pradesh-govt-of-suppressing-drive-for-transparency
+                    - generic [ref=e180]:
+                      - generic [ref=e182]: "4"
+                      - generic [ref=e183]:
+                        - heading "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [level=4] [ref=e184]
+                        - generic [ref=e185]:
+                          - generic [ref=e186]:
+                            - img [ref=e187]
+                            - text: "8"
+                          - generic [ref=e190]: •
+                          - generic [ref=e191]:
+                            - img [ref=e192]
+                            - text: 1 week ago
+                  - link "5 The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban 7 • 1 week ago" [ref=e195] [cursor=pointer]:
+                    - /url: /article/the-voice-of-hind-rajab-to-receive-a-certificate-weeks-after-oral-ban
+                    - generic [ref=e196]:
+                      - generic [ref=e198]: "5"
+                      - generic [ref=e199]:
+                        - heading "The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban" [level=4] [ref=e200]
+                        - generic [ref=e201]:
+                          - generic [ref=e202]:
+                            - img [ref=e203]
+                            - text: "7"
+                          - generic [ref=e206]: •
+                          - generic [ref=e207]:
+                            - img [ref=e208]
+                            - text: 1 week ago
+                  - link "6 Bangalore Astronomical Society featured in Mann Ki Baat 5 • 1 week ago" [ref=e211] [cursor=pointer]:
+                    - /url: /article/bangalore-astronomical-society-featured-in-mann-ki-baat
+                    - generic [ref=e212]:
+                      - generic [ref=e214]: "6"
+                      - generic [ref=e215]:
+                        - heading "Bangalore Astronomical Society featured in Mann Ki Baat" [level=4] [ref=e216]
+                        - generic [ref=e217]:
+                          - generic [ref=e218]:
+                            - img [ref=e219]
+                            - text: "5"
+                          - generic [ref=e222]: •
+                          - generic [ref=e223]:
+                            - img [ref=e224]
+                            - text: 1 week ago
+                  - link "7 T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approvals 4 • 1 week ago" [ref=e227] [cursor=pointer]:
+                    - /url: /article/tn-government-announces-zero-tolerance-approach-towards-delays-in-sanctioning-building-plan-approvals
+                    - generic [ref=e228]:
+                      - generic [ref=e230]: "7"
+                      - generic [ref=e231]:
+                        - heading "T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approvals" [level=4] [ref=e232]
+                        - generic [ref=e233]:
+                          - generic [ref=e234]:
+                            - img [ref=e235]
+                            - text: "4"
+                          - generic [ref=e238]: •
+                          - generic [ref=e239]:
+                            - img [ref=e240]
+                            - text: 1 week ago
+                  - link "8 Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy 4 • 1 week ago" [ref=e243] [cursor=pointer]:
+                    - /url: /article/palaniswami-did-not-build-a-strong-alliance-to-garner-anti-incumbency-votes-says-pt-chief-k-krishnasamy
+                    - generic [ref=e244]:
+                      - generic [ref=e246]: "8"
+                      - generic [ref=e247]:
+                        - heading "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy" [level=4] [ref=e248]
+                        - generic [ref=e249]:
+                          - generic [ref=e250]:
+                            - img [ref=e251]
+                            - text: "4"
+                          - generic [ref=e254]: •
+                          - generic [ref=e255]:
+                            - img [ref=e256]
+                            - text: 1 week ago
+                  - link "9 BJP to host Nepal ruling party delegation in outreach to new govt. 4 • 1 week ago" [ref=e259] [cursor=pointer]:
+                    - /url: /article/bjp-to-host-nepal-ruling-party-delegation-in-outreach-to-new-govt
+                    - generic [ref=e260]:
+                      - generic [ref=e262]: "9"
+                      - generic [ref=e263]:
+                        - heading "BJP to host Nepal ruling party delegation in outreach to new govt." [level=4] [ref=e264]
+                        - generic [ref=e265]:
+                          - generic [ref=e266]:
+                            - img [ref=e267]
+                            - text: "4"
+                          - generic [ref=e270]: •
+                          - generic [ref=e271]:
+                            - img [ref=e272]
+                            - text: 1 week ago
+                  - link "10 White Paper on State govt.’s finances is being finalised 4 • 1 week ago" [ref=e275] [cursor=pointer]:
+                    - /url: /article/white-paper-on-state-govts-finances-is-being-finalised
+                    - generic [ref=e276]:
+                      - generic [ref=e278]: "10"
+                      - generic [ref=e279]:
+                        - heading "White Paper on State govt.’s finances is being finalised" [level=4] [ref=e280]
+                        - generic [ref=e281]:
+                          - generic [ref=e282]:
+                            - img [ref=e283]
+                            - text: "4"
+                          - generic [ref=e286]: •
+                          - generic [ref=e287]:
+                            - img [ref=e288]
+                            - text: 1 week ago
+                  - link "11 UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology 4 • 1 week ago" [ref=e291] [cursor=pointer]:
+                    - /url: /article/uas-b-launches-new-ug-programmes-in-natural-farming-forestry-and-biotechnology
+                    - generic [ref=e292]:
+                      - generic [ref=e294]: "11"
+                      - generic [ref=e295]:
+                        - heading "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [level=4] [ref=e296]
+                        - generic [ref=e297]:
+                          - generic [ref=e298]:
+                            - img [ref=e299]
+                            - text: "4"
+                          - generic [ref=e302]: •
+                          - generic [ref=e303]:
+                            - img [ref=e304]
+                            - text: 1 week ago
+                  - link "12 The apex court rings its own chain 4 • 1 week ago" [ref=e307] [cursor=pointer]:
+                    - /url: /article/the-apex-court-rings-its-own-chain
+                    - generic [ref=e308]:
+                      - generic [ref=e310]: "12"
+                      - generic [ref=e311]:
+                        - heading "The apex court rings its own chain" [level=4] [ref=e312]
+                        - generic [ref=e313]:
+                          - generic [ref=e314]:
+                            - img [ref=e315]
+                            - text: "4"
+                          - generic [ref=e318]: •
+                          - generic [ref=e319]:
+                            - img [ref=e320]
+                            - text: 1 week ago
+          - generic [ref=e324]:
+            - heading "Latest News" [level=2] [ref=e326]
+            - generic [ref=e327]:
+              - generic [ref=e328]:
+                - article [ref=e329]:
+                  - link "Bangalore Astronomical Society featured in Mann Ki Baat 0" [ref=e330] [cursor=pointer]:
+                    - /url: /article/bangalore-astronomical-society-featured-in-mann-ki-baat
+                    - img "Bangalore Astronomical Society featured in Mann Ki Baat" [ref=e331]
+                    - text: "0"
+                  - generic [ref=e332]:
+                    - link "Bangalore Astronomical Society featured in Mann Ki Baat" [ref=e333] [cursor=pointer]:
+                      - /url: /article/bangalore-astronomical-society-featured-in-mann-ki-baat
+                      - heading "Bangalore Astronomical Society featured in Mann Ki Baat" [level=3] [ref=e334]
+                    - generic [ref=e335]:
+                      - generic [ref=e336]:
+                        - generic [ref=e338] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e339]
+                        - generic [ref=e341]:
+                          - img [ref=e342]
+                          - generic [ref=e345]: 1 week ago
+                      - generic [ref=e346]:
+                        - img [ref=e347]
+                        - generic [ref=e350]: "5"
+                - article [ref=e351]:
+                  - link "College student dies after getting stuck in temple car wheel in Tiruchengode 0" [ref=e352] [cursor=pointer]:
+                    - /url: /article/college-student-dies-after-getting-stuck-in-temple-car-wheel-in-tiruchengode
+                    - img "College student dies after getting stuck in temple car wheel in Tiruchengode" [ref=e353]
+                    - text: "0"
+                  - generic [ref=e354]:
+                    - link "College student dies after getting stuck in temple car wheel in Tiruchengode" [ref=e355] [cursor=pointer]:
+                      - /url: /article/college-student-dies-after-getting-stuck-in-temple-car-wheel-in-tiruchengode
+                      - heading "College student dies after getting stuck in temple car wheel in Tiruchengode" [level=3] [ref=e356]
+                    - generic [ref=e357]:
+                      - generic [ref=e358]:
+                        - generic [ref=e360] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e361]
+                        - generic [ref=e363]:
+                          - img [ref=e364]
+                          - generic [ref=e367]: 1 week ago
+                      - generic [ref=e368]:
+                        - img [ref=e369]
+                        - generic [ref=e372]: "8"
+                - article [ref=e373]:
+                  - link "Image not available 0" [ref=e374] [cursor=pointer]:
+                    - /url: /article/aptf-seeks-local-cadre-status-for-zp-teachers-warns-of-agitations
+                    - img "Image not available" [ref=e376]
+                    - text: "0"
+                  - generic [ref=e377]:
+                    - link "APTF seeks local cadre status for ZP teachers, warns of agitations" [ref=e378] [cursor=pointer]:
+                      - /url: /article/aptf-seeks-local-cadre-status-for-zp-teachers-warns-of-agitations
+                      - heading "APTF seeks local cadre status for ZP teachers, warns of agitations" [level=3] [ref=e379]
+                    - generic [ref=e380]:
+                      - generic [ref=e381]:
+                        - generic [ref=e383] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e384]
+                        - generic [ref=e386]:
+                          - img [ref=e387]
+                          - generic [ref=e390]: 1 week ago
+                      - generic [ref=e391]:
+                        - img [ref=e392]
+                        - generic [ref=e395]: "8"
+                - article [ref=e396]:
+                  - link "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency 0" [ref=e397] [cursor=pointer]:
+                    - /url: /article/recruitment-exam-candidates-accuse-uttar-pradesh-govt-of-suppressing-drive-for-transparency
+                    - img "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [ref=e398]
+                    - text: "0"
+                  - generic [ref=e399]:
+                    - link "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [ref=e400] [cursor=pointer]:
+                      - /url: /article/recruitment-exam-candidates-accuse-uttar-pradesh-govt-of-suppressing-drive-for-transparency
+                      - heading "Recruitment exam candidates accuse Uttar Pradesh govt of suppressing drive for transparency" [level=3] [ref=e401]
+                    - generic [ref=e402]:
+                      - generic [ref=e403]:
+                        - generic [ref=e405] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e406]
+                        - generic [ref=e408]:
+                          - img [ref=e409]
+                          - generic [ref=e412]: 1 week ago
+                      - generic [ref=e413]:
+                        - img [ref=e414]
+                        - generic [ref=e417]: "8"
+                - article [ref=e418]:
+                  - link "4 convicts booked for attacking accused in rape and murder case 0" [ref=e419] [cursor=pointer]:
+                    - /url: /article/4-convicts-booked-for-attacking-accused-in-rape-and-murder-case
+                    - img "4 convicts booked for attacking accused in rape and murder case" [ref=e420]
+                    - text: "0"
+                  - generic [ref=e421]:
+                    - link "4 convicts booked for attacking accused in rape and murder case" [ref=e422] [cursor=pointer]:
+                      - /url: /article/4-convicts-booked-for-attacking-accused-in-rape-and-murder-case
+                      - heading "4 convicts booked for attacking accused in rape and murder case" [level=3] [ref=e423]
+                    - generic [ref=e424]:
+                      - generic [ref=e425]:
+                        - generic [ref=e427] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e428]
+                        - generic [ref=e430]:
+                          - img [ref=e431]
+                          - generic [ref=e434]: 1 week ago
+                      - generic [ref=e435]:
+                        - img [ref=e436]
+                        - generic [ref=e439]: "10"
+                - article [ref=e440]:
+                  - link "Image not available 0" [ref=e441] [cursor=pointer]:
+                    - /url: /article/tn-government-announces-zero-tolerance-approach-towards-delays-in-sanctioning-building-plan-approvals
+                    - img "Image not available" [ref=e443]
+                    - text: "0"
+                  - generic [ref=e444]:
+                    - link "T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approvals" [ref=e445] [cursor=pointer]:
+                      - /url: /article/tn-government-announces-zero-tolerance-approach-towards-delays-in-sanctioning-building-plan-approvals
+                      - heading "T.N. government announces zero-tolerance approach towards delays in sanctioning building plan approvals" [level=3] [ref=e446]
+                    - generic [ref=e447]:
+                      - generic [ref=e448]:
+                        - generic [ref=e450] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e451]
+                        - generic [ref=e453]:
+                          - img [ref=e454]
+                          - generic [ref=e457]: 1 week ago
+                      - generic [ref=e458]:
+                        - img [ref=e459]
+                        - generic [ref=e462]: "4"
+                - article [ref=e463]:
+                  - link "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy 0" [ref=e464] [cursor=pointer]:
+                    - /url: /article/palaniswami-did-not-build-a-strong-alliance-to-garner-anti-incumbency-votes-says-pt-chief-k-krishnasamy
+                    - img "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy" [ref=e465]
+                    - text: "0"
+                  - generic [ref=e466]:
+                    - link "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy" [ref=e467] [cursor=pointer]:
+                      - /url: /article/palaniswami-did-not-build-a-strong-alliance-to-garner-anti-incumbency-votes-says-pt-chief-k-krishnasamy
+                      - heading "Palaniswami did not build a strong alliance to garner anti-incumbency votes, says PT chief K. Krishnasamy" [level=3] [ref=e468]
+                    - generic [ref=e469]:
+                      - generic [ref=e470]:
+                        - generic [ref=e472] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e473]
+                        - generic [ref=e475]:
+                          - img [ref=e476]
+                          - generic [ref=e479]: 1 week ago
+                      - generic [ref=e480]:
+                        - img [ref=e481]
+                        - generic [ref=e484]: "4"
+                - article [ref=e485]:
+                  - link "BJP to host Nepal ruling party delegation in outreach to new govt. 0" [ref=e486] [cursor=pointer]:
+                    - /url: /article/bjp-to-host-nepal-ruling-party-delegation-in-outreach-to-new-govt
+                    - img "BJP to host Nepal ruling party delegation in outreach to new govt." [ref=e487]
+                    - text: "0"
+                  - generic [ref=e488]:
+                    - link "BJP to host Nepal ruling party delegation in outreach to new govt." [ref=e489] [cursor=pointer]:
+                      - /url: /article/bjp-to-host-nepal-ruling-party-delegation-in-outreach-to-new-govt
+                      - heading "BJP to host Nepal ruling party delegation in outreach to new govt." [level=3] [ref=e490]
+                    - generic [ref=e491]:
+                      - generic [ref=e492]:
+                        - generic [ref=e494] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e495]
+                        - generic [ref=e497]:
+                          - img [ref=e498]
+                          - generic [ref=e501]: 1 week ago
+                      - generic [ref=e502]:
+                        - img [ref=e503]
+                        - generic [ref=e506]: "4"
+                - article [ref=e507]:
+                  - link "Image not available 0" [ref=e508] [cursor=pointer]:
+                    - /url: /article/white-paper-on-state-govts-finances-is-being-finalised
+                    - img "Image not available" [ref=e510]
+                    - text: "0"
+                  - generic [ref=e511]:
+                    - link "White Paper on State govt.’s finances is being finalised" [ref=e512] [cursor=pointer]:
+                      - /url: /article/white-paper-on-state-govts-finances-is-being-finalised
+                      - heading "White Paper on State govt.’s finances is being finalised" [level=3] [ref=e513]
+                    - generic [ref=e514]:
+                      - generic [ref=e515]:
+                        - generic [ref=e517] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e518]
+                        - generic [ref=e520]:
+                          - img [ref=e521]
+                          - generic [ref=e524]: 1 week ago
+                      - generic [ref=e525]:
+                        - img [ref=e526]
+                        - generic [ref=e529]: "4"
+                - article [ref=e530]:
+                  - link "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology 0" [ref=e531] [cursor=pointer]:
+                    - /url: /article/uas-b-launches-new-ug-programmes-in-natural-farming-forestry-and-biotechnology
+                    - img "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [ref=e532]
+                    - text: "0"
+                  - generic [ref=e533]:
+                    - link "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [ref=e534] [cursor=pointer]:
+                      - /url: /article/uas-b-launches-new-ug-programmes-in-natural-farming-forestry-and-biotechnology
+                      - heading "UAS-B launches new UG programmes in Natural farming, Forestry and Biotechnology" [level=3] [ref=e535]
+                    - generic [ref=e536]:
+                      - generic [ref=e537]:
+                        - generic [ref=e539] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e540]
+                        - generic [ref=e542]:
+                          - img [ref=e543]
+                          - generic [ref=e546]: 1 week ago
+                      - generic [ref=e547]:
+                        - img [ref=e548]
+                        - generic [ref=e551]: "4"
+                - article [ref=e552]:
+                  - link "The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban 0" [ref=e553] [cursor=pointer]:
+                    - /url: /article/the-voice-of-hind-rajab-to-receive-a-certificate-weeks-after-oral-ban
+                    - img "The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban" [ref=e554]
+                    - text: "0"
+                  - generic [ref=e555]:
+                    - link "The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban" [ref=e556] [cursor=pointer]:
+                      - /url: /article/the-voice-of-hind-rajab-to-receive-a-certificate-weeks-after-oral-ban
+                      - heading "The Voice of Hind Rajab to receive ‘A’ certificate, weeks after oral ban" [level=3] [ref=e557]
+                    - generic [ref=e558]:
+                      - generic [ref=e559]:
+                        - generic [ref=e561] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e562]
+                        - generic [ref=e564]:
+                          - img [ref=e565]
+                          - generic [ref=e568]: 1 week ago
+                      - generic [ref=e569]:
+                        - img [ref=e570]
+                        - generic [ref=e573]: "7"
+                - article [ref=e574]:
+                  - link "The apex court rings its own chain 0" [ref=e575] [cursor=pointer]:
+                    - /url: /article/the-apex-court-rings-its-own-chain
+                    - img "The apex court rings its own chain" [ref=e576]
+                    - text: "0"
+                  - generic [ref=e577]:
+                    - link "The apex court rings its own chain" [ref=e578] [cursor=pointer]:
+                      - /url: /article/the-apex-court-rings-its-own-chain
+                      - heading "The apex court rings its own chain" [level=3] [ref=e579]
+                    - generic [ref=e580]:
+                      - generic [ref=e581]:
+                        - generic [ref=e583] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e584]
+                        - generic [ref=e586]:
+                          - img [ref=e587]
+                          - generic [ref=e590]: 1 week ago
+                      - generic [ref=e591]:
+                        - img [ref=e592]
+                        - generic [ref=e595]: "4"
+                - article [ref=e596]:
+                  - link "I always wondered if a tablet could really replace a laptop; the OnePlus Pad 4 answered it for me 0" [ref=e597] [cursor=pointer]:
+                    - /url: /article/i-always-wondered-if-a-tablet-could-really-replace-a-laptop-the-oneplus-pad-4-answered-it-for-me
+                    - img "I always wondered if a tablet could really replace a laptop; the OnePlus Pad 4 answered it for me" [ref=e598]
+                    - text: "0"
+                  - generic [ref=e599]:
+                    - link "I always wondered if a tablet could really replace a laptop; the OnePlus Pad 4 answered it for me" [ref=e600] [cursor=pointer]:
+                      - /url: /article/i-always-wondered-if-a-tablet-could-really-replace-a-laptop-the-oneplus-pad-4-answered-it-for-me
+                      - heading "I always wondered if a tablet could really replace a laptop; the OnePlus Pad 4 answered it for me" [level=3] [ref=e601]
+                    - generic [ref=e602]:
+                      - generic [ref=e603]:
+                        - generic [ref=e605] [cursor=pointer]:
+                          - text: Hindustan Times
+                          - img [ref=e606]
+                        - generic [ref=e608]:
+                          - img [ref=e609]
+                          - generic [ref=e612]: 1 week ago
+                      - generic [ref=e613]:
+                        - img [ref=e614]
+                        - generic [ref=e617]: "10"
+                - article [ref=e618]:
+                  - link "Image not available 0" [ref=e619] [cursor=pointer]:
+                    - /url: /article/emergency-operation-centres-activated-in-district-ahead-of-monsoon
+                    - img "Image not available" [ref=e621]
+                    - text: "0"
+                  - generic [ref=e622]:
+                    - link "Emergency operation centres activated in district ahead of monsoon" [ref=e623] [cursor=pointer]:
+                      - /url: /article/emergency-operation-centres-activated-in-district-ahead-of-monsoon
+                      - heading "Emergency operation centres activated in district ahead of monsoon" [level=3] [ref=e624]
+                    - generic [ref=e625]:
+                      - generic [ref=e626]:
+                        - generic [ref=e628] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e629]
+                        - generic [ref=e631]:
+                          - img [ref=e632]
+                          - generic [ref=e635]: 1 week ago
+                      - generic [ref=e636]:
+                        - img [ref=e637]
+                        - generic [ref=e640]: "5"
+                - article [ref=e641]:
+                  - 'link "Chand Mera Dil box office collection day 10: Lakshya, Ananya Panday film collects less than Hollywood release Obsession 0" [ref=e642] [cursor=pointer]':
+                    - /url: /article/chand-mera-dil-box-office-collection-day-10-lakshya-ananya-panday-film-collects-less-than-hollywood-release-obsession
+                    - 'img "Chand Mera Dil box office collection day 10: Lakshya, Ananya Panday film collects less than Hollywood release Obsession" [ref=e643]'
+                    - text: "0"
+                  - generic [ref=e644]:
+                    - 'link "Chand Mera Dil box office collection day 10: Lakshya, Ananya Panday film collects less than Hollywood release Obsession" [ref=e645] [cursor=pointer]':
+                      - /url: /article/chand-mera-dil-box-office-collection-day-10-lakshya-ananya-panday-film-collects-less-than-hollywood-release-obsession
+                      - 'heading "Chand Mera Dil box office collection day 10: Lakshya, Ananya Panday film collects less than Hollywood release Obsession" [level=3] [ref=e646]'
+                    - generic [ref=e647]:
+                      - generic [ref=e648]:
+                        - generic [ref=e650] [cursor=pointer]:
+                          - text: Hindustan Times
+                          - img [ref=e651]
+                        - generic [ref=e653]:
+                          - img [ref=e654]
+                          - generic [ref=e657]: 1 week ago
+                      - generic [ref=e658]:
+                        - img [ref=e659]
+                        - generic [ref=e662]: "7"
+                - article [ref=e663]:
+                  - link "Human trafficking feeds on migration, Supreme Court outs their 'close link’ 0" [ref=e664] [cursor=pointer]:
+                    - /url: /article/human-trafficking-feeds-on-migration-supreme-court-outs-their-close-link
+                    - img "Human trafficking feeds on migration, Supreme Court outs their 'close link’" [ref=e665]
+                    - text: "0"
+                  - generic [ref=e666]:
+                    - link "Human trafficking feeds on migration, Supreme Court outs their 'close link’" [ref=e667] [cursor=pointer]:
+                      - /url: /article/human-trafficking-feeds-on-migration-supreme-court-outs-their-close-link
+                      - heading "Human trafficking feeds on migration, Supreme Court outs their 'close link’" [level=3] [ref=e668]
+                    - generic [ref=e669]:
+                      - generic [ref=e670]:
+                        - generic [ref=e672] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e673]
+                        - generic [ref=e675]:
+                          - img [ref=e676]
+                          - generic [ref=e679]: 1 week ago
+                      - generic [ref=e680]:
+                        - img [ref=e681]
+                        - generic [ref=e684]: "4"
+                - article [ref=e685]:
+                  - link "Over 600 youngsters complete The Hindu FIC-AM/NS cricket coaching camp 0" [ref=e686] [cursor=pointer]:
+                    - /url: /article/over-600-youngsters-complete-the-hindu-fic-amns-cricket-coaching-camp
+                    - img "Over 600 youngsters complete The Hindu FIC-AM/NS cricket coaching camp" [ref=e687]
+                    - text: "0"
+                  - generic [ref=e688]:
+                    - link "Over 600 youngsters complete The Hindu FIC-AM/NS cricket coaching camp" [ref=e689] [cursor=pointer]:
+                      - /url: /article/over-600-youngsters-complete-the-hindu-fic-amns-cricket-coaching-camp
+                      - heading "Over 600 youngsters complete The Hindu FIC-AM/NS cricket coaching camp" [level=3] [ref=e690]
+                    - generic [ref=e691]:
+                      - generic [ref=e692]:
+                        - generic [ref=e694] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e695]
+                        - generic [ref=e697]:
+                          - img [ref=e698]
+                          - generic [ref=e701]: 1 week ago
+                      - generic [ref=e702]:
+                        - img [ref=e703]
+                        - generic [ref=e706]: "4"
+                - article [ref=e707]:
+                  - link "Image not available 0" [ref=e708] [cursor=pointer]:
+                    - /url: /article/rising-dengue-cases-cause-concern-in-thripunithura-municipality
+                    - img "Image not available" [ref=e710]
+                    - text: "0"
+                  - generic [ref=e711]:
+                    - link "Rising dengue cases cause concern in Thripunithura municipality" [ref=e712] [cursor=pointer]:
+                      - /url: /article/rising-dengue-cases-cause-concern-in-thripunithura-municipality
+                      - heading "Rising dengue cases cause concern in Thripunithura municipality" [level=3] [ref=e713]
+                    - generic [ref=e714]:
+                      - generic [ref=e715]:
+                        - generic [ref=e717] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e718]
+                        - generic [ref=e720]:
+                          - img [ref=e721]
+                          - generic [ref=e724]: 1 week ago
+                      - generic [ref=e725]:
+                        - img [ref=e726]
+                        - generic [ref=e729]: "4"
+                - article [ref=e730]:
+                  - link "The Hindu Huddle panel to throw light on AI and its impact 0" [ref=e731] [cursor=pointer]:
+                    - /url: /article/the-hindu-huddle-panel-to-throw-light-on-ai-and-its-impact
+                    - img "The Hindu Huddle panel to throw light on AI and its impact" [ref=e732]
+                    - text: "0"
+                  - generic [ref=e733]:
+                    - link "The Hindu Huddle panel to throw light on AI and its impact" [ref=e734] [cursor=pointer]:
+                      - /url: /article/the-hindu-huddle-panel-to-throw-light-on-ai-and-its-impact
+                      - heading "The Hindu Huddle panel to throw light on AI and its impact" [level=3] [ref=e735]
+                    - generic [ref=e736]:
+                      - generic [ref=e737]:
+                        - generic [ref=e739] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e740]
+                        - generic [ref=e742]:
+                          - img [ref=e743]
+                          - generic [ref=e746]: 1 week ago
+                      - generic [ref=e747]:
+                        - img [ref=e748]
+                        - generic [ref=e751]: "4"
+                - article [ref=e752]:
+                  - link "Trinamool calls off meeting as three-fourths of its MLAs fail to turn up 0" [ref=e753] [cursor=pointer]:
+                    - /url: /article/trinamool-calls-off-meeting-as-three-fourths-of-its-mlas-fail-to-turn-up
+                    - img "Trinamool calls off meeting as three-fourths of its MLAs fail to turn up" [ref=e754]
+                    - text: "0"
+                  - generic [ref=e755]:
+                    - link "Trinamool calls off meeting as three-fourths of its MLAs fail to turn up" [ref=e756] [cursor=pointer]:
+                      - /url: /article/trinamool-calls-off-meeting-as-three-fourths-of-its-mlas-fail-to-turn-up
+                      - heading "Trinamool calls off meeting as three-fourths of its MLAs fail to turn up" [level=3] [ref=e757]
+                    - generic [ref=e758]:
+                      - generic [ref=e759]:
+                        - generic [ref=e761] [cursor=pointer]:
+                          - text: The Hindu
+                          - img [ref=e762]
+                        - generic [ref=e764]:
+                          - img [ref=e765]
+                          - generic [ref=e768]: 1 week ago
+                      - generic [ref=e769]:
+                        - img [ref=e770]
+                        - generic [ref=e773]: "4"
+              - button "Load More" [ref=e775]
+          - complementary [ref=e776]:
+            - complementary [ref=e777]:
+              - generic [ref=e778]:
+                - heading "Trending News" [level=3] [ref=e779]:
+                  - img [ref=e780]
+                  - text: Trending News
+                - generic [ref=e783]:
+                  - 'link "1 1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day Hindustan Times • 1 month ago" [ref=e784] [cursor=pointer]':
+                    - /url: /article/1998-pokhran-nuclear-tests-reflected-indias-scientific-excellence-pm-modi-on-national-technology-day
+                    - generic [ref=e785]:
+                      - generic [ref=e787]: "1"
+                      - generic [ref=e788]:
+                        - 'heading "1998 Pokhran nuclear tests reflected India''s scientific excellence: PM Modi on National Technology Day" [level=4] [ref=e789]'
+                        - generic [ref=e790]:
+                          - generic [ref=e791]: Hindustan Times
+                          - generic [ref=e792]: •
+                          - generic [ref=e793]:
+                            - img [ref=e794]
+                            - text: 1 month ago
+                  - link "2 Stock markets slip more than 1% as U.S. rejects Iran’s response to peace deal The Hindu • 1 month ago" [ref=e797] [cursor=pointer]:
+                    - /url: /article/stock-markets-slip-more-than-1percent-as-us-rejects-irans-response-to-peace-deal
+                    - generic [ref=e798]:
+                      - generic [ref=e800]: "2"
+                      - generic [ref=e801]:
+                        - heading "Stock markets slip more than 1% as U.S. rejects Iran’s response to peace deal" [level=4] [ref=e802]
+                        - generic [ref=e803]:
+                          - generic [ref=e804]: The Hindu
+                          - generic [ref=e805]: •
+                          - generic [ref=e806]:
+                            - img [ref=e807]
+                            - text: 1 month ago
+                  - link "3 Can ChatGPT be charged in a murder? The Hindu • 1 month ago" [ref=e810] [cursor=pointer]:
+                    - /url: /article/can-chatgpt-be-charged-in-a-murder
+                    - generic [ref=e811]:
+                      - generic [ref=e813]: "3"
+                      - generic [ref=e814]:
+                        - heading "Can ChatGPT be charged in a murder?" [level=4] [ref=e815]
+                        - generic [ref=e816]:
+                          - generic [ref=e817]: The Hindu
+                          - generic [ref=e818]: •
+                          - generic [ref=e819]:
+                            - img [ref=e820]
+                            - text: 1 month ago
+                  - link "4 Australian tennis 'true legend' Anderson dies aged 91 The Hindu • 1 month ago" [ref=e823] [cursor=pointer]:
+                    - /url: /article/australian-tennis-true-legend-anderson-dies-aged-91
+                    - generic [ref=e824]:
+                      - generic [ref=e826]: "4"
+                      - generic [ref=e827]:
+                        - heading "Australian tennis 'true legend' Anderson dies aged 91" [level=4] [ref=e828]
+                        - generic [ref=e829]:
+                          - generic [ref=e830]: The Hindu
+                          - generic [ref=e831]: •
+                          - generic [ref=e832]:
+                            - img [ref=e833]
+                            - text: 1 month ago
+                  - link "5 Negative reviews, 'controlled' promotions 'scare' Hollywood blockbusters away from Cannes Film Festival 2026 Hindustan Times • 1 month ago" [ref=e836] [cursor=pointer]:
+                    - /url: /article/negative-reviews-controlled-promotions-scare-hollywood-blockbusters-away-from-cannes-film-festival-2026
+                    - generic [ref=e837]:
+                      - generic [ref=e839]: "5"
+                      - generic [ref=e840]:
+                        - heading "Negative reviews, 'controlled' promotions 'scare' Hollywood blockbusters away from Cannes Film Festival 2026" [level=4] [ref=e841]
+                        - generic [ref=e842]:
+                          - generic [ref=e843]: Hindustan Times
+                          - generic [ref=e844]: •
+                          - generic [ref=e845]:
+                            - img [ref=e846]
+                            - text: 1 month ago
+                  - link "6 Three of family dead in road accident in Karnataka's Belagavi - The Hindu News.google.com • 3 months ago" [ref=e849] [cursor=pointer]:
+                    - /url: /article/three-of-family-dead-in-road-accident-in-karnatakas-belagavi-the-hindu
+                    - generic [ref=e850]:
+                      - generic [ref=e852]: "6"
+                      - generic [ref=e853]:
+                        - heading "Three of family dead in road accident in Karnataka's Belagavi - The Hindu" [level=4] [ref=e854]
+                        - generic [ref=e855]:
+                          - generic [ref=e856]: News.google.com
+                          - generic [ref=e857]: •
+                          - generic [ref=e858]:
+                            - img [ref=e859]
+                            - text: 3 months ago
+                  - link "7 Calls for Lutnick's testimony in Epstein case renew as deleted photograph shows up on DoJ's website Firstpost.com • 3 months ago" [ref=e862] [cursor=pointer]:
+                    - /url: /article/calls-for-lutnicks-testimony-in-epstein-case-renew-as-deleted-photograph-shows-up-on-dojs-website
+                    - generic [ref=e863]:
+                      - generic [ref=e865]: "7"
+                      - generic [ref=e866]:
+                        - heading "Calls for Lutnick's testimony in Epstein case renew as deleted photograph shows up on DoJ's website" [level=4] [ref=e867]
+                        - generic [ref=e868]:
+                          - generic [ref=e869]: Firstpost.com
+                          - generic [ref=e870]: •
+                          - generic [ref=e871]:
+                            - img [ref=e872]
+                            - text: 3 months ago
+                  - 'link "8 Not wrong to give telecom powers to L-G as he is in charge of security: Jammu and Kashmir CM The Hindu • 1 month ago" [ref=e875] [cursor=pointer]':
+                    - /url: /article/not-wrong-to-give-telecom-powers-to-l-g-as-he-is-in-charge-of-security-jammu-and-kashmir-cm
+                    - generic [ref=e876]:
+                      - generic [ref=e878]: "8"
+                      - generic [ref=e879]:
+                        - 'heading "Not wrong to give telecom powers to L-G as he is in charge of security: Jammu and Kashmir CM" [level=4] [ref=e880]'
+                        - generic [ref=e881]:
+                          - generic [ref=e882]: The Hindu
+                          - generic [ref=e883]: •
+                          - generic [ref=e884]:
+                            - img [ref=e885]
+                            - text: 1 month ago
+                  - link "9 Dua Lipa says Samsung used her image to sell TVs without consent, files $15 million lawsuit Hindustan Times • 1 month ago" [ref=e888] [cursor=pointer]:
+                    - /url: /article/dua-lipa-says-samsung-used-her-image-to-sell-tvs-without-consent-files-dollar15-million-lawsuit
+                    - generic [ref=e889]:
+                      - generic [ref=e891]: "9"
+                      - generic [ref=e892]:
+                        - heading "Dua Lipa says Samsung used her image to sell TVs without consent, files $15 million lawsuit" [level=4] [ref=e893]
+                        - generic [ref=e894]:
+                          - generic [ref=e895]: Hindustan Times
+                          - generic [ref=e896]: •
+                          - generic [ref=e897]:
+                            - img [ref=e898]
+                            - text: 1 month ago
+                  - link "10 Canvas system is online after a cyberattack disrupted thousands of schools The Hindu • 1 month ago" [ref=e901] [cursor=pointer]:
+                    - /url: /article/canvas-system-is-online-after-a-cyberattack-disrupted-thousands-of-schools
+                    - generic [ref=e902]:
+                      - generic [ref=e904]: "10"
+                      - generic [ref=e905]:
+                        - heading "Canvas system is online after a cyberattack disrupted thousands of schools" [level=4] [ref=e906]
+                        - generic [ref=e907]:
+                          - generic [ref=e908]: The Hindu
+                          - generic [ref=e909]: •
+                          - generic [ref=e910]:
+                            - img [ref=e911]
+                            - text: 1 month ago
+    - contentinfo [ref=e914]:
+      - generic [ref=e916]:
+        - generic [ref=e917]:
+          - link "B Belgaum Today" [ref=e918] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e919]: B
+            - heading "Belgaum Today" [level=2] [ref=e921]
+          - paragraph [ref=e922]: Your trusted source for the latest news from Belgaum and beyond. We bring you accurate, timely, and relevant news from across India.
+          - generic [ref=e923]:
+            - link "Facebook" [ref=e924] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e925]
+            - link "Twitter" [ref=e927] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e928]
+            - link "Instagram" [ref=e930] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e931]
+            - link "Youtube" [ref=e934] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e935]
+        - generic [ref=e938]:
+          - heading "Categories" [level=3] [ref=e939]
+          - list [ref=e940]:
+            - listitem [ref=e941]:
+              - link "India" [ref=e942] [cursor=pointer]:
+                - /url: /india
+                - text: India
+            - listitem [ref=e944]:
+              - link "Business" [ref=e945] [cursor=pointer]:
+                - /url: /business
+                - text: Business
+            - listitem [ref=e947]:
+              - link "Technology" [ref=e948] [cursor=pointer]:
+                - /url: /technology
+                - text: Technology
+            - listitem [ref=e950]:
+              - link "Entertainment" [ref=e951] [cursor=pointer]:
+                - /url: /entertainment
+                - text: Entertainment
+            - listitem [ref=e953]:
+              - link "Sports" [ref=e954] [cursor=pointer]:
+                - /url: /sports
+                - text: Sports
+            - listitem [ref=e956]:
+              - link "Belgaum" [ref=e957] [cursor=pointer]:
+                - /url: /belgaum
+                - text: Belgaum
+        - generic [ref=e959]:
+          - heading "Quick Links" [level=3] [ref=e960]
+          - list [ref=e961]:
+            - listitem [ref=e962]:
+              - link "About Us" [ref=e963] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e964]:
+              - link "Search News" [ref=e965] [cursor=pointer]:
+                - /url: /search
+            - listitem [ref=e966]:
+              - link "RSS Feed" [ref=e967] [cursor=pointer]:
+                - /url: /feed.xml
+                - img [ref=e968]
+                - text: RSS Feed
+          - heading "Legal" [level=3] [ref=e972]
+          - list [ref=e973]:
+            - listitem [ref=e974]:
+              - link "Privacy Policy" [ref=e975] [cursor=pointer]:
+                - /url: /privacy-policy
+            - listitem [ref=e976]:
+              - link "Terms of Service" [ref=e977] [cursor=pointer]:
+                - /url: /terms-of-service
+            - listitem [ref=e978]:
+              - link "Disclaimer" [ref=e979] [cursor=pointer]:
+                - /url: /terms-of-service#disclaimer
+        - generic [ref=e980]:
+          - heading "Contact Us" [level=3] [ref=e981]
+          - list [ref=e982]:
+            - listitem [ref=e983]:
+              - img [ref=e984]
+              - generic [ref=e987]: Belgaum (Belagavi), Karnataka, India — 590001
+            - listitem [ref=e988]:
+              - img [ref=e989]
+              - link "+91 12345 6789" [ref=e991] [cursor=pointer]:
+                - /url: tel:+91123456789
+            - listitem [ref=e992]:
+              - img [ref=e993]
+              - link "ask@belgaum.today" [ref=e996] [cursor=pointer]:
+                - /url: mailto:ask@belgaum.today
+      - generic [ref=e999]:
+        - paragraph [ref=e1000]: © 2026 Belgaum Today. All rights reserved.
+        - generic [ref=e1001]:
+          - link "Privacy" [ref=e1002] [cursor=pointer]:
+            - /url: /privacy-policy
+          - generic [ref=e1003]: ·
+          - link "Terms" [ref=e1004] [cursor=pointer]:
+            - /url: /terms-of-service
+          - generic [ref=e1005]: ·
+          - link "About" [ref=e1006] [cursor=pointer]:
+            - /url: /about
+        - paragraph [ref=e1007]: Made with ❤️ in Belgaum
+  - button "Open Next.js Dev Tools" [ref=e1013] [cursor=pointer]:
+    - img [ref=e1014]
+  - alert [ref=e1017]
