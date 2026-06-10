@@ -134,7 +134,7 @@ export function Header() {
                         <Link
                             href="/search"
                             onClick={() => setIsMenuOpen(false)}
-                            className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all flex items-center gap-2"
+                            className="px-4 py-3 text-sm font-medium text-ink/80 hover:text-primary rounded-lg hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors flex items-center gap-2"
                         >
                             <Search className="w-4 h-4" />
                             Advanced Search

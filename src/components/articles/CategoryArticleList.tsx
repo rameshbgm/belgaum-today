@@ -103,14 +103,14 @@ export function CategoryArticleList({ initialArticles, category, subCategories }
 
             {/* No results message */}
             {filteredArticles.length === 0 && (
-                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="text-gray-400 dark:text-gray-500 mb-2">
+                <div className="text-center py-12 bg-surface border border-hairline rounded-lg">
+                    <div className="text-muted mb-2">
                         <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     </div>
-                    <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                    <p className="font-display text-lg font-medium text-ink">
                         No articles found
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    <p className="text-sm text-muted mt-2">
                         {searchQuery
                             ? `No results for "${searchQuery}" in ${selectedSubCategory !== 'all' ? selectedSubCategory : categoryMeta.name}`
                             : `No articles available in ${selectedSubCategory !== 'all' ? selectedSubCategory : categoryMeta.name}`}
@@ -132,7 +132,7 @@ export function CategoryArticleList({ initialArticles, category, subCategories }
             )}
 
             {!searchQuery && selectedSubCategory === 'all' && !hasMore && articles.length > 0 && (
-                <div className="mt-8 text-center text-gray-500 dark:text-gray-400">
+                <div className="mt-8 text-center text-muted">
                     No more articles to load
                 </div>
             )}

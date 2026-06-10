@@ -96,7 +96,7 @@ export function Sidebar({
 
             {/* Advertisement Space */}
             {showAds && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 p-8">
+                <div className="bg-surface rounded-lg border-2 border-dashed border-hairline p-8">
                     <div className="text-center">
                         <div className="mb-3">
                             <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
