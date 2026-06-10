@@ -26,7 +26,7 @@ interface TrendingCarouselProps {
     accentColor?: string; // e.g. 'orange', 'emerald'
 }
 
-export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingCarouselProps) {
+export function TrendingCarousel({ articles, accentColor = 'saffron' }: TrendingCarouselProps) {
     const [current, setCurrent] = useState(0);
     const [paused, setPaused] = useState(false);
     const total = articles.length;
@@ -46,6 +46,12 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
     const article = articles[current];
 
     const colorMap: Record<string, { badge: string; btn: string; dot: string; gradient: string }> = {
+        saffron: {
+            badge: 'bg-[#E8590C]',
+            btn: 'text-[#FDBA74] hover:text-[#FB923C]',
+            dot: 'bg-[#E8590C]',
+            gradient: 'from-[#1A1712] via-black/80',
+        },
         orange: {
             badge: 'bg-orange-500',
             btn: 'text-orange-400 hover:text-orange-300',
@@ -77,7 +83,7 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
             gradient: 'from-red-950 via-black/80',
         },
     };
-    const colors = colorMap[accentColor] || colorMap.orange;
+    const colors = colorMap[accentColor] || colorMap.saffron;
 
     // Source brand colors
     const sourceColors: Record<string, string> = {
@@ -120,7 +126,7 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
                 <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10">
                     {/* Badges */}
                     <div className="flex items-center gap-2 mb-4">
-                        <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full uppercase tracking-wider animate-pulse flex items-center gap-1">
+                        <span className={`px-3 py-1 ${colors.badge} text-white text-xs font-bold rounded-full uppercase tracking-wider flex items-center gap-1`}>
                             <TrendingUp className="w-3 h-3" />
                             Trending #{current + 1}
                         </span>
@@ -130,7 +136,7 @@ export function TrendingCarousel({ articles, accentColor = 'orange' }: TrendingC
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight max-w-3xl transition-colors">
+                    <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-3 leading-tight max-w-3xl transition-colors">
                         {article.title}
                     </h2>
 

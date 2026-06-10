@@ -22,10 +22,10 @@ export function BreakingNewsTicker({ articles, maxArticles = 10 }: BreakingNewsT
     const tickerArticles = articles.slice(0, maxArticles);
 
     return (
-        <section className="bg-gray-900 dark:bg-black border-y border-gray-800 overflow-hidden">
+        <section className="bg-[#1A1712] border-y border-[#322C24] overflow-hidden">
             <div className="flex items-center">
                 {/* Breaking Label */}
-                <span className="flex-shrink-0 bg-red-600 text-white text-xs font-bold px-4 py-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+                <span className="flex-shrink-0 bg-primary text-white text-xs font-bold px-4 py-2.5 flex items-center gap-1.5 uppercase tracking-wider">
                     <TrendingUp className="w-3.5 h-3.5 animate-pulse" />
                     Breaking
                 </span>
@@ -42,9 +42,9 @@ export function BreakingNewsTicker({ articles, maxArticles = 10 }: BreakingNewsT
                                 rel="noopener noreferrer"
                                 data-article-id={article.id}
                                 data-source-name={article.source_name}
-                                className="inline-flex items-center text-sm text-gray-300 hover:text-white transition-colors mx-8 flex-shrink-0 group"
+                                className="inline-flex items-center text-sm text-[#C9C1B4] hover:text-white transition-colors mx-8 flex-shrink-0 group"
                             >
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-2 flex-shrink-0 group-hover:scale-125 transition-transform" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent mr-2 flex-shrink-0 group-hover:scale-125 transition-transform" />
                                 {truncate(article.title, 100)}
                             </a>
                         ))}
