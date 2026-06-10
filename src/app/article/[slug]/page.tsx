@@ -184,14 +184,14 @@ export default async function ArticlePage({ params }: Props) {
 
             <article className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Breadcrumb */}
-                <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <nav className="flex items-center gap-2 text-sm text-muted mb-6">
+                    <Link href="/" className="hover:text-primary transition-colors">
                         Home
                     </Link>
                     <ChevronRight className="w-4 h-4" />
                     <Link
                         href={`/${article.category}`}
-                        className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="hover:text-primary transition-colors"
                     >
                         {categoryMeta.name}
                     </Link>
@@ -212,12 +212,12 @@ export default async function ArticlePage({ params }: Props) {
                     </div>
 
                     {/* Title */}
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+                    <h1 className="font-display text-3xl md:text-5xl font-bold text-ink mb-4 leading-tight">
                         {article.title}
                     </h1>
 
                     {/* Meta */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted mb-6">
                         <span className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4" />
                             {formatDate(article.published_at || article.created_at)}
@@ -273,18 +273,18 @@ export default async function ArticlePage({ params }: Props) {
                 })()}
 
                 {/* Source Attribution Box */}
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-6 mb-8 border border-blue-200 dark:border-blue-800">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <div className="bg-[#F4FBFA] dark:bg-teal-900/15 rounded-xl p-6 mb-8 border border-teal-200/60 dark:border-teal-800/60">
+                    <h3 className="font-display text-lg font-semibold text-ink mb-2">
                         Original Source
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <p className="text-muted mb-4">
                         This article was originally published by <strong>{article.source_name}</strong>.
                     </p>
                     <a
                         href={article.source_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium rounded-lg hover:bg-teal-800 transition-colors"
                     >
                         Read Original Article
                         <ExternalLink className="w-4 h-4" />
@@ -294,7 +294,7 @@ export default async function ArticlePage({ params }: Props) {
                 {/* Related Articles */}
                 {relatedArticles.length > 0 && (
                     <section className="mt-12">
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                        <h2 className="font-display text-2xl md:text-3xl font-bold text-ink mb-6">
                             Related Articles
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

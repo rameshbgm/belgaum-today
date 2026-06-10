@@ -8,7 +8,7 @@ export default function NotFound() {
             <div className="text-center">
                 {/* 404 Graphic */}
                 <div className="relative mb-8">
-                    <div className="text-[150px] md:text-[200px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 opacity-20 select-none">
+                    <div className="font-display text-[150px] md:text-[200px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#E8590C] to-[#C2410C] opacity-25 select-none">
                         404
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -17,10 +17,10 @@ export default function NotFound() {
                 </div>
 
                 {/* Message */}
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-ink mb-4">
                     Page Not Found
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                <p className="text-muted mb-8 max-w-md mx-auto">
                     Oops! The page you&apos;re looking for doesn&apos;t exist. It might have been moved, deleted, or perhaps never existed in the first place.
                 </p>
 
@@ -35,7 +35,7 @@ export default function NotFound() {
                 </div>
 
                 {/* Quick Links */}
-                <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <div className="mt-12 pt-8 border-t border-hairline">
                   
                 </div>
             </div>

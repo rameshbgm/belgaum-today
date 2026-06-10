@@ -26,29 +26,29 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
             name: 'Twitter',
             icon: Twitter,
             href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-            color: 'hover:bg-sky-500',
-            bgColor: 'bg-sky-500/10',
+            color: 'hover:bg-primary',
+            bgColor: 'bg-primary/10',
         },
         {
             name: 'Facebook',
             icon: Facebook,
             href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-            color: 'hover:bg-blue-600',
-            bgColor: 'bg-blue-600/10',
+            color: 'hover:bg-primary',
+            bgColor: 'bg-primary/10',
         },
         {
             name: 'LinkedIn',
             icon: Linkedin,
             href: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`,
-            color: 'hover:bg-blue-700',
-            bgColor: 'bg-blue-700/10',
+            color: 'hover:bg-accent',
+            bgColor: 'bg-accent/10',
         },
         {
             name: 'WhatsApp',
             icon: MessageCircle,
             href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-            color: 'hover:bg-green-500',
-            bgColor: 'bg-green-500/10',
+            color: 'hover:bg-accent',
+            bgColor: 'bg-accent/10',
         },
     ];
 
@@ -74,7 +74,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 
     return (
         <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400 mr-1">Share:</span>
+            <span className="text-sm font-medium text-muted mr-1">Share:</span>
 
             {shareLinks.map((link) => (
                 <a
@@ -82,7 +82,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`p-2 rounded-lg ${link.bgColor} ${link.color} hover:text-white text-gray-600 dark:text-gray-400 transition-all duration-200`}
+                    className={`p-2 rounded-lg ${link.bgColor} ${link.color} hover:text-white text-muted transition-all duration-200`}
                     aria-label={`Share on ${link.name}`}
                 >
                     <link.icon className="w-4 h-4" />
@@ -93,7 +93,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
                 onClick={copyToClipboard}
                 className={`p-2 rounded-lg transition-all duration-200 ${copied
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400'
+                        : 'bg-[#F3EEE4] dark:bg-[#2A251E] hover:bg-primary/10 text-muted'
                     }`}
                 aria-label="Copy link"
             >
@@ -103,7 +103,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
             {canShare && (
                 <button
                     onClick={handleShare}
-                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-all duration-200"
+                    className="p-2 rounded-lg bg-[#F3EEE4] dark:bg-[#2A251E] hover:bg-primary/10 text-muted transition-all duration-200"
                     aria-label="Share"
                 >
                     <Share2 className="w-4 h-4" />
