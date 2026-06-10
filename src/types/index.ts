@@ -128,31 +128,31 @@ export const CATEGORY_META: Record<Category, { name: string; description: string
   india: {
     name: 'India',
     description: 'Latest news from across India',
-    color: '#FF9933'
+    color: '#E8590C'
   },
   business: {
     name: 'Business',
     description: 'Business and economy updates',
-    color: '#4CAF50'
+    color: '#0F766E'
   },
   technology: {
     name: 'Technology',
     description: 'Tech news and innovations',
-    color: '#2196F3'
+    color: '#1D4ED8'
   },
   entertainment: {
     name: 'Entertainment',
     description: 'Movies, music, and pop culture',
-    color: '#E91E63'
+    color: '#BE123C'
   },
   sports: {
     name: 'Sports',
     description: 'Sports news and updates',
-    color: '#FF5722'
+    color: '#15803D'
   },
   belgaum: {
     name: 'Belgaum',
     description: 'Local news from Belgaum region',
-    color: '#9C27B0'
+    color: '#B45309'
   }
 };
