@@ -43,3 +43,7 @@ next-env.d.ts
 # Application logs
 /logs/
 *.log
+
+# Playwright MCP QA artifacts
+.playwright-mcp/
+home-desktop.png
