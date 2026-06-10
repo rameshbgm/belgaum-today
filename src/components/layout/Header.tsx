@@ -41,10 +41,10 @@ export function Header() {
     return (
         <header
             className={cn(
-                'sticky top-0 z-50 transition-all duration-300',
+                'sticky top-0 z-50 transition-all duration-300 border-b border-hairline',
                 isScrolled
-                    ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg shadow-lg'
-                    : 'bg-white dark:bg-gray-900'
+                    ? 'bg-background/85 backdrop-blur-lg shadow-sm'
+                    : 'bg-background'
             )}
         >
             {/* Top Bar removed per request */}
@@ -64,15 +64,10 @@ export function Header() {
                             />
                         </div>
                         <div>
-
-                            <span className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-center tracking-wide drop-shadow-[0_0_8px_rgba(147,51,234,0.5)]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', textShadow: '0 0 10px rgba(147,51,234,0.6), 0 0 20px rgba(147,51,234,0.4), 0 0 30px rgba(147,51,234,0.2)' }}>
-                             <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                                Belgaum <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Today</span>
+                            <h1 className="font-display text-xl font-bold text-ink leading-none">
+                                Belgaum <span className="text-primary">Today</span>
                             </h1>
-                        </span>
-
-                           
-                            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-0.5">Local News, Global Standards</p>
+                            <p className="text-[11px] text-muted mt-0.5 tracking-wide">Local News, Global Standards</p>
                         </div>
                     </Link>
 
@@ -82,14 +77,14 @@ export function Header() {
                             <Link
                                 key={cat}
                                 href={`/${cat}`}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                                className="px-3 py-2 text-sm font-medium text-ink/80 hover:text-primary rounded-md hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors"
                             >
                                 {CATEGORY_META[cat].name}
                             </Link>
                         ))}
                         <Link
                             href="/search"
-                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all flex items-center gap-1"
+                            className="px-3 py-2 text-sm font-medium text-ink/80 hover:text-primary rounded-md hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors flex items-center gap-1"
                         >
                             <Search className="w-4 h-4" />
                             Search
@@ -100,7 +95,7 @@ export function Header() {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={toggleDarkMode}
-                            className="p-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            className="p-2 rounded-lg text-ink hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors"
                             aria-label="Toggle dark mode"
                         >
                             {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -109,7 +104,7 @@ export function Header() {
                         {/* Mobile Menu Button */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="lg:hidden p-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            className="lg:hidden p-2 rounded-lg text-ink hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors"
                             aria-label="Toggle menu"
                         >
                             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -120,14 +115,14 @@ export function Header() {
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <nav className="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 animate-slide-down">
+                <nav className="lg:hidden border-t border-hairline bg-background animate-slide-down">
                     <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
                         {categories.map((cat) => (
                             <Link
                                 key={cat}
                                 href={`/${cat}`}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all flex items-center gap-2"
+                                className="px-4 py-3 text-sm font-medium text-ink/80 hover:text-primary rounded-lg hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-colors flex items-center gap-2"
                             >
                                 <span
                                     className="w-2 h-2 rounded-full"
