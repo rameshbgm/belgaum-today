@@ -107,20 +107,20 @@ export default async function HomePage() {
       <div className="container mx-auto px-4 py-8">
       {/* Trending Carousel */}
       {trendingArticles.length > 0 && (
-        <section className="mb-10">
+        <section className="mb-12">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🔥</span>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-ink">
               Trending Now
             </h2>
           </div>
-          <TrendingCarousel articles={trendingArticles} accentColor="#3b82f6" />
+          <TrendingCarousel articles={trendingArticles} accentColor="saffron" />
         </section>
       )}
 
       {/* Featured Article */}
       {featured && (
-        <section className="mb-10">
+        <section className="mb-12">
           <FeaturedArticle article={featured} />
         </section>
       )}
@@ -130,7 +130,7 @@ export default async function HomePage() {
         {/* Main Content - Shows first on mobile */}
         <section className="lg:hidden mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-ink">
               Latest News
             </h2>
           </div>
