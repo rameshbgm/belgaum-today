@@ -150,7 +150,7 @@ export function CategoryPageClient({
 
                     {/* Title Row with Search */}
                     <div className="flex items-center justify-between gap-4 mb-4">
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
                             {categoryMeta.name}
                         </h1>
 
@@ -218,14 +218,14 @@ export function CategoryPageClient({
 
                         {/* No results message */}
                         {filteredArticles.length === 0 && (
-                            <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <div className="text-gray-400 dark:text-gray-500 mb-2">
+                            <div className="text-center py-12 bg-surface rounded-lg border border-hairline">
+                                <div className="text-muted mb-2">
                                     <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                 </div>
-                                <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+                                <p className="text-lg font-medium text-ink">
                                     No articles found
                                 </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                <p className="text-sm text-muted mt-2">
                                     {searchQuery
                                         ? `No results for "${searchQuery}"`
                                         : `No articles in ${selectedSubCategory !== 'all' ? subCategories.find(s => s.id === selectedSubCategory)?.label : categoryMeta.name}`}
@@ -239,7 +239,7 @@ export function CategoryPageClient({
                                 <Button
                                     onClick={loadMore}
                                     disabled={loading}
-                                    className="px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                                    className="px-8 py-3 bg-primary text-white hover:bg-primary-hover"
                                 >
                                     {loading ? 'Loading...' : 'Load More'}
                                 </Button>
@@ -247,7 +247,7 @@ export function CategoryPageClient({
                         )}
 
                         {!searchQuery && selectedSubCategory === 'all' && !hasMore && articles.length > 0 && (
-                            <div className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                            <div className="mt-8 text-center text-muted text-sm">
                                 No more articles to load
                             </div>
                         )}

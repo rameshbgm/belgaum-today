@@ -55,7 +55,7 @@ export function CategorySearchHeader({
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: categoryColor }}
                         />
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <h2 className="font-display text-2xl font-bold text-ink">
                             {categoryName}
                         </h2>
                     </div>
@@ -71,13 +71,13 @@ export function CategorySearchHeader({
                                         placeholder={`Search in ${categoryName}...`}
                                         value={searchQuery}
                                         onChange={(e) => onSearchChange(e.target.value)}
-                                        className="pl-10 pr-4 py-2 w-64 md:w-80 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        className="pl-10 pr-4 py-2 w-64 md:w-80 rounded-lg border border-hairline bg-surface text-ink focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                         autoFocus
                                     />
                                 </div>
                                 <button
                                     onClick={handleSearchToggle}
-                                    className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+                                    className="p-2 rounded-lg text-muted hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-all"
                                     aria-label="Close search"
                                 >
                                     <X className="w-5 h-5" />
@@ -86,7 +86,7 @@ export function CategorySearchHeader({
                         ) : (
                             <button
                                 onClick={handleSearchToggle}
-                                className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex items-center gap-2"
+                                className="p-2 rounded-lg text-muted hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] transition-all flex items-center gap-2"
                                 aria-label="Open search"
                             >
                                 <Search className="w-5 h-5" />
@@ -105,7 +105,7 @@ export function CategorySearchHeader({
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                 selectedSubCategory === subCat.id
                                     ? 'text-white'
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    : 'bg-surface text-ink hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E]'
                             }`}
                             style={{
                                 backgroundColor: selectedSubCategory === subCat.id ? categoryColor : undefined,
@@ -118,7 +118,7 @@ export function CategorySearchHeader({
 
                 {/* Search Results Count */}
                 {searchQuery && (
-                    <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="mt-3 text-sm text-muted">
                         Searching for: <span className="font-medium">&quot;{searchQuery}&quot;</span>
                     </div>
                 )}
