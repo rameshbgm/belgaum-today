@@ -13,10 +13,10 @@ export function ArticleGrid({ articles, priority = false, columns = 3, compact =
         return (
             <div className="text-center py-12">
                 <div className="text-6xl mb-4">📭</div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="font-display text-xl font-semibold text-ink mb-2">
                     No articles found
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-muted">
                     Check back later for more news updates.
                 </p>
             </div>

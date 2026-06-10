@@ -70,7 +70,7 @@ export function ArticleList({ initialArticles, category, columns = 3, compact = 
             )}
             
             {!hasMore && articles.length > 0 && (
-                <div className="mt-8 text-center text-gray-500 dark:text-gray-400">
+                <div className="mt-8 text-center text-muted">
                     No more articles to load
                 </div>
             )}

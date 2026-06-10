@@ -27,10 +27,10 @@ export default function Error({ error, reset }: ErrorProps) {
                 </div>
 
                 {/* Message */}
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                <h1 className="font-display text-3xl md:text-4xl font-bold text-ink mb-4">
                     Something went wrong!
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                <p className="text-muted mb-8 max-w-md mx-auto">
                     We apologize for the inconvenience. An unexpected error occurred while loading this page.
                 </p>
 
@@ -63,9 +63,9 @@ export default function Error({ error, reset }: ErrorProps) {
                 </div>
 
                 {/* Support */}
-                <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-8 text-sm text-muted">
                     If this problem persists, please contact{' '}
-                    <a href="mailto:support@belgaum.today" className="text-blue-600 hover:underline">
+                    <a href="mailto:support@belgaum.today" className="text-accent hover:underline">
                         support@belgaum.today
                     </a>
                 </p>
