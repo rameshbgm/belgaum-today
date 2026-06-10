@@ -8,19 +8,19 @@ export function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="bg-gray-900 text-gray-300">
+        <footer className="bg-[#1A1712] text-[#C9C1B4]">
             {/* Main Footer */}
             <div className="container mx-auto px-4 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {/* Brand */}
                     <div>
                         <Link href="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg">
                                 B
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">
-                                    Belgaum <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Today</span>
+                                <h2 className="font-display text-xl font-bold text-white">
+                                    Belgaum <span className="text-primary">Today</span>
                                 </h2>
                             </div>
                         </Link>
@@ -28,16 +28,16 @@ export function Footer() {
                             Your trusted source for the latest news from Belgaum and beyond. We bring you accurate, timely, and relevant news from across India.
                         </p>
                         <div className="flex gap-3">
-                            <a href="#" className="p-2 rounded-lg bg-gray-800 hover:bg-blue-600 transition-colors" aria-label="Facebook">
+                            <a href="#" className="p-2 rounded-lg bg-white/10 hover:bg-primary transition-colors" aria-label="Facebook">
                                 <Facebook className="w-5 h-5" />
                             </a>
-                            <a href="#" className="p-2 rounded-lg bg-gray-800 hover:bg-sky-500 transition-colors" aria-label="Twitter">
+                            <a href="#" className="p-2 rounded-lg bg-white/10 hover:bg-primary transition-colors" aria-label="Twitter">
                                 <Twitter className="w-5 h-5" />
                             </a>
-                            <a href="#" className="p-2 rounded-lg bg-gray-800 hover:bg-pink-600 transition-colors" aria-label="Instagram">
+                            <a href="#" className="p-2 rounded-lg bg-white/10 hover:bg-primary transition-colors" aria-label="Instagram">
                                 <Instagram className="w-5 h-5" />
                             </a>
-                            <a href="#" className="p-2 rounded-lg bg-gray-800 hover:bg-red-600 transition-colors" aria-label="Youtube">
+                            <a href="#" className="p-2 rounded-lg bg-white/10 hover:bg-primary transition-colors" aria-label="Youtube">
                                 <Youtube className="w-5 h-5" />
                             </a>
                         </div>
@@ -110,15 +110,15 @@ export function Footer() {
                         <h3 className="text-lg font-semibold text-white mb-4">Contact Us</h3>
                         <ul className="space-y-3">
                             <li className="flex items-start gap-3 text-sm text-gray-400">
-                                <MapPin className="w-5 h-5 flex-shrink-0 text-blue-400" />
+                                <MapPin className="w-5 h-5 flex-shrink-0 text-accent" />
                                 <span>Belgaum (Belagavi), Karnataka, India — 590001</span>
                             </li>
                             <li className="flex items-center gap-3 text-sm text-gray-400">
-                                <Phone className="w-5 h-5 flex-shrink-0 text-blue-400" />
+                                <Phone className="w-5 h-5 flex-shrink-0 text-accent" />
                                 <a href="tel:+91123456789" className="hover:text-white transition-colors">+91 12345 6789</a>
                             </li>
                             <li className="flex items-center gap-3 text-sm text-gray-400">
-                                <Mail className="w-5 h-5 flex-shrink-0 text-blue-400" />
+                                <Mail className="w-5 h-5 flex-shrink-0 text-accent" />
                                 <a href="mailto:ask@belgaum.today" className="hover:text-white transition-colors">ask@belgaum.today</a>
                             </li>
                         </ul>
@@ -127,7 +127,7 @@ export function Footer() {
             </div>
 
             {/* Bottom Bar */}
-            <div className="border-t border-gray-800">
+            <div className="border-t border-white/10">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
                         <p>© {currentYear} Belgaum Today. All rights reserved.</p>
