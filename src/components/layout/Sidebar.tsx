@@ -50,9 +50,9 @@ export function Sidebar({
         <aside className="space-y-6">
             {/* Most Viewed Articles */}
             {mostViewedArticles.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        <Eye className="w-5 h-5 text-blue-500" />
+                <div className="bg-surface rounded-lg border border-hairline p-5">
+                    <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink mb-4">
+                        <Eye className="w-5 h-5 text-accent" />
                         Most Viewed
                     </h3>
                     <div className="space-y-4">
@@ -65,17 +65,17 @@ export function Sidebar({
                                 <div className="flex gap-3">
                                     {/* Rank Badge */}
                                     <div className="flex-shrink-0">
-                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-white text-xs flex items-center justify-center font-bold">
+                                        <span className="w-7 h-7 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">
                                             {index + 1}
                                         </span>
                                     </div>
                                     
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-1">
+                                        <h4 className="text-sm font-semibold text-ink group-hover:text-primary transition-colors line-clamp-2 mb-1">
                                             {article.title}
                                         </h4>
-                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-2 text-xs text-muted">
                                             <span className="flex items-center gap-1">
                                                 <Eye className="w-3 h-3" />
                                                 {formatNumber(article.view_count)}
@@ -119,9 +119,9 @@ export function Sidebar({
 
             {/* Trending Articles */}
             {trendingArticles.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        <TrendingUp className="w-5 h-5 text-red-500" />
+                <div className="bg-surface rounded-lg border border-hairline p-5">
+                    <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink mb-4">
+                        <TrendingUp className="w-5 h-5 text-primary" />
                         Trending News
                     </h3>
                     <div className="space-y-4">
@@ -134,17 +134,17 @@ export function Sidebar({
                                 <div className="flex gap-3">
                                     {/* Rank Badge */}
                                     <div className="flex-shrink-0">
-                                        <span className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-orange-500 text-white text-xs flex items-center justify-center font-bold">
+                                        <span className="w-7 h-7 rounded-full bg-primary text-white text-xs flex items-center justify-center font-bold">
                                             {index + 1}
                                         </span>
                                     </div>
                                     
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-1">
+                                        <h4 className="text-sm font-semibold text-ink group-hover:text-primary transition-colors line-clamp-2 mb-1">
                                             {article.title}
                                         </h4>
-                                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-2 text-xs text-muted">
                                             <span className="truncate">{article.source_name}</span>
                                             <span>•</span>
                                             <span className="flex items-center gap-1">
@@ -162,9 +162,9 @@ export function Sidebar({
 
             {/* Categories */}
             {showCategories && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        <Tag className="w-5 h-5 text-purple-500" />
+                <div className="bg-surface rounded-lg border border-hairline p-5">
+                    <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink mb-4">
+                        <Tag className="w-5 h-5 text-accent" />
                         Categories
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -186,7 +186,7 @@ export function Sidebar({
 
             {/* RSS Subscribe */}
             {showRss && (
-                <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-5 text-white">
+                <div className="bg-accent rounded-lg p-5 text-white">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-white/20 rounded-lg">
                             <Rss className="w-6 h-6" />
@@ -198,7 +198,7 @@ export function Sidebar({
                     </div>
                     <Link
                         href="/feed.xml"
-                        className="block w-full py-2 px-4 bg-white text-blue-600 text-center font-medium rounded-lg hover:bg-white/90 transition-colors"
+                        className="block w-full py-2 px-4 bg-white text-accent text-center font-medium rounded-lg hover:bg-white/90 transition-colors"
                     >
                         Get RSS Feed
                     </Link>
