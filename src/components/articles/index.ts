@@ -8,5 +8,10 @@ export { CategoryArticleList } from './CategoryArticleList';
 export { CategorySearchHeader } from './CategorySearchHeader';
 export { CategoryPageClient } from './CategoryPageClient';
 export { ArticleViewTracker } from './ArticleViewTracker';
+export { LeadStory } from './LeadStory';
+export { LatestRail } from './LatestRail';
+export { MostRead } from './MostRead';
+export { StoryCard } from './StoryCard';
+export { SectionHeading } from './SectionHeading';
 export type { SubCategory } from './CategorySearchHeader';
 
