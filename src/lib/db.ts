@@ -34,13 +34,16 @@ function logDbError(operation: string, sql: string, error: unknown) {
     });
 }
 
+// mysql2's accepted bind-parameter values (newer versions reject unknown[])
+type SqlParam = string | number | boolean | null | Date | Buffer;
+
 // Query helper with automatic connection handling
 export async function query<T = unknown>(
     sql: string,
     params?: unknown[]
 ): Promise<T> {
     try {
-        const [rows] = await pool.execute(sql, params);
+        const [rows] = await pool.execute(sql, params as SqlParam[] | undefined);
         return rows as T;
     } catch (error) {
         logDbError('QUERY', sql, error);
@@ -68,7 +71,7 @@ export async function insert(
     params?: unknown[]
 ): Promise<number> {
     try {
-        const [result] = await pool.execute(sql, params);
+        const [result] = await pool.execute(sql, params as SqlParam[] | undefined);
         return (result as mysql.ResultSetHeader).insertId;
     } catch (error) {
         logDbError('INSERT', sql, error);
@@ -82,7 +85,7 @@ export async function execute(
     params?: unknown[]
 ): Promise<number> {
     try {
-        const [result] = await pool.execute(sql, params);
+        const [result] = await pool.execute(sql, params as SqlParam[] | undefined);
         return (result as mysql.ResultSetHeader).affectedRows;
     } catch (error) {
         logDbError('EXECUTE', sql, error);
