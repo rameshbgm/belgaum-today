@@ -140,21 +140,23 @@ function LoginForm() {
                     </Button>
                 </form>
 
-                {/* Quick Login */}
-                <div className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                    <p className="text-xs text-center text-gray-400 mb-2 uppercase tracking-wider">Quick Login</p>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEmail('admin@belgaum.today');
-                            setPassword('admin123');
-                            setErrors({});
-                        }}
-                        className="w-full text-sm text-blue-300 hover:text-blue-200 transition-colors cursor-pointer text-center font-medium"
-                    >
-                        admin@belgaum.today / admin123
-                    </button>
-                </div>
+                {/* Demo Credentials - Quick Fill (development only) */}
+                {process.env.NEXT_PUBLIC_APP_ENV !== 'production' && (
+                    <div className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                        <p className="text-xs text-center text-gray-400 mb-2 uppercase tracking-wider">Quick Login (dev only)</p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setEmail('admin@belgaum.today');
+                                setPassword('admin123');
+                                setErrors({});
+                            }}
+                            className="w-full text-sm text-blue-300 hover:text-blue-200 transition-colors cursor-pointer text-center font-medium"
+                        >
+                            admin@belgaum.today / admin123
+                        </button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
