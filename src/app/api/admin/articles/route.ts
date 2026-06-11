@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, execute } from '@/lib/db';
+import { query, execute, insert } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
+import { generateSlug, calculateReadingTime } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,14 +58,113 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         return NextResponse.json({
             success: true,
-            data: articles,
-            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+            data: {
+                items: articles,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
         });
     } catch (error) {
         console.error('Error fetching articles:', error);
         return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
 });
+
+/**
+ * POST /api/admin/articles — Create a new article or blog post
+ */
+export const POST = withLogging(async (request: NextRequest) => {
+    try {
+        const user = await getCurrentUser();
+        if (!user || (user.role !== 'admin' && user.role !== 'editor')) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const {
+            title,
+            excerpt,
+            content,
+            featured_image,
+            category,
+            source_name,
+            source_url,
+            status = 'draft',
+            featured = false,
+            is_blog = false,
+            tags = [],
+        } = body;
+
+        if (!title?.trim()) {
+            return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
+        }
+        if (!content?.trim()) {
+            return NextResponse.json({ success: false, error: 'Content is required' }, { status: 400 });
+        }
+        if (!category) {
+            return NextResponse.json({ success: false, error: 'Category is required' }, { status: 400 });
+        }
+
+        const slug = generateSlug(title);
+        const readingTime = calculateReadingTime(content);
+        const publishedAt = status === 'published' ? new Date() : null;
+        const finalSourceName = source_name || 'Belgaum Today';
+        const finalSourceUrl = source_url || `https://belgaum.today/blog/${slug}`;
+
+        const id = await insert(
+            `INSERT INTO articles
+                (title, slug, excerpt, content, featured_image, category, source_name, source_url,
+                 status, featured, ai_generated, requires_review, reading_time, published_at, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, FALSE, ?, ?, NOW(), NOW())`,
+            [
+                title.trim(),
+                slug,
+                excerpt || title.substring(0, 150),
+                content,
+                featured_image || null,
+                category,
+                finalSourceName,
+                finalSourceUrl,
+                status,
+                featured ? 1 : 0,
+                readingTime,
+                publishedAt,
+            ]
+        );
+
+        // Insert tags if provided
+        if (tags.length > 0) {
+            for (const tagName of tags) {
+                const trimmed = tagName.trim();
+                if (!trimmed) continue;
+                const tagSlug = generateSlug(trimmed);
+                // Upsert tag
+                await execute(
+                    'INSERT INTO tags (name, slug) VALUES (?, ?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
+                    [trimmed, tagSlug]
+                );
+                const tagRows = await query<[{ id: number }]>(
+                    'SELECT id FROM tags WHERE slug = ? LIMIT 1',
+                    [tagSlug]
+                );
+                if (tagRows[0]) {
+                    await execute(
+                        'INSERT IGNORE INTO article_tags (article_id, tag_id) VALUES (?, ?)',
+                        [id, tagRows[0].id]
+                    );
+                }
+            }
+        }
+
+        return NextResponse.json({ success: true, data: { id, slug } }, { status: 201 });
+    } catch (error) {
+        console.error('Error creating article:', error);
+        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    }
+});
+
 /**
  * PATCH /api/admin/articles — Update article status
  * Body: { id: number, status: 'published' | 'draft' | 'archived' }

@@ -25,7 +25,7 @@ export function ArticleGrid({ articles, priority = false, columns = 3, compact =
 
     const gridClass = columns === 1
         ? "flex flex-col gap-4"
-        : "grid grid-cols-2 gap-3 sm:gap-4 md:gap-5";
+        : "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4 md:gap-5";
 
     return (
         <div className={gridClass}>

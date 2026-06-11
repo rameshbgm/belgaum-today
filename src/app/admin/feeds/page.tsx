@@ -11,7 +11,6 @@ interface Feed {
     name: string;
     feed_url: string;
     category: string;
-    fetch_interval_minutes: number;
     is_active: boolean;
     last_fetched_at: string | null;
     article_count: number;
@@ -43,7 +42,6 @@ export default function RSSFeedsPage() {
         name: '',
         feed_url: '',
         category: 'india',
-        fetch_interval_minutes: 60,
         is_active: true
     });
     const [formSubmitting, setFormSubmitting] = useState(false);
@@ -162,7 +160,6 @@ export default function RSSFeedsPage() {
             name: '',
             feed_url: '',
             category: 'india',
-            fetch_interval_minutes: 60,
             is_active: true
         });
         setShowFeedModal(true);
@@ -174,8 +171,7 @@ export default function RSSFeedsPage() {
             name: feed.name,
             feed_url: feed.feed_url,
             category: feed.category,
-            fetch_interval_minutes: feed.fetch_interval_minutes,
-            is_active: feed.is_active
+            is_active: Boolean(feed.is_active),
         });
         setShowFeedModal(true);
     };
@@ -358,6 +354,15 @@ export default function RSSFeedsPage() {
         entertainment: '#E91E63',
         sports: '#FF5722',
         belgaum: '#9C27B0',
+        travel: '#00BCD4',
+        science: '#3F51B5',
+        health: '#8BC34A',
+        lifestyle: '#FF4081',
+        food: '#FF9800',
+        education: '#607D8B',
+        environment: '#4CAF50',
+        culture: '#795548',
+        finance: '#009688',
     };
 
     // Filter and sort feeds
@@ -826,21 +831,17 @@ export default function RSSFeedsPage() {
                                     <option value="technology">Technology</option>
                                     <option value="sports">Sports</option>
                                     <option value="entertainment">Entertainment</option>
-                                    <option value="world">World</option>
+                                    <option value="belgaum">Belgaum</option>
+                                    <option value="travel">Travel</option>
+                                    <option value="science">Science</option>
+                                    <option value="health">Health</option>
+                                    <option value="lifestyle">Lifestyle</option>
+                                    <option value="food">Food</option>
+                                    <option value="education">Education</option>
+                                    <option value="environment">Environment</option>
+                                    <option value="culture">Culture</option>
+                                    <option value="finance">Finance</option>
                                 </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Fetch Interval (minutes)
-                                </label>
-                                <Input
-                                    type="number"
-                                    value={formData.fetch_interval_minutes}
-                                    onChange={(e) => setFormData({ ...formData, fetch_interval_minutes: parseInt(e.target.value) || 1 })}
-                                    min="1"
-                                    max="1440"
-                                />
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -869,7 +870,7 @@ export default function RSSFeedsPage() {
                                     {formSubmitting ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            {editingFeed ? 'Updating...' : 'Creating...'}
+                                            {editingFeed ? 'Updating...' : 'Validating feed…'}
                                         </>
                                     ) : (
                                         editingFeed ? 'Update Feed' : 'Create Feed'

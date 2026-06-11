@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
         hostname: 'th-i.thgim.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.ndtvimg.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.ndtv.com',
+        pathname: '/**',
+      },
     ],
   },
 };

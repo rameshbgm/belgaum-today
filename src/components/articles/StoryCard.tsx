@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate } from '@/lib/utils';
+import { formatRelativeTime, truncate, stripHtml } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 
 /**
@@ -21,7 +21,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                         {article.title}
                     </h3>
                     <p className="mt-2 text-sm text-muted leading-relaxed line-clamp-2">
-                        {truncate(article.excerpt || '', 140)}
+                        {truncate(stripHtml(article.excerpt || ''), 140)}
                     </p>
                     <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
                         {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}

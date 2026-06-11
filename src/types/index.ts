@@ -22,13 +22,22 @@ export interface Article {
   tags?: Tag[];
 }
 
-export type Category = 
-  | 'india' 
-  | 'business' 
-  | 'technology' 
-  | 'entertainment' 
-  | 'sports' 
-  | 'belgaum';
+export type Category =
+  | 'india'
+  | 'business'
+  | 'technology'
+  | 'entertainment'
+  | 'sports'
+  | 'belgaum'
+  | 'travel'
+  | 'science'
+  | 'health'
+  | 'lifestyle'
+  | 'food'
+  | 'education'
+  | 'environment'
+  | 'culture'
+  | 'finance';
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';
 
@@ -154,5 +163,50 @@ export const CATEGORY_META: Record<Category, { name: string; description: string
     name: 'Belgaum',
     description: 'Local news from Belgaum region',
     color: '#B45309'
-  }
+  },
+  travel: {
+    name: 'Travel',
+    description: 'Travel guides, destinations and tips',
+    color: '#0369A1'
+  },
+  science: {
+    name: 'Science',
+    description: 'Scientific discoveries and research',
+    color: '#7C3AED'
+  },
+  health: {
+    name: 'Health',
+    description: 'Health, wellness and medical news',
+    color: '#059669'
+  },
+  lifestyle: {
+    name: 'Lifestyle',
+    description: 'Lifestyle, fashion and personal development',
+    color: '#DB2777'
+  },
+  food: {
+    name: 'Food',
+    description: 'Recipes, cuisine and food culture',
+    color: '#D97706'
+  },
+  education: {
+    name: 'Education',
+    description: 'Education news, tips and learning resources',
+    color: '#2563EB'
+  },
+  environment: {
+    name: 'Environment',
+    description: 'Climate, sustainability and environmental news',
+    color: '#16A34A'
+  },
+  culture: {
+    name: 'Culture',
+    description: 'Art, culture, heritage and society',
+    color: '#9333EA'
+  },
+  finance: {
+    name: 'Finance',
+    description: 'Personal finance, investing and markets',
+    color: '#CA8A04'
+  },
 };

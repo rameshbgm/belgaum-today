@@ -49,8 +49,8 @@ export default function AdminArticlesPage() {
                     items = items.filter((a: Article) => a.status === statusFilter);
                 }
 
-                setArticles(items);
-                setTotalPages(data.data.totalPages);
+                setArticles(items ?? []);
+                setTotalPages(data.data.totalPages ?? 1);
             }
         } catch (error) {
             console.error('Error fetching articles:', error);

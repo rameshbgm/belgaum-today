@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, Rss } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, Rss, BookOpen } from 'lucide-react';
 import { CATEGORY_META, Category } from '@/types';
 
 const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+
+const blogCategories: Category[] = ['technology', 'travel', 'science', 'health', 'lifestyle', 'food', 'education', 'environment'];
 
 export function Footer() {
     const currentYear = new Date().getFullYear();
@@ -11,7 +13,7 @@ export function Footer() {
         <footer className="bg-[#1A1712] text-[#C9C1B4]">
             {/* Main Footer */}
             <div className="container mx-auto px-4 py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
                     {/* Brand */}
                     <div>
                         <Link href="/" className="flex items-center gap-2 mb-4">
@@ -43,14 +45,44 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* Categories */}
+                    {/* News Categories */}
                     <div>
-                        <h3 className="text-lg font-semibold text-white mb-4">Categories</h3>
+                        <h3 className="text-lg font-semibold text-white mb-4">News</h3>
                         <ul className="space-y-2">
                             {categories.map((cat) => (
                                 <li key={cat}>
                                     <Link
                                         href={`/${cat}`}
+                                        className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
+                                    >
+                                        <span
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: CATEGORY_META[cat].color }}
+                                        />
+                                        {CATEGORY_META[cat].name}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Blog */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                            Blog
+                        </h3>
+                        <ul className="space-y-2">
+                            <li>
+                                <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-primary" />
+                                    All Posts
+                                </Link>
+                            </li>
+                            {blogCategories.map((cat) => (
+                                <li key={cat}>
+                                    <Link
+                                        href={`/blog/category/${cat}`}
                                         className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2"
                                     >
                                         <span
