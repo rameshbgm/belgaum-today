@@ -13,7 +13,7 @@ interface MostReadArticle {
  */
 export function MostRead({ articles }: { articles: MostReadArticle[] }) {
     return (
-        <ol className="space-y-5">
+        <ol className="space-y-5 max-h-[560px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-ink/15 hover:scrollbar-thumb-ink/30">
             {articles.map((a, i) => (
                 <li key={a.id}>
                     <Link href={`/article/${a.slug}`} className="group flex gap-4 items-start">

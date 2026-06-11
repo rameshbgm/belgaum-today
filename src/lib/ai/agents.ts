@@ -152,14 +152,19 @@ async function createLangChainModel(): Promise<BaseChatModel> {
     fileLogger.info('ai', `🔗 LangChain: Creating ChatOpenAI model (${config.model})`);
 
     const { ChatOpenAI } = await import('@langchain/openai');
+
+    // gpt-5-nano and newer o-series models use max_completion_tokens, not max_tokens
+    const usesCompletionTokens = config.model.startsWith('gpt-5') || config.model.startsWith('o1') || config.model.startsWith('o3');
+
     const model = new ChatOpenAI({
         apiKey: config.apiKey,
         modelName: config.model,
         temperature: config.temperature,
-        maxTokens: config.maxTokens,
+        maxTokens: usesCompletionTokens ? undefined : config.maxTokens,
         timeout: config.requestTimeoutMs,
         modelKwargs: {
             response_format: { type: 'json_object' },
+            ...(usesCompletionTokens ? { max_completion_tokens: config.maxTokens } : {}),
         },
     });
 

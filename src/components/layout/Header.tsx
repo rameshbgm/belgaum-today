@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon, Search } from 'lucide-react';
+import { Menu, X, Sun, Moon, Search, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CATEGORY_META, Category } from '@/types';
 
@@ -52,20 +53,34 @@ export function Header() {
                         <Link href="/feed.xml" className="hidden sm:inline hover:text-primary transition-colors">RSS</Link>
                         <button
                             onClick={toggleDarkMode}
-                            className="p-1 -mr-1 text-muted hover:text-primary transition-colors"
+                            className="p-1 text-muted hover:text-primary transition-colors"
                             aria-label="Toggle dark mode"
                         >
                             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
+                        <Link
+                            href="/admin/login"
+                            className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold uppercase tracking-wider border border-ink/20 text-ink/70 hover:text-primary hover:border-primary transition-colors"
+                        >
+                            <LogIn className="w-3 h-3" /> Admin
+                        </Link>
                     </div>
                 </div>
             </div>
 
             {/* ── Masthead nameplate ── */}
-            <div className="container mx-auto px-4 pt-7 pb-5 text-center">
+            <div className="container mx-auto px-4 pt-5 pb-4 text-center">
                 <div className="flex items-center justify-center gap-4">
                     <span className="hidden md:block h-px w-16 bg-ink/25" />
-                    <Link href="/" className="inline-block">
+                    <Link href="/" className="inline-flex items-center gap-3">
+                        <Image
+                            src="/images/logo.jpeg"
+                            alt="Belgaum Today"
+                            width={56}
+                            height={56}
+                            className="rounded-xl object-contain"
+                            priority
+                        />
                         <h1 className="font-display text-4xl md:text-6xl font-black tracking-[-0.02em] text-ink leading-none">
                             Belgaum<span className="text-primary"> Today</span>
                         </h1>

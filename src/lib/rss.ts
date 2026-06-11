@@ -19,7 +19,6 @@ export interface RssFeedConfig {
     name: string;
     feed_url: string;
     category: string;
-    fetch_interval_minutes: number;
     is_active: boolean;
     last_fetched_at: Date | null;
 }
@@ -60,6 +59,27 @@ function extractTag(xml: string, tag: string): string | null {
     const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
     const match = xml.match(regex);
     return match ? match[1].trim() : null;
+}
+
+/**
+ * Extract link URL from RSS item — handles RSS 2.0 plain text links,
+ * CDATA-wrapped links, and Atom-style href attributes.
+ */
+function extractLink(itemXml: string): string | null {
+    // Standard extractTag covers CDATA and normal <link>...</link>
+    const fromTag = extractTag(itemXml, 'link');
+    if (fromTag && fromTag.startsWith('http')) return fromTag;
+
+    // Atom: <link href="..."/> or <link rel="alternate" href="..."/>
+    const atomHref = itemXml.match(/<link[^>]+href=["']([^"']+)["']/i);
+    if (atomHref) return atomHref[1];
+
+    // Some RSS 2.0 feeds put the URL between tags without closing properly
+    // e.g. <link>https://example.com/story</link> but regex missed it
+    const rawLink = itemXml.match(/<link>\s*(https?:\/\/[^\s<]+)\s*<\/link>/i);
+    if (rawLink) return rawLink[1];
+
+    return fromTag; // return whatever we got (might be null)
 }
 
 /**
@@ -130,17 +150,47 @@ function getSourceName(feedUrl: string): string {
     }
 }
 
+const BROWSER_USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0',
+];
+
+function getRandomUA(): string {
+    return BROWSER_USER_AGENTS[Math.floor(Math.random() * BROWSER_USER_AGENTS.length)];
+}
+
+async function fetchWithBrowserHeaders(url: string): Promise<Response> {
+    const headers = {
+        'User-Agent': getRandomUA(),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,application/rss+xml,application/atom+xml,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Referer': 'https://www.google.com/',
+    };
+
+    let res = await fetch(url, { headers, redirect: 'follow', next: { revalidate: 0 } });
+
+    // If blocked, retry with a different UA after short delay
+    if (!res.ok && res.status === 403) {
+        await new Promise(r => setTimeout(r, 500));
+        res = await fetch(url, {
+            headers: { ...headers, 'User-Agent': getRandomUA() },
+            redirect: 'follow',
+            next: { revalidate: 0 },
+        });
+    }
+
+    return res;
+}
+
 /**
  * Parse RSS XML feed and return validated items
  */
 export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
-    const response = await fetch(feedUrl, {
-        headers: {
-            'User-Agent': 'BelgaumToday/1.0 RSS Reader',
-            'Accept': 'application/rss+xml, application/xml, text/xml',
-        },
-        next: { revalidate: 0 },
-    });
+    const response = await fetchWithBrowserHeaders(feedUrl);
 
     if (!response.ok) {
         console.error(`Failed to fetch RSS feed: ${feedUrl} — status ${response.status}`);
@@ -162,7 +212,7 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
 
         // Extract fields
         let title = extractTag(itemXml, 'title');
-        let link = extractTag(itemXml, 'link');
+        let link = extractLink(itemXml);
         let description = extractTag(itemXml, 'description');
         const pubDateStr = extractTag(itemXml, 'pubDate');
         let guid = extractTag(itemXml, 'guid') || link;

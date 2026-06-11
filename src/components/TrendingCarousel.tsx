@@ -93,7 +93,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
 
     return (
         <div
-            className="group relative rounded-2xl overflow-hidden shadow-2xl"
+            className="group relative overflow-hidden shadow-2xl"
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
@@ -102,7 +102,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                 href={`/article/${article.slug}`}
                 data-article-id={article.id}
                 data-source-name={article.source_name}
-                className="block relative aspect-[16/6] md:aspect-[16/5]"
+                className="block relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/5]"
             >
                 {/* Image */}
                 {article.featured_image ? (
@@ -136,12 +136,12 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                     </div>
 
                     {/* Title */}
-                    <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-3 leading-tight max-w-3xl transition-colors">
+                    <h2 className="font-display text-xl sm:text-2xl md:text-4xl font-bold text-white mb-3 leading-tight max-w-3xl transition-colors line-clamp-3">
                         {article.title}
                     </h2>
 
                     {/* Excerpt */}
-                    <p className="text-gray-300 text-base md:text-lg mb-4 line-clamp-2 max-w-2xl">
+                    <p className="hidden sm:block text-gray-300 text-base md:text-lg mb-4 line-clamp-2 max-w-2xl">
                         {truncate(article.excerpt || '', 250)}
                     </p>
 

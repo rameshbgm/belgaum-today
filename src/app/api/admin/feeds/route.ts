@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
+import { parseRssFeed } from '@/lib/rss';
+
+const VALID_CATEGORIES = [
+    'india', 'business', 'technology', 'sports', 'entertainment', 'belgaum',
+    'travel', 'science', 'health', 'lifestyle', 'food', 'education', 'environment', 'culture', 'finance',
+];
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +83,7 @@ export const PATCH = withLogging(async (request: NextRequest) => {
 
 /**
  * POST /api/admin/feeds — Create new RSS feed
- * Body: { name: string, feed_url: string, category: string, fetch_interval_minutes?: number, is_active?: boolean }
+ * Body: { name: string, feed_url: string, category: string, is_active?: boolean }
  */
 export const POST = withLogging(async (request: NextRequest) => {
     try {
@@ -87,7 +93,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { name, feed_url, category, fetch_interval_minutes = 60, is_active = true } = body;
+        const { name, feed_url, category, is_active = true } = body;
 
         // Validation
         if (!name || !feed_url || !category) {
@@ -108,11 +114,27 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         // Validate category
-        const validCategories = ['india', 'business', 'technology', 'sports', 'entertainment', 'world'];
-        if (!validCategories.includes(category.toLowerCase())) {
+        if (!VALID_CATEGORIES.includes(category.toLowerCase())) {
             return NextResponse.json(
-                { success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
+                { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` },
                 { status: 400 }
+            );
+        }
+
+        // Validate that the URL is a reachable RSS feed with at least one item
+        try {
+            const feedItems = await parseRssFeed(feed_url);
+            if (feedItems.length === 0) {
+                return NextResponse.json(
+                    { success: false, error: 'Feed URL does not return any valid RSS items. Please check the URL and try again.' },
+                    { status: 422 }
+                );
+            }
+        } catch (feedError) {
+            console.error('Feed validation error:', feedError);
+            return NextResponse.json(
+                { success: false, error: 'Could not fetch or parse the feed URL. Make sure it is a valid RSS/Atom feed.' },
+                { status: 422 }
             );
         }
 
@@ -131,9 +153,9 @@ export const POST = withLogging(async (request: NextRequest) => {
 
         // Insert new feed
         await execute(
-            `INSERT INTO rss_feed_config (name, feed_url, category, fetch_interval_minutes, is_active)
-             VALUES (?, ?, ?, ?, ?)`,
-            [name, feed_url, category.toLowerCase(), fetch_interval_minutes, is_active]
+            `INSERT INTO rss_feed_config (name, feed_url, category, is_active)
+             VALUES (?, ?, ?, ?)`,
+            [name, feed_url, category.toLowerCase(), is_active]
         );
 
         return NextResponse.json({ 
@@ -161,7 +183,7 @@ export const PUT = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { id, name, feed_url, category, fetch_interval_minutes, is_active } = body;
+        const { id, name, feed_url, category, is_active } = body;
 
         // Validation
         if (!id || !name || !feed_url || !category) {
@@ -182,10 +204,9 @@ export const PUT = withLogging(async (request: NextRequest) => {
         }
 
         // Validate category
-        const validCategories = ['india', 'business', 'technology', 'sports', 'entertainment', 'world'];
-        if (!validCategories.includes(category.toLowerCase())) {
+        if (!VALID_CATEGORIES.includes(category.toLowerCase())) {
             return NextResponse.json(
-                { success: false, error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
+                { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` },
                 { status: 400 }
             );
         }
@@ -218,17 +239,10 @@ export const PUT = withLogging(async (request: NextRequest) => {
 
         // Update feed
         await execute(
-            `UPDATE rss_feed_config 
-             SET name = ?, feed_url = ?, category = ?, fetch_interval_minutes = ?, is_active = ?
+            `UPDATE rss_feed_config
+             SET name = ?, feed_url = ?, category = ?, is_active = ?
              WHERE id = ?`,
-            [
-                name, 
-                feed_url, 
-                category.toLowerCase(), 
-                fetch_interval_minutes ?? 60, 
-                is_active ?? true, 
-                id
-            ]
+            [name, feed_url, category.toLowerCase(), is_active ?? true, id]
         );
 
         return NextResponse.json({ 

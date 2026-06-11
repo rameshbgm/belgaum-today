@@ -39,20 +39,14 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         fileLogger.info('cron', '✓ Authentication successful');
 
-        // Get active RSS feed configs that need fetching based on interval
-        // Only fetch feeds where: last_fetched_at IS NULL (never fetched) 
-        // OR time since last_fetched_at >= fetch_interval_minutes
         const feeds = await query<RssFeedConfig[]>(
-            `SELECT * FROM rss_feed_config 
-             WHERE is_active = true 
-             AND (last_fetched_at IS NULL 
-                  OR TIMESTAMPDIFF(MINUTE, last_fetched_at, NOW()) >= fetch_interval_minutes)`
+            `SELECT * FROM rss_feed_config WHERE is_active = true`
         );
 
         if (feeds.length === 0) {
-            fileLogger.info('cron', '✓ No feeds need fetching at this time (all intervals not elapsed yet)');
+            fileLogger.info('cron', '✓ No active feeds found');
             return NextResponse.json({
-                message: 'No feeds need fetching - all intervals not elapsed',
+                message: 'No active feeds found',
                 feedsProcessed: 0,
                 newArticles: 0,
                 skipped: 0,
@@ -60,14 +54,13 @@ export const GET = withLogging(async (request: NextRequest) => {
         }
 
         await logger.cronStart(feeds.length);
-        fileLogger.info('cron', `📡 Found ${feeds.length} active RSS feeds ready for fetching`, {
-            feeds: feeds.map(f => ({ 
-                id: f.id, 
-                name: f.name, 
-                category: f.category, 
-                interval: f.fetch_interval_minutes,
+        fileLogger.info('cron', `📡 Found ${feeds.length} active RSS feeds`, {
+            feeds: feeds.map(f => ({
+                id: f.id,
+                name: f.name,
+                category: f.category,
                 lastFetched: f.last_fetched_at,
-                feedUrl: f.feed_url?.substring(0, 80) 
+                feedUrl: f.feed_url?.substring(0, 80),
             })),
         });
 
@@ -129,15 +122,33 @@ export const GET = withLogging(async (request: NextRequest) => {
 
                     const readingTime = calculateReadingTime(item.description || item.title);
 
-                    await insert(
-                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [
-                            item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, feed.category, item.sourceName, item.link,
-                            'published', false, false, 0, readingTime, item.pubDate,
-                        ]
-                    );
+                    try {
+                        await insert(
+                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            [
+                                item.title, slug, item.description || item.title, item.description || item.title,
+                                item.imageUrl, feed.category, item.sourceName, item.link,
+                                'published', false, false, 0, readingTime, item.pubDate,
+                            ]
+                        );
+                    } catch (insertErr) {
+                        const msg = insertErr instanceof Error ? insertErr.message : String(insertErr);
+                        // Slug race condition: two feeds inserted same slug concurrently — retry with unique suffix
+                        if (msg.includes('Duplicate entry') && msg.includes("for key 'slug'")) {
+                            await insert(
+                                `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [
+                                    item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
+                                    item.imageUrl, feed.category, item.sourceName, item.link,
+                                    'published', false, false, 0, readingTime, item.pubDate,
+                                ]
+                            );
+                        } else {
+                            throw insertErr;
+                        }
+                    }
 
                     feedNew++;
                     fileLogger.debug('cron', `  │ ✓ NEW: "${item.title.substring(0, 80)}..."`, {
@@ -149,6 +160,11 @@ export const GET = withLogging(async (request: NextRequest) => {
                     });
                 } catch (itemError) {
                     const errMsg = itemError instanceof Error ? itemError.message : String(itemError);
+                    // Treat duplicate source_url at DB level as a silent skip
+                    if (errMsg.includes('Duplicate entry') && errMsg.includes("for key 'source_url'")) {
+                        feedSkipped++;
+                        continue;
+                    }
                     fileLogger.error('cron', `  │ ✕ ERROR inserting: "${item.title.substring(0, 80)}..."`, {
                         error: errMsg,
                         sourceUrl: item.link,
