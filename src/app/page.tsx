@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
+import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
 import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading } from '@/components/articles';
 import type { LeadCarouselArticle } from '@/components/articles';
 
@@ -117,6 +118,10 @@ async function getArticles(): Promise<{
 }
 
 export default async function HomePage() {
+  // Self-heal: if the in-process scheduler was reaped on shared hosting, this
+  // fire-and-forget call revives it on the next visit. Cheap when healthy.
+  void reviveSchedulerIfStale();
+
   const { articles, trendingArticles, mostViewedArticles, categorySections } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback

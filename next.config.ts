@@ -34,6 +34,31 @@ const nextConfig: NextConfig = {
         hostname: '**.ndtv.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: '**.firstpost.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.indianexpress.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.oneindia.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.indiatimes.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.thehindu.com',
+        pathname: '/**',
+      },
     ],
   },
 };

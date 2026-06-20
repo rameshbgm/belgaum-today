@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, Rss, BookOpen } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, Rss, BookOpen, Linkedin, Globe } from 'lucide-react';
 import { CATEGORY_META, Category } from '@/types';
 
 const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
@@ -171,6 +171,31 @@ export function Footer() {
                             <Link href="/about" className="hover:text-gray-300 transition-colors">About</Link>
                         </div>
                         <p>Made with ❤️ in Belgaum</p>
+                    </div>
+
+                    {/* Built by — author credit */}
+                    <div className="mt-4 pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm text-gray-500 text-center">
+                        <span>
+                            Built by <span className="font-medium text-gray-300">Ramesh Maharaddi</span>
+                        </span>
+                        <span className="hidden sm:inline text-gray-700">·</span>
+                        <a
+                            href="https://www.linkedin.com/in/rameshbgm/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                        >
+                            <Linkedin className="w-4 h-4" /> LinkedIn
+                        </a>
+                        <span className="hidden sm:inline text-gray-700">·</span>
+                        <a
+                            href="https://rameshsnotebook.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 hover:text-gray-300 transition-colors"
+                        >
+                            <Globe className="w-4 h-4" /> rameshsnotebook.com
+                        </a>
                     </div>
                 </div>
             </div>

@@ -1,10 +1,13 @@
 import Link from 'next/link';
+import { Eye } from 'lucide-react';
+import { formatNumber } from '@/lib/utils';
 
 interface MostReadArticle {
     id: number;
     title: string;
     slug: string;
     source_name: string;
+    view_count?: number;
 }
 
 /**
@@ -24,8 +27,12 @@ export function MostRead({ articles }: { articles: MostReadArticle[] }) {
                             <h3 className="font-display text-[15px] font-semibold leading-snug text-ink group-hover:text-primary transition-colors">
                                 {a.title}
                             </h3>
-                            <span className="mt-1 block text-[11px] uppercase tracking-wider text-muted">
-                                {a.source_name}
+                            <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
+                                <span className="truncate">{a.source_name}</span>
+                                <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
+                                    <Eye className="w-3 h-3" />
+                                    {formatNumber(a.view_count ?? 0)}
+                                </span>
                             </span>
                         </div>
                     </Link>
