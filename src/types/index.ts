@@ -121,6 +121,23 @@ export interface DashboardStats {
     source: string;
     count: number;
   }>;
+  // Live view tracking (from the article_views event table — the real source of truth)
+  viewsToday: number;
+  viewEventsTotal: number;
+  lastViewAt: string | null;
+  viewTrackingStale: boolean; // true when no view events recorded recently
+  // Scheduler liveness (from scheduler_heartbeat)
+  scheduler: SchedulerHealth;
+}
+
+export interface SchedulerHealth {
+  lastStartedAt: string | null;
+  lastSuccessAt: string | null;
+  lastStatus: 'running' | 'success' | 'error' | 'never';
+  lastError: string | null;
+  tickCount: number;
+  ageMinutes: number | null; // minutes since last tick started
+  isStale: boolean;          // true => scheduler looks dead (render RED)
 }
 
 // Search Types

@@ -3,8 +3,9 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Eye } from 'lucide-react';
 import { Article, CATEGORY_META } from '@/types';
-import { stripHtml, formatRelativeTime } from '@/lib/utils';
+import { stripHtml, formatRelativeTime, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { SectionHeading } from './SectionHeading';
 
@@ -52,20 +53,23 @@ function ArticleRow({ article }: { article: Article }) {
     const cat = CATEGORY_META[article.category];
     const excerpt = stripHtml(article.excerpt || '');
     const timestamp = article.published_at || article.created_at;
+    const [imgFailed, setImgFailed] = useState(false);
+    const showImg = article.featured_image && !imgFailed;
 
     return (
         <article className="group">
-            <Link href={`/article/${article.slug}`} className="flex gap-4 items-start">
-                {/* Thumbnail */}
-                <div className="relative w-28 h-20 shrink-0 overflow-hidden rounded-sm bg-surface">
-                    {article.featured_image ? (
+            <Link href={`/article/${article.slug}`} className="flex gap-3 sm:gap-4 items-start">
+                {/* Thumbnail — smaller on mobile */}
+                <div className="relative w-20 h-16 sm:w-28 sm:h-20 shrink-0 overflow-hidden rounded-sm bg-surface">
+                    {showImg ? (
                         <Image
-                            src={article.featured_image}
+                            src={article.featured_image!}
                             alt={article.title}
                             fill
-                            sizes="112px"
+                            sizes="(max-width: 640px) 80px, 112px"
                             className="object-cover"
                             unoptimized
+                            onError={() => setImgFailed(true)}
                         />
                     ) : (
                         <NewsFallbackImage seed={article.id} />
@@ -88,8 +92,12 @@ function ArticleRow({ article }: { article: Article }) {
                             {excerpt}
                         </p>
                     )}
-                    <span className="mt-1 block text-[11px] uppercase tracking-wider text-muted">
-                        {article.source_name} · {formatRelativeTime(timestamp)}
+                    <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
+                        <span className="truncate">{article.source_name} · {formatRelativeTime(timestamp)}</span>
+                        <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
+                            <Eye className="w-3 h-3" />
+                            {formatNumber(article.view_count ?? 0)}
+                        </span>
                     </span>
                 </div>
             </Link>

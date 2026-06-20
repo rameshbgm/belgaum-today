@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { DashboardStats } from '@/types';
+import { query, queryOne } from '@/lib/db';
+import { DashboardStats, SchedulerHealth } from '@/types';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
+import { SCHEDULER_STALE_AFTER_MS, VIEW_TRACKING_STALE_AFTER_MS } from '@/lib/scheduler/constants';
 
 // GET /api/admin/stats - Get dashboard statistics (real data only)
 export const GET = withLogging(async () => {
@@ -133,6 +134,46 @@ export const GET = withLogging(async () => {
             `SELECT source_name as source, COUNT(*) as count FROM articles GROUP BY source_name ORDER BY count DESC LIMIT 5`
         );
 
+        // Live view tracking — the article_views event table is the source of truth.
+        // articles.view_count is a denormalized counter that can drift / look frozen.
+        const viewsTodayResult = await query<[{ total: number }]>(
+            `SELECT COUNT(*) as total FROM article_views WHERE DATE(created_at) = CURDATE()`
+        );
+        const viewsToday = viewsTodayResult[0]?.total || 0;
+
+        const viewEventsResult = await query<[{ total: number; last_view: string | null }]>(
+            `SELECT COUNT(*) as total, MAX(created_at) as last_view FROM article_views`
+        );
+        const viewEventsTotal = viewEventsResult[0]?.total || 0;
+        const lastViewAt = viewEventsResult[0]?.last_view || null;
+        const viewTrackingStale = !lastViewAt
+            || (Date.now() - new Date(lastViewAt).getTime()) > VIEW_TRACKING_STALE_AFTER_MS;
+
+        // Scheduler liveness from the heartbeat table.
+        const beat = await queryOne<{
+            last_started_at: string | null;
+            last_success_at: string | null;
+            last_status: 'running' | 'success' | 'error';
+            last_error: string | null;
+            tick_count: number;
+        }>(
+            `SELECT last_started_at, last_success_at, last_status, last_error, tick_count
+             FROM scheduler_heartbeat WHERE job_name = 'rss-scheduler'`
+        );
+
+        const ageMs = beat?.last_started_at
+            ? Date.now() - new Date(beat.last_started_at).getTime()
+            : null;
+        const scheduler: SchedulerHealth = {
+            lastStartedAt: beat?.last_started_at ?? null,
+            lastSuccessAt: beat?.last_success_at ?? null,
+            lastStatus: beat?.last_status ?? 'never',
+            lastError: beat?.last_error ?? null,
+            tickCount: beat?.tick_count ?? 0,
+            ageMinutes: ageMs === null ? null : Math.floor(ageMs / 60000),
+            isStale: ageMs === null || ageMs > SCHEDULER_STALE_AFTER_MS,
+        };
+
         // RSS feed status
         const feedStatus = await query<Array<{
             id: number;
@@ -160,6 +201,11 @@ export const GET = withLogging(async () => {
             categoryStats,
             sourceStats,
             feedStatus,
+            viewsToday,
+            viewEventsTotal,
+            lastViewAt,
+            viewTrackingStale,
+            scheduler,
         };
 
         return NextResponse.json({

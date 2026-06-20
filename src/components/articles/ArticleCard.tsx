@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Clock, Info, ExternalLink } from 'lucide-react';
+import { Eye, Clock, Info, ExternalLink, Flame } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
@@ -14,19 +15,27 @@ interface ArticleCardProps {
     compact?: boolean;
 }
 
+// Articles above this view count get a red "HOT" badge.
+const HOT_VIEW_THRESHOLD = 20;
+
 export function ArticleCard({ article, priority = false, compact = false }: ArticleCardProps) {
+    const isHot = article.view_count >= HOT_VIEW_THRESHOLD;
+    // Fall back to the placeholder if the remote image fails (404, blocked host, etc.)
+    const [imageFailed, setImageFailed] = useState(false);
+    const showImage = article.featured_image && !imageFailed;
     return (
         <article className={`group bg-surface rounded-lg overflow-hidden border border-hairline transition-all duration-300 hover:shadow-md hover:border-primary/40 ${compact ? 'text-sm' : ''}`}>
             {/* Image */}
             <Link href={`/article/${article.slug}`} className={`block relative overflow-hidden ${compact ? 'aspect-square sm:aspect-[4/3] md:aspect-video' : 'aspect-video'}`}>
-                {article.featured_image ? (
+                {showImage ? (
                     <Image
-                        src={article.featured_image}
+                        src={article.featured_image!}
                         alt={article.title}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-110"
                         priority={priority}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        onError={() => setImageFailed(true)}
                     />
                 ) : (
                     <NewsFallbackImage seed={article.id} />
@@ -37,6 +46,15 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                         <Badge variant="info" size="sm">
                             AI ✨
                         </Badge>
+                    </div>
+                )}
+                {/* HOT Badge — high-traffic articles */}
+                {isHot && (
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-1.5 py-0.5 sm:px-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+                            <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            Hot
+                        </span>
                     </div>
                 )}
             </Link>
@@ -96,9 +114,11 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                         </span>
                     </div>
 
-                    {/* Views */}
-                    <span className="flex items-center gap-0.5">
-                        <Eye className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />
+                    {/* Views — rendered red for hot articles */}
+                    <span className={`flex items-center gap-0.5 ${isHot ? 'font-semibold text-red-600' : ''}`}>
+                        {isHot
+                            ? <Flame className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />
+                            : <Eye className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />}
                         <span className="hidden md:inline">{formatNumber(article.view_count)}</span>
                         <span className="md:hidden">{article.view_count > 999 ? `${Math.floor(article.view_count / 1000)}k` : article.view_count}</span>
                     </span>

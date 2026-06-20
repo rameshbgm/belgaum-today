@@ -368,3 +368,16 @@ CREATE TABLE IF NOT EXISTS ai_agent_logs (
     INDEX idx_category (category),
     INDEX idx_created_at (created_at)
 );
+
+-- Scheduler heartbeat / liveness (in-process setInterval can die on shared hosting)
+CREATE TABLE IF NOT EXISTS scheduler_heartbeat (
+    job_name        VARCHAR(64) PRIMARY KEY,
+    last_started_at TIMESTAMP NULL DEFAULT NULL,
+    last_success_at TIMESTAMP NULL DEFAULT NULL,
+    last_status     ENUM('running','success','error') NOT NULL DEFAULT 'running',
+    last_error      TEXT NULL,
+    tick_count      INT NOT NULL DEFAULT 0,
+    process_pid     INT NULL,
+    registered_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

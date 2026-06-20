@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import {
     FileText, Eye, Edit3, Clock, TrendingUp, MousePointer,
-    BarChart3, PieChart, CheckCircle2, XCircle, AlertTriangle
+    BarChart3, PieChart, CheckCircle2, XCircle, AlertTriangle,
+    Activity, Zap
 } from 'lucide-react';
 import { Card, CardContent, Badge, Button, useToast } from '@/components/ui';
 import { DashboardStats } from '@/types';
@@ -29,6 +30,7 @@ interface CronResult {
 export default function AdminDashboardPage() {
     const { showToast } = useToast();
     const [stats, setStats] = useState<(DashboardStats & { totalClicks?: number; feedStatus?: any[]; topArticlesByDate?: any[] }) | null>(null);
+    const sched = stats?.scheduler;
     const [isLoading, setIsLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);
     const [cronResult, setCronResult] = useState<CronResult | null>(null);
@@ -140,9 +142,20 @@ export default function AdminDashboardPage() {
                                 <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
                                     {formatNumber(stats?.totalViews || 0)}
                                 </p>
+                                {/* Live view tracking signal — turns red when no views are being recorded */}
+                                {stats?.viewTrackingStale ? (
+                                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        Tracking stalled
+                                    </p>
+                                ) : (
+                                    <p className="mt-1 text-xs font-medium text-green-600">
+                                        +{formatNumber(stats?.viewsToday || 0)} today
+                                    </p>
+                                )}
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                <Eye className="w-6 h-6 text-purple-600" />
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stats?.viewTrackingStale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-purple-100 dark:bg-purple-900/30'}`}>
+                                <Eye className={`w-6 h-6 ${stats?.viewTrackingStale ? 'text-red-600' : 'text-purple-600'}`} />
                             </div>
                         </div>
                     </CardContent>
@@ -180,6 +193,44 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Scheduler Health — GREEN when alive, RED when the in-process timer has died */}
+            <Card className={`mb-8 border-2 ${sched?.isStale ? 'border-red-300 dark:border-red-800' : 'border-green-200 dark:border-green-800'}`}>
+                <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center ${sched?.isStale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+                                <Activity className={`w-6 h-6 ${sched?.isStale ? 'text-red-600' : 'text-green-600'}`} />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">RSS Scheduler</h3>
+                                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                        sched?.isStale
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                            : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                                    }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${sched?.isStale ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
+                                        {sched?.lastStatus === 'never' ? 'Never ran' : sched?.isStale ? 'Stale / Dead' : 'Alive'}
+                                    </span>
+                                </div>
+                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {sched?.lastStartedAt
+                                        ? `Last tick ${sched.ageMinutes === 0 ? 'just now' : `${sched.ageMinutes} min ago`} · ${formatNumber(sched.tickCount)} ticks total`
+                                        : 'No heartbeat recorded yet'}
+                                </p>
+                                {sched?.isStale && sched.lastError && (
+                                    <p className="text-xs text-red-600 mt-1 truncate max-w-full sm:max-w-md">⚠ {sched.lastError}</p>
+                                )}
+                            </div>
+                        </div>
+                        <Button onClick={handleRunCron} disabled={cronRunning} className="shrink-0 w-full md:w-auto">
+                            <Zap className="w-4 h-4 mr-1" />
+                            {cronRunning ? 'Running…' : 'Run now'}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Cron Result Panel */}
             {showCronResult && cronResult && (
