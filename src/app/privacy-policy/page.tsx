@@ -23,7 +23,7 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    Effective Date: February 17, 2026 &nbsp;|&nbsp; Last Updated: February 17, 2026
+                    Effective Date: February 17, 2026 &nbsp;|&nbsp; Last Updated: September 27, 2026
                 </p>
             </div>
 
@@ -73,12 +73,21 @@ export default function PrivacyPolicyPage() {
                     to newsletters, or interact with certain features. This may include your name, email address,
                     and any message content you submit.
                 </p>
+                <p>
+                    If you request the daily digest, we store your email address, chosen topics, confirmation status,
+                    and the date a digest was last sent. We send a confirmation link before starting the digest.
+                    Every digest includes an unsubscribe link.
+                </p>
 
                 <h3>2.3 Information from Third-Party Services</h3>
                 <p>
                     We use third-party services such as Google Analytics, Google AdSense, and Meta Pixel that may
                     independently collect information about you. Please refer to the specific disclosures in
                     Sections 5, 6, and 7 for details.
+                </p>
+                <p>
+                    When the daily digest is enabled, we use an email delivery provider to send confirmation
+                    messages and the requested digest. Your email address is shared with that provider for delivery.
                 </p>
 
                 {/* 3. How We Use Information */}
@@ -119,6 +128,10 @@ export default function PrivacyPolicyPage() {
                         <tr>
                             <td><strong>Analytics Cookies</strong></td>
                             <td>Help us understand how visitors interact with our website (e.g., Google Analytics).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reader measurement</strong></td>
+                            <td>A first-party, pseudonymous reader cookie helps count repeat visits to news sections. We store one visit per section per day.</td>
                         </tr>
                         <tr>
                             <td><strong>Advertising Cookies</strong></td>

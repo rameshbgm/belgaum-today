@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from '@/components/articles/PublisherLink';
 import { Clock, ArrowRight, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
@@ -98,10 +98,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
             onMouseLeave={() => setPaused(false)}
         >
             {/* Carousel slide */}
-            <Link
-                href={`/article/${article.slug}`}
-                data-article-id={article.id}
-                data-source-name={article.source_name}
+            <PublisherLink article={article}
                 className="block relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/5]"
             >
                 {/* Image */}
@@ -157,7 +154,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                         </span>
                     </div>
                 </div>
-            </Link>
+            </PublisherLink>
 
             {/* Navigation arrows */}
             {total > 1 && (

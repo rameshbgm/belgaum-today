@@ -1,5 +1,7 @@
 import { query, execute, insert } from '@/lib/db';
-import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
+import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource, resolvePublisherUrl } from '@/lib/source-policy';
+import { isBelagaviStory } from '@/lib/local-relevance';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
 
@@ -7,9 +9,11 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
     const start = Date.now();
     fileLogger.info('cron', '═══ Scheduled RSS fetch started ═══');
 
-    const feeds = await query<RssFeedConfig[]>(
+    assertSourcePolicyConfigured();
+    const configuredFeeds = await query<RssFeedConfig[]>(
         `SELECT * FROM rss_feed_config WHERE is_active = true`
     );
+    const feeds = configuredFeeds.filter(feed => dueForScheduledFetch(feed) && !isBlockedSource(feed.feed_url, feed.name));
 
     if (feeds.length === 0) {
         fileLogger.info('cron', 'No active feeds found');
@@ -24,25 +28,52 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
     let totalSkipped = 0;
     let totalErrors = 0;
 
-    for (const { feedId, items } of feedResults) {
+    for (const { feedId, items, error: fetchError } of feedResults) {
         const feed = feeds.find((f: RssFeedConfig) => f.id === feedId);
         if (!feed) continue;
 
         let feedNew = 0;
         let feedSkipped = 0;
         const feedErrors: string[] = [];
+        if (fetchError) feedErrors.push(fetchError);
 
         for (const item of items) {
             try {
+                if (isBlockedSource(item.link, item.sourceName) || hasNonEnglishScript(item.title)) {
+                    feedSkipped++;
+                    continue;
+                }
                 const existing = await query<{ id: number }[]>(
-                    'SELECT id FROM articles WHERE source_url = ? OR title = ? LIMIT 1',
-                    [item.link, item.title]
+                    'SELECT id FROM articles WHERE source_url = ? LIMIT 1',
+                    [item.link]
                 );
 
                 if (existing.length > 0) {
                     feedSkipped++;
                     continue;
                 }
+
+                const sourceLink = await resolvePublisherUrl(item.link);
+                if (!sourceLink || isBlockedSource(sourceLink, item.sourceName)) {
+                    feedSkipped++;
+                    continue;
+                }
+                if (sourceLink !== item.link) {
+                    const canonicalMatch = await query<{ id: number }[]>(
+                        'SELECT id FROM articles WHERE source_url = ? LIMIT 1', [sourceLink]
+                    );
+                    if (canonicalMatch.length > 0) {
+                        feedSkipped++;
+                        continue;
+                    }
+                }
+
+                const isLocal = await isBelagaviStory(item, feed.category === 'belgaum');
+                if (feed.category === 'belgaum' && !isLocal) {
+                    feedSkipped++;
+                    continue;
+                }
+                const articleCategory = isLocal ? 'belgaum' : feed.category;
 
                 let slug = generateSlug(item.title);
                 const slugExists = await query<{ id: number }[]>(
@@ -57,11 +88,11 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
 
                 try {
                     await insert(
-                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, feed.category, item.sourceName, item.link,
+                            item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
                             'published', false, false, 0, readingTime, item.pubDate,
                         ]
                     );
@@ -69,11 +100,11 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
                     const msg = insertErr instanceof Error ? insertErr.message : String(insertErr);
                     if (msg.includes('Duplicate entry') && msg.includes("for key 'slug'")) {
                         await insert(
-                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
                                 item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
-                                item.imageUrl, feed.category, item.sourceName, item.link,
+                                item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
                                 'published', false, false, 0, readingTime, item.pubDate,
                             ]
                         );
@@ -93,14 +124,17 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
             }
         }
 
-        await execute('UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?', [feedId]);
+        if (!fetchError) {
+            await execute('UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?', [feedId]);
+        }
 
         totalNew += feedNew;
         totalSkipped += feedSkipped;
         totalErrors += feedErrors.length;
 
         try {
-            const logStatus = feedErrors.length === items.length ? 'error' : (feedErrors.length > 0 ? 'partial' : 'success');
+            const logStatus = fetchError ? 'error' :
+                (feedErrors.length > 0 ? (feedErrors.length === items.length ? 'error' : 'partial') : 'success');
             await insert(
                 `INSERT INTO rss_fetch_logs (feed_id, feed_name, category, status, items_fetched, new_articles, skipped_articles, errors_count, error_details, duration_ms, started_at, completed_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,

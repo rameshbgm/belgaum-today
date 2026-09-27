@@ -24,6 +24,7 @@ export interface Article {
 
 export type Category =
   | 'india'
+  | 'world'
   | 'business'
   | 'technology'
   | 'entertainment'
@@ -38,6 +39,16 @@ export type Category =
   | 'environment'
   | 'culture'
   | 'finance';
+
+export const FEED_CATEGORIES: Category[] = [
+  'belgaum', 'india', 'world', 'business', 'technology', 'sports',
+  'entertainment', 'travel', 'science', 'health', 'lifestyle', 'food',
+  'education', 'environment', 'culture', 'finance',
+];
+
+export const TOP_LEVEL_CATEGORIES: Category[] = [
+  'belgaum', 'india', 'world', 'business', 'technology', 'sports', 'entertainment',
+];
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';
 
@@ -104,6 +115,9 @@ export interface DashboardStats {
   draftCount: number;
   publishedToday: number;
   totalViews: number;
+  weeklyReturningLocalReaders: number;
+  previousWeeklyReturningLocalReaders: number;
+  localPublisherClicks7d: number;
   topArticles: Array<{
     id: number;
     title: string;
@@ -155,6 +169,11 @@ export const CATEGORY_META: Record<Category, { name: string; description: string
     name: 'India',
     description: 'Latest news from across India',
     color: '#E8590C'
+  },
+  world: {
+    name: 'World',
+    description: 'News from around the world',
+    color: '#365A78'
   },
   business: {
     name: 'Business',

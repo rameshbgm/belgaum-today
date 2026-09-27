@@ -10,16 +10,26 @@ interface Feed {
     id: number;
     name: string;
     feed_url: string;
+    fetch_interval_minutes: number;
     category: string;
     is_active: boolean;
     last_fetched_at: string | null;
     article_count: number;
+    last_attempted_at: string | null;
+    last_successful_at: string | null;
+    last_status: 'success' | 'partial' | 'error' | null;
+    last_error: string | null;
+    last_items_fetched: number | null;
+    new_articles_24h: number;
+    error_runs_24h: number;
+    empty_runs_24h: number;
 }
 
 export default function RSSFeedsPage() {
     const { showToast } = useToast();
     const [feeds, setFeeds] = useState<Feed[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [cronRunning, setCronRunning] = useState(false);
     const [aiRunning, setAiRunning] = useState(false);
     const [selectedFeeds, setSelectedFeeds] = useState<number[]>([]);
@@ -32,7 +42,8 @@ export default function RSSFeedsPage() {
     
     // Search and sort state
     const [searchQuery, setSearchQuery] = useState('');
-    const [sortField, setSortField] = useState<'name' | 'category' | 'last_fetched_at'>('name');
+    const [healthFilter, setHealthFilter] = useState<'all' | 'attention' | 'healthy'>('all');
+    const [sortField, setSortField] = useState<'name' | 'category' | 'last_successful_at'>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     
     // Feed form state
@@ -42,6 +53,7 @@ export default function RSSFeedsPage() {
         name: '',
         feed_url: '',
         category: 'india',
+        fetch_interval_minutes: 120,
         is_active: true
     });
     const [formSubmitting, setFormSubmitting] = useState(false);
@@ -54,8 +66,12 @@ export default function RSSFeedsPage() {
         try {
             const res = await fetch('/api/admin/feeds');
             const data = await res.json();
-            if (data.success) setFeeds(data.data);
-        } catch { /* ignore */ }
+            if (!res.ok || !data.success) throw new Error(data.error || 'Could not load feeds');
+            setFeeds(data.data);
+            setLoadError('');
+        } catch {
+            setLoadError('Could not load feed health. Refresh the page to try again.');
+        }
     }, []);
 
     useEffect(() => {
@@ -160,6 +176,7 @@ export default function RSSFeedsPage() {
             name: '',
             feed_url: '',
             category: 'india',
+            fetch_interval_minutes: 120,
             is_active: true
         });
         setShowFeedModal(true);
@@ -171,6 +188,7 @@ export default function RSSFeedsPage() {
             name: feed.name,
             feed_url: feed.feed_url,
             category: feed.category,
+            fetch_interval_minutes: feed.fetch_interval_minutes,
             is_active: Boolean(feed.is_active),
         });
         setShowFeedModal(true);
@@ -369,6 +387,14 @@ export default function RSSFeedsPage() {
     const filteredAndSortedFeeds = useMemo(() => {
         let result = [...feeds];
 
+        if (healthFilter === 'attention') {
+            result = result.filter(feed => feed.is_active && ((feed.last_status === 'error' && !!feed.last_error) ||
+                (feed.last_items_fetched === 0 && !!feed.last_attempted_at) || feed.error_runs_24h > 0));
+        } else if (healthFilter === 'healthy') {
+            result = result.filter(feed => feed.is_active && (!feed.last_error || feed.last_status !== 'error') &&
+                (feed.last_items_fetched ?? 0) > 0 && feed.error_runs_24h === 0);
+        }
+
         // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
@@ -384,7 +410,7 @@ export default function RSSFeedsPage() {
             let aVal: any = a[sortField];
             let bVal: any = b[sortField];
 
-            if (sortField === 'last_fetched_at') {
+            if (sortField === 'last_successful_at') {
                 aVal = aVal ? new Date(aVal).getTime() : 0;
                 bVal = bVal ? new Date(bVal).getTime() : 0;
             } else if (typeof aVal === 'string') {
@@ -398,9 +424,9 @@ export default function RSSFeedsPage() {
         });
 
         return result;
-    }, [feeds, searchQuery, sortField, sortDirection]);
+    }, [feeds, searchQuery, healthFilter, sortField, sortDirection]);
 
-    const toggleSort = (field: 'name' | 'category' | 'last_fetched_at') => {
+    const toggleSort = (field: 'name' | 'category' | 'last_successful_at') => {
         if (sortField === field) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
@@ -422,6 +448,7 @@ export default function RSSFeedsPage() {
 
     return (
         <div className="space-y-6">
+            {loadError && <p role="alert" className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{loadError}</p>}
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -453,7 +480,7 @@ export default function RSSFeedsPage() {
                                 className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                             >
                                 <option value="all">All Active Feeds</option>
-                                <option value="selected">Selected Feeds ({selectedFeeds.length})</option>
+                                <option value="selected">Selected feeds ({selectedFeeds.length})</option>
                                 <option value="category">By Category</option>
                             </select>
                             {feedScope === 'category' && (
@@ -497,7 +524,7 @@ export default function RSSFeedsPage() {
                                 className="flex-1 text-sm px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                             >
                                 <option value="all">All Categories</option>
-                                <option value="selected">Selected Feeds ({selectedFeeds.length})</option>
+                                <option value="selected">Categories of selected feeds ({selectedFeeds.length})</option>
                                 <option value="category">By Category</option>
                             </select>
                             {aiScope === 'category' && (
@@ -549,10 +576,10 @@ export default function RSSFeedsPage() {
                 </Card>
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <p className="text-2xl font-bold text-indigo-600">
-                            {[...new Set(feeds.map(f => f.category))].length}
+                        <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">
+                            {feeds.reduce((total, feed) => total + Number(feed.new_articles_24h || 0), 0)}
                         </p>
-                        <p className="text-xs text-gray-500">Categories</p>
+                        <p className="text-xs text-gray-500">New in 24 hours</p>
                     </CardContent>
                 </Card>
             </div>
@@ -583,6 +610,16 @@ export default function RSSFeedsPage() {
                             Showing {filteredAndSortedFeeds.length} of {feeds.length} feeds
                         </p>
                     )}
+                    <div className="mt-3 flex items-center gap-2 text-sm">
+                        <label htmlFor="feed-health" className="text-gray-600 dark:text-gray-300">Show</label>
+                        <select id="feed-health" value={healthFilter}
+                            onChange={e => setHealthFilter(e.target.value as typeof healthFilter)}
+                            className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                            <option value="all">All feeds</option>
+                            <option value="attention">Needs attention</option>
+                            <option value="healthy">Healthy</option>
+                        </select>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -678,22 +715,24 @@ export default function RSSFeedsPage() {
                                     </div>
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Feed health</th>
                                 <th 
                                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
-                                    onClick={() => toggleSort('last_fetched_at')}
+                                    onClick={() => toggleSort('last_successful_at')}
                                 >
                                     <div className="flex items-center gap-1">
-                                        Last Fetched
+                                        Last successful fetch
                                         <ArrowUpDown className="w-3 h-3" />
                                     </div>
                                 </th>
+                                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">New / 24h</th>
                                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {filteredAndSortedFeeds.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                         {searchQuery ? 'No feeds match your search' : 'No feeds yet. Add your first feed to get started.'}
                                     </td>
                                 </tr>
@@ -725,11 +764,24 @@ export default function RSSFeedsPage() {
                                             {feed.is_active ? 'Active' : 'Disabled'}
                                         </Badge>
                                     </td>
+                                    <td className="px-4 py-3 text-xs">
+                                        {!feed.is_active ? <span className="text-gray-500">Paused</span> :
+                                            feed.last_status === 'error' && feed.last_error ? <span className="font-semibold text-red-600">Fetch failed</span> :
+                                            feed.last_attempted_at && feed.last_items_fetched === 0 ? <span className="font-semibold text-amber-700 dark:text-amber-400">Empty feed</span> :
+                                            feed.error_runs_24h > 0 ? <span className="font-semibold text-amber-700 dark:text-amber-400">Intermittent</span> :
+                                            feed.last_attempted_at ? <span className="font-semibold text-green-700 dark:text-green-400">Healthy</span> :
+                                            <span className="text-gray-500">Never checked</span>}
+                                        {feed.last_attempted_at && <p className="mt-1 text-gray-500">Attempted {formatDate(feed.last_attempted_at)}</p>}
+                                        {feed.last_error && <p className="mt-1 max-w-48 truncate text-red-600" title={feed.last_error}>{feed.last_error}</p>}
+                                    </td>
                                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
-                                            {formatDate(feed.last_fetched_at)}
+                                            {formatDate(feed.last_successful_at)}
                                         </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-800 dark:text-gray-200">
+                                        {feed.new_articles_24h ?? 0}
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center justify-end gap-1">
@@ -827,6 +879,7 @@ export default function RSSFeedsPage() {
                                     required
                                 >
                                     <option value="india">India</option>
+                                    <option value="world">World</option>
                                     <option value="business">Business</option>
                                     <option value="technology">Technology</option>
                                     <option value="sports">Sports</option>
@@ -855,6 +908,16 @@ export default function RSSFeedsPage() {
                                 <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Active (fetch this feed automatically)
                                 </label>
+                            </div>
+
+                            <div>
+                                <label htmlFor="fetch-interval" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Fetch interval (minutes)
+                                </label>
+                                <Input id="fetch-interval" type="number" min={1} max={1440} step={1}
+                                    value={formData.fetch_interval_minutes}
+                                    onChange={e => setFormData({ ...formData, fetch_interval_minutes: Number(e.target.value) })}
+                                    required />
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

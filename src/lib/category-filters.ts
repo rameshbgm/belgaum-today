@@ -40,6 +40,9 @@ export const CATEGORY_FILTERS: Record<Category, SubCategory[]> = {
         { id: 'regional', label: 'Regional' },
         { id: 'national', label: 'National' },
     ],
+    world: [
+        { id: 'all', label: 'All World' },
+    ],
     belgaum: [
         { id: 'all', label: 'All Belgaum' },
         { id: 'local', label: 'Local News' },

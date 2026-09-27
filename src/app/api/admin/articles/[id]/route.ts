@@ -3,6 +3,8 @@ import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
+import { FEED_CATEGORIES } from '@/types';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,18 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
             title, excerpt, content, featured_image, category,
             source_name, source_url, status, featured, tags = [],
         } = body;
+
+        assertSourcePolicyConfigured();
+        const current = await query<Array<{ title: string; source_name: string; source_url: string; category: string }>>(
+            'SELECT title, source_name, source_url, category FROM articles WHERE id = ? LIMIT 1', [id]
+        );
+        if (!current[0]) return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        const nextTitle = title ?? current[0].title;
+        const nextCategory = category ?? current[0].category;
+        if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||
+            isBlockedSource(source_url ?? current[0].source_url, `${source_name ?? current[0].source_name} ${nextTitle}`)) {
+            return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
+        }
 
         const updates: string[] = [];
         const values: unknown[] = [];

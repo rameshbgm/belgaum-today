@@ -5,7 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ChevronRight, Clock, Eye, Calendar, ExternalLink, Sparkles } from 'lucide-react';
-import { query, execute } from '@/lib/db';
+import { query } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
 import { ShareButtons, ArticleCard, ArticleViewTracker, NewsFallbackImage } from '@/components/articles';
@@ -13,53 +13,6 @@ import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent } 
 
 type Props = {
     params: Promise<{ slug: string }>;
-};
-
-// Mock article for development
-const mockArticle: Article = {
-    id: 1,
-    title: 'Belgaum Celebrates Annual Cultural Festival',
-    slug: 'belgaum-celebrates-annual-cultural-festival',
-    excerpt: 'The historic city of Belgaum came alive this weekend with vibrant cultural performances and traditional festivities.',
-    content: `# Belgaum Cultural Festival 2026
-
-The historic city of Belgaum came alive this weekend with vibrant cultural performances and traditional festivities that attracted thousands of visitors from across the region.
-
-## Event Highlights
-
-The three-day festival featured:
-- Traditional folk dances
-- Local cuisine stalls
-- Art exhibitions
-- Music performances
-
-The festival celebrates the rich cultural heritage of the Belgaum region, bringing together communities from different backgrounds.
-
-## Community Response
-
-> "This festival truly represents the spirit of Belgaum. It brings together people from all walks of life to celebrate our shared heritage." - Local Resident
-
-| Day | Event | Attendance |
-|-----|-------|------------|
-| Day 1 | Opening Ceremony | 5,000 |
-| Day 2 | Cultural Shows | 8,000 |
-| Day 3 | Grand Finale | 12,000 |
-
-The festival concluded with a spectacular fireworks display that lit up the night sky over Belgaum.`,
-    featured_image: null,
-    category: 'belgaum',
-    source_name: 'Belgaum Times',
-    source_url: 'https://example.com/belgaum-festival',
-    status: 'published',
-    featured: true,
-    ai_generated: false,
-    ai_confidence: null,
-    requires_review: false,
-    view_count: 1250,
-    reading_time: 3,
-    published_at: new Date(),
-    created_at: new Date(),
-    updated_at: new Date(),
 };
 
 async function getArticle(slug: string): Promise<Article | null> {
@@ -70,11 +23,7 @@ async function getArticle(slug: string): Promise<Article | null> {
         );
         return articles.length > 0 ? articles[0] : null;
     } catch {
-        console.log('Database not available, using mock data');
-        if (slug === mockArticle.slug) {
-            return mockArticle;
-        }
-        return mockArticle; // Return mock for any slug in dev mode
+        return null;
     }
 }
 
@@ -90,17 +39,6 @@ async function getRelatedArticles(category: string, currentId: number): Promise<
     }
 }
 
-async function incrementViewCount(articleId: number): Promise<void> {
-    try {
-        await execute(
-            `UPDATE articles SET view_count = view_count + 1 WHERE id = ?`,
-            [articleId]
-        );
-    } catch {
-        // Silently fail for view count
-    }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const article = await getArticle(slug);
@@ -112,6 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: article.title,
         description: article.excerpt,
+        robots: { index: false, follow: true },
         openGraph: {
             title: article.title,
             description: article.excerpt || '',
@@ -136,9 +75,6 @@ export default async function ArticlePage({ params }: Props) {
     if (!article) {
         notFound();
     }
-
-    // Increment view count
-    await incrementViewCount(article.id);
 
     const relatedArticles = await getRelatedArticles(article.category, article.id);
     const categoryMeta = CATEGORY_META[article.category];

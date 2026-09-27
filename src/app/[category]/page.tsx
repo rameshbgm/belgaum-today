@@ -1,12 +1,13 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { query } from '@/lib/db';
-import { Article, CATEGORY_META, Category } from '@/types';
+import { Article, CATEGORY_META, Category, TOP_LEVEL_CATEGORIES } from '@/types';
 import { CategoryPageClient } from '@/components/articles';
 import { getSubCategories } from '@/lib/category-filters';
 import { TrendingArticle } from '@/components/TrendingCarousel';
+import { distinctStories } from '@/lib/story-clusters';
 
-const validCategories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+const validCategories = TOP_LEVEL_CATEGORIES;
 
 /* ── Per-category theme configuration ── */
 const CATEGORY_THEME: Record<Category, {
@@ -50,6 +51,13 @@ const CATEGORY_THEME: Record<Category, {
         accentColor: 'saffron',
         title: 'India News',
         tagline: 'Latest Headlines & Breaking Stories',
+    },
+    world: {
+        gradient: 'from-[#19334A] via-[#365A78] to-[#61849B]',
+        iconName: 'Globe',
+        accentColor: 'saffron',
+        title: 'World News',
+        tagline: 'Headlines from around the world',
     },
     belgaum: {
         gradient: 'from-[#1A1712] via-[#7C2D12] to-[#C2410C]',
@@ -154,10 +162,12 @@ export async function generateStaticParams() {
 async function getCategoryArticles(category: Category): Promise<Article[]> {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' AND category = ? ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`,
+            `SELECT * FROM articles WHERE status = 'published' AND category = ?
+             AND source_url NOT LIKE 'https://news.google.com/%'
+             ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`,
             [category]
         );
-        return articles;
+        return distinctStories(articles);
     } catch (error) {
         console.error(`[${category}] DB error:`, error instanceof Error ? error.message : error);
         return [];
@@ -172,7 +182,8 @@ async function getTrendingArticles(category: Category): Promise<TrendingArticle[
                     ta.ai_score, ta.ai_reasoning, ta.rank_position
              FROM trending_articles ta
              JOIN articles a ON ta.article_id = a.id
-             WHERE ta.category = ?
+             WHERE ta.category = ? AND a.status = 'published'
+               AND a.source_url NOT LIKE 'https://news.google.com/%'
              ORDER BY ta.rank_position ASC
              LIMIT 5`,
             [category]

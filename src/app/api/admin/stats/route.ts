@@ -47,6 +47,26 @@ export const GET = withLogging(async () => {
         );
         const totalClicks = clicksResult[0]?.total || 0;
 
+        const [returningNow] = await query<Array<{ total: number }>>(
+            `SELECT COUNT(*) AS total FROM (
+                SELECT reader_id FROM reader_visits
+                WHERE section = 'belgaum' AND visit_day >= CURDATE() - INTERVAL 6 DAY
+                GROUP BY reader_id HAVING COUNT(*) >= 2
+             ) returning_readers`
+        );
+        const [returningPrevious] = await query<Array<{ total: number }>>(
+            `SELECT COUNT(*) AS total FROM (
+                SELECT reader_id FROM reader_visits
+                WHERE section = 'belgaum'
+                  AND visit_day BETWEEN CURDATE() - INTERVAL 13 DAY AND CURDATE() - INTERVAL 7 DAY
+                GROUP BY reader_id HAVING COUNT(*) >= 2
+             ) returning_readers`
+        );
+        const [localClicks] = await query<Array<{ total: number }>>(
+            `SELECT COUNT(*) AS total FROM source_clicks sc JOIN articles a ON a.id = sc.article_id
+             WHERE a.category = 'belgaum' AND sc.created_at >= NOW() - INTERVAL 7 DAY`
+        );
+
         // Top articles by view_count
         const topArticles = await query<Array<{ id: number; title: string; view_count: number }>>(
             `SELECT id, title, view_count FROM articles WHERE view_count > 0 ORDER BY view_count DESC LIMIT 5`
@@ -195,6 +215,9 @@ export const GET = withLogging(async () => {
             publishedToday,
             totalViews,
             totalClicks,
+            weeklyReturningLocalReaders: returningNow?.total || 0,
+            previousWeeklyReturningLocalReaders: returningPrevious?.total || 0,
+            localPublisherClicks7d: localClicks?.total || 0,
             topArticles,
             topArticlesByDate,
             articlesPerDay,

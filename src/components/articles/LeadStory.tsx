@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
@@ -13,8 +13,7 @@ export function LeadStory({ article }: { article: Article }) {
 
     return (
         <article className="group relative overflow-hidden rounded-sm">
-            <Link
-                href={`/article/${article.slug}`}
+            <PublisherLink article={article}
                 className="block relative aspect-[4/3] md:aspect-[16/10]"
             >
                 {article.featured_image ? (
@@ -47,7 +46,7 @@ export function LeadStory({ article }: { article: Article }) {
                         <span>{formatRelativeTime(article.published_at || article.created_at)}</span>
                     </div>
                 </div>
-            </Link>
+            </PublisherLink>
         </article>
     );
 }

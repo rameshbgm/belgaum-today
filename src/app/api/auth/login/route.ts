@@ -25,44 +25,11 @@ export const POST = withLogging(async (request: NextRequest) => {
             );
         }
 
-        // Find user
-        let user: User | null = null;
-
-        try {
-            const users = await query<User[]>(
-                `SELECT * FROM users WHERE email = ? LIMIT 1`,
-                [email]
-            );
-            user = users.length > 0 ? users[0] : null;
-        } catch {
-            // Mock user for development when DB is not available
-            if (email === 'admin@belgaum.today' && password === 'admin123') {
-                const mockPayload: AuthPayload = {
-                    userId: 1,
-                    email: 'admin@belgaum.today',
-                    role: 'admin',
-                };
-                const token = generateToken(mockPayload);
-                await setAuthCookie(token);
-
-                return NextResponse.json({
-                    success: true,
-                    data: {
-                        user: {
-                            id: 1,
-                            email: 'admin@belgaum.today',
-                            name: 'Admin',
-                            role: 'admin',
-                        },
-                    },
-                });
-            }
-
-            return NextResponse.json(
-                { success: false, error: 'Invalid credentials', code: 401 },
-                { status: 401 }
-            );
-        }
+        const users = await query<User[]>(
+            `SELECT * FROM users WHERE email = ? LIMIT 1`,
+            [email]
+        );
+        const user = users.length > 0 ? users[0] : null;
 
         if (!user) {
             return NextResponse.json(

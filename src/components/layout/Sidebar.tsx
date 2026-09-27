@@ -5,11 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TrendingUp, Tag, Rss, Loader2, Clock, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui';
-import { CATEGORY_META, Category } from '@/types';
+import { CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
 import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 
-const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+const categories = TOP_LEVEL_CATEGORIES;
 
 interface TrendingArticle {
     id: number;

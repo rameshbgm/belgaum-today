@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Youtube, Mail, MapPin, Phone, Rss, BookOpen, Linkedin, Globe } from 'lucide-react';
-import { CATEGORY_META, Category } from '@/types';
+import { CATEGORY_META, TOP_LEVEL_CATEGORIES, Category } from '@/types';
 
-const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+const categories = TOP_LEVEL_CATEGORIES;
 
 const blogCategories: Category[] = ['technology', 'travel', 'science', 'health', 'lifestyle', 'food', 'education', 'environment'];
 

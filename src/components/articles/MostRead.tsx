@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Eye } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
 
@@ -7,11 +7,12 @@ interface MostReadArticle {
     title: string;
     slug: string;
     source_name: string;
+    source_url: string;
     view_count?: number;
 }
 
 /**
- * "Most Read" — big oversized rank numerals in saffron beside the headline.
+ * "Most Opened" — stories readers followed to their publishers.
  * A classic newspaper "most popular" list, restyled editorially.
  */
 export function MostRead({ articles }: { articles: MostReadArticle[] }) {
@@ -19,7 +20,7 @@ export function MostRead({ articles }: { articles: MostReadArticle[] }) {
         <ol className="space-y-5 max-h-[560px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-ink/15 hover:scrollbar-thumb-ink/30">
             {articles.map((a, i) => (
                 <li key={a.id}>
-                    <Link href={`/article/${a.slug}`} className="group flex gap-4 items-start">
+                    <PublisherLink article={a} className="group flex gap-4 items-start">
                         <span className="font-display text-3xl font-black leading-none text-primary/90 w-9 shrink-0 tabular-nums">
                             {i + 1}
                         </span>
@@ -35,7 +36,7 @@ export function MostRead({ articles }: { articles: MostReadArticle[] }) {
                                 </span>
                             </span>
                         </div>
-                    </Link>
+                    </PublisherLink>
                 </li>
             ))}
         </ol>

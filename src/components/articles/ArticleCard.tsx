@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Eye, Clock, Info, ExternalLink, Flame } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
@@ -26,7 +26,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
     return (
         <article className={`group bg-surface rounded-lg overflow-hidden border border-hairline transition-all duration-300 hover:shadow-md hover:border-primary/40 ${compact ? 'text-sm' : ''}`}>
             {/* Image */}
-            <Link href={`/article/${article.slug}`} className={`block relative overflow-hidden ${compact ? 'aspect-square sm:aspect-[4/3] md:aspect-video' : 'aspect-video'}`}>
+            <PublisherLink article={article} className={`block relative overflow-hidden ${compact ? 'aspect-square sm:aspect-[4/3] md:aspect-video' : 'aspect-video'}`}>
                 {showImage ? (
                     <Image
                         src={article.featured_image!}
@@ -57,7 +57,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                         </span>
                     </div>
                 )}
-            </Link>
+            </PublisherLink>
 
             {/* Content */}
             <div className={compact ? "p-1.5 sm:p-2 md:p-3" : "p-4"}>
@@ -67,11 +67,11 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                 </span>
 
                 {/* Title */}
-                <Link href={`/article/${article.slug}`}>
+                <PublisherLink article={article}>
                     <h3 className={`font-display font-semibold text-ink mb-1 line-clamp-3 sm:line-clamp-2 group-hover:text-primary transition-colors ${compact ? 'text-[11px] leading-tight sm:text-xs md:text-sm' : 'text-lg'}`}>
                         {article.title}
                     </h3>
-                </Link>
+                </PublisherLink>
 
                 {/* Excerpt - Hidden in compact mode */}
                 {!compact && (

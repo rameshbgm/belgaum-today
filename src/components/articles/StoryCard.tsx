@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate, stripHtml } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
@@ -15,7 +15,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
     if (variant === 'brief') {
         return (
             <article className="group border-l-2 border-primary/70 pl-4 py-1">
-                <Link href={`/article/${article.slug}`} className="block">
+                <PublisherLink article={article} className="block">
                     <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{cat?.name}</span>
                     <h3 className="mt-1 font-display text-lg font-semibold leading-snug text-ink group-hover:text-primary transition-colors">
                         {article.title}
@@ -26,14 +26,14 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                     <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
                         {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
                     </span>
-                </Link>
+                </PublisherLink>
             </article>
         );
     }
 
     return (
         <article className="group">
-            <Link href={`/article/${article.slug}`} className="block">
+            <PublisherLink article={article} className="block">
                 <div className="relative aspect-[3/2] overflow-hidden rounded-sm mb-3">
                     {article.featured_image ? (
                         <Image
@@ -54,7 +54,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                 <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
                     {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
                 </span>
-            </Link>
+            </PublisherLink>
         </article>
     );
 }

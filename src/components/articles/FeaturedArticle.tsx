@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Eye, Clock, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
@@ -54,11 +54,11 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
                 </div>
 
                 {/* Title */}
-                <Link href={`/article/${article.slug}`}>
+                <PublisherLink article={article}>
                     <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-[#FDBA74] transition-colors">
                         {article.title}
                     </h2>
-                </Link>
+                </PublisherLink>
 
                 {/* Excerpt */}
                 <p className="text-gray-300 text-lg mb-6 max-w-2xl line-clamp-3">
@@ -79,13 +79,12 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
                         </span>
                     </div>
 
-                    <Link
-                        href={`/article/${article.slug}`}
+                    <PublisherLink article={article}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-all group/btn"
                     >
-                        Read Full Story
+                        Read at {article.source_name}
                         <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                    </Link>
+                    </PublisherLink>
                 </div>
             </div>
         </article>

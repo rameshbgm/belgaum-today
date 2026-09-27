@@ -5,9 +5,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, X, History } from 'lucide-react';
 import { Button, Input, Badge } from '@/components/ui';
 import { ArticleGrid } from '@/components/articles';
-import { Article, CATEGORY_META, Category } from '@/types';
+import { Article, CATEGORY_META, Category, TOP_LEVEL_CATEGORIES } from '@/types';
 
-const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+const categories = TOP_LEVEL_CATEGORIES;
 
 function SearchContent() {
     const router = useRouter();
@@ -54,25 +54,13 @@ function SearchContent() {
             setValidationError('Search text is required');
             return false;
         }
-        if (!category) {
-            setValidationError('Category is required');
-            return false;
-        }
-        if (!startDate) {
-            setValidationError('From date is required');
-            return false;
-        }
-        if (!endDate) {
-            setValidationError('To date is required');
-            return false;
-        }
-        if (new Date(startDate) > new Date(endDate)) {
+        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
             setValidationError('From date must be before To date');
             return false;
         }
         setValidationError('');
         return true;
-    }, [query, category, startDate, endDate]);
+    }, [query, startDate, endDate]);
 
     // Perform search
     const performSearch = useCallback(async () => {

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
     FileText, Eye, Edit3, Clock, TrendingUp, MousePointer,
     BarChart3, PieChart, CheckCircle2, XCircle, AlertTriangle,
-    Activity, Zap
+    Activity, Zap, Users
 } from 'lucide-react';
 import { Card, CardContent, Badge, Button, useToast } from '@/components/ui';
 import { DashboardStats } from '@/types';
@@ -101,7 +101,25 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+                <Card gradient>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Returning local readers</p>
+                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+                                    {formatNumber(stats?.weeklyReturningLocalReaders || 0)}
+                                </p>
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    7 days · {formatNumber(stats?.localPublisherClicks7d || 0)} local publisher opens
+                                </p>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                                <Users className="w-6 h-6 text-teal-700 dark:text-teal-300" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
                 <Card gradient>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">

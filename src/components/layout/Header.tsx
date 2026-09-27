@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Menu, X, Sun, Moon, Search, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CATEGORY_META, Category } from '@/types';
+import { CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
 
-const categories: Category[] = ['india', 'business', 'technology', 'entertainment', 'sports', 'belgaum'];
+const categories = TOP_LEVEL_CATEGORIES;
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

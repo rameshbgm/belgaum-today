@@ -3,7 +3,11 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { AuthPayload, UserRole } from '@/types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+function jwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) throw new Error('JWT_SECRET must be configured with at least 32 characters');
+    return secret;
+}
 const TOKEN_EXPIRY = '24h';
 const COOKIE_NAME = 'auth_token';
 
@@ -18,12 +22,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 // JWT token management
 export function generateToken(payload: AuthPayload): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+    return jwt.sign(payload, jwtSecret(), { expiresIn: TOKEN_EXPIRY });
 }
 
 export function verifyToken(token: string): AuthPayload | null {
     try {
-        return jwt.verify(token, JWT_SECRET) as AuthPayload;
+        return jwt.verify(token, jwtSecret()) as AuthPayload;
     } catch {
         return null;
     }

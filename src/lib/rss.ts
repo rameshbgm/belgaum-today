@@ -21,6 +21,20 @@ export interface RssFeedConfig {
     category: string;
     is_active: boolean;
     last_fetched_at: Date | null;
+    fetch_interval_minutes: number;
+}
+
+export interface FeedFetchResult {
+    feedId: number;
+    items: RssItem[];
+    error: string | null;
+}
+
+export function dueForScheduledFetch(feed: RssFeedConfig, now = Date.now()): boolean {
+    if (!feed.last_fetched_at) return true;
+    const last = new Date(feed.last_fetched_at).getTime();
+    if (!Number.isFinite(last)) return true;
+    return now - last >= Math.max(1, feed.fetch_interval_minutes || 15) * 60_000;
 }
 
 /**
@@ -193,8 +207,7 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
     const response = await fetchWithBrowserHeaders(feedUrl);
 
     if (!response.ok) {
-        console.error(`Failed to fetch RSS feed: ${feedUrl} — status ${response.status}`);
-        return [];
+        throw new Error(`HTTP ${response.status}`);
     }
 
     const xml = await response.text();
@@ -231,6 +244,10 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
                 // Fallback: strip HTML even if parser didn't match
                 description = stripHtml(description);
             }
+        }
+        if (isGoogleNews && itemSourceName === 'News.google.com') {
+            const publisher = extractTag(itemXml, 'source');
+            if (publisher) itemSourceName = stripHtml(publisher);
         }
 
         // Validation: must have title and link at minimum
@@ -274,6 +291,9 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
         });
     }
 
+    if (items.length === 0 && /<item(?:\s|>)/i.test(xml)) {
+        throw new Error('RSS document contains items, but none could be parsed');
+    }
     return items;
 }
 
@@ -282,17 +302,16 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
  */
 export async function fetchAllFeeds(
     feeds: RssFeedConfig[]
-): Promise<{ feedId: number; items: RssItem[] }[]> {
-    const results = await Promise.allSettled(
-        feeds.map(async (feed) => {
-            const items = await parseRssFeed(feed.feed_url);
-            return { feedId: feed.id, items };
-        })
-    );
-
-    return results
-        .filter((r): r is PromiseFulfilledResult<{ feedId: number; items: RssItem[] }> =>
-            r.status === 'fulfilled'
-        )
-        .map((r) => r.value);
+): Promise<FeedFetchResult[]> {
+    return Promise.all(feeds.map(async feed => {
+        try {
+            return { feedId: feed.id, items: await parseRssFeed(feed.feed_url), error: null };
+        } catch (error) {
+            return {
+                feedId: feed.id,
+                items: [],
+                error: error instanceof Error ? error.message : 'Unknown feed fetch error',
+            };
+        }
+    }));
 }

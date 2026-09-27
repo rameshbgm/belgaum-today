@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { Eye } from 'lucide-react';
 import { Article, CATEGORY_META } from '@/types';
 import { stripHtml, formatRelativeTime, formatNumber } from '@/lib/utils';
@@ -58,7 +58,7 @@ function ArticleRow({ article }: { article: Article }) {
 
     return (
         <article className="group">
-            <Link href={`/article/${article.slug}`} className="flex gap-3 sm:gap-4 items-start">
+            <PublisherLink article={article} className="flex gap-3 sm:gap-4 items-start">
                 {/* Thumbnail — smaller on mobile */}
                 <div className="relative w-20 h-16 sm:w-28 sm:h-20 shrink-0 overflow-hidden rounded-sm bg-surface">
                     {showImg ? (
@@ -100,7 +100,7 @@ function ArticleRow({ article }: { article: Article }) {
                         </span>
                     </span>
                 </div>
-            </Link>
+            </PublisherLink>
         </article>
     );
 }

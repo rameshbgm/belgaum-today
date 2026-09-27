@@ -3,11 +3,10 @@ import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { parseRssFeed } from '@/lib/rss';
+import { FEED_CATEGORIES } from '@/types';
+import { assertSourcePolicyConfigured, isBlockedSource } from '@/lib/source-policy';
 
-const VALID_CATEGORIES = [
-    'india', 'business', 'technology', 'sports', 'entertainment', 'belgaum',
-    'travel', 'science', 'health', 'lifestyle', 'food', 'education', 'environment', 'culture', 'finance',
-];
+const VALID_CATEGORIES = FEED_CATEGORIES;
 
 export const dynamic = 'force-dynamic';
 
@@ -29,10 +28,40 @@ export const GET = withLogging(async () => {
             is_active: boolean;
             last_fetched_at: string | null;
             article_count: number;
+            last_attempted_at: string | null;
+            last_successful_at: string | null;
+            last_status: string | null;
+            last_error: string | null;
+            last_items_fetched: number | null;
+            new_articles_24h: number;
+            error_runs_24h: number;
+            empty_runs_24h: number;
         }>>(
-            `SELECT f.*, 
-                    (SELECT COUNT(*) FROM articles a WHERE a.source_name LIKE CONCAT('%', SUBSTRING_INDEX(f.name, ' - ', 1), '%') AND a.category = f.category) as article_count
+            `SELECT f.*,
+                    (SELECT COUNT(*) FROM articles a WHERE a.feed_id = f.id) AS article_count,
+                    latest.started_at AS last_attempted_at,
+                    (SELECT MAX(s.started_at) FROM rss_fetch_logs s
+                     WHERE s.feed_id = f.id AND s.status IN ('success', 'partial') AND s.items_fetched > 0) AS last_successful_at,
+                    latest.status AS last_status,
+                    latest.error_details AS last_error,
+                    latest.items_fetched AS last_items_fetched,
+                    COALESCE(recent.new_articles_24h, 0) AS new_articles_24h,
+                    COALESCE(recent.error_runs_24h, 0) AS error_runs_24h,
+                    COALESCE(recent.empty_runs_24h, 0) AS empty_runs_24h
              FROM rss_feed_config f
+             LEFT JOIN rss_fetch_logs latest ON latest.id = (
+                 SELECT l.id FROM rss_fetch_logs l
+                 WHERE l.feed_id = f.id ORDER BY l.started_at DESC, l.id DESC LIMIT 1
+             )
+             LEFT JOIN (
+                 SELECT feed_id, SUM(new_articles) AS new_articles_24h,
+                        SUM(status = 'error' AND (errors_count > 0 OR error_details IS NOT NULL)) AS error_runs_24h,
+                        SUM(items_fetched = 0 AND (status = 'success' OR
+                            (status = 'error' AND errors_count = 0 AND error_details IS NULL))) AS empty_runs_24h
+                 FROM rss_fetch_logs
+                 WHERE started_at >= NOW() - INTERVAL 24 HOUR
+                 GROUP BY feed_id
+             ) recent ON recent.feed_id = f.id
              ORDER BY f.category, f.name`
         );
 
@@ -93,7 +122,12 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { name, feed_url, category, is_active = true } = body;
+        const { name, feed_url, category, is_active = true, fetch_interval_minutes = 120 } = body;
+
+        assertSourcePolicyConfigured();
+        if (isBlockedSource(feed_url, name)) {
+            return NextResponse.json({ success: false, error: 'This publisher is excluded from the site' }, { status: 422 });
+        }
 
         // Validation
         if (!name || !feed_url || !category) {
@@ -119,6 +153,9 @@ export const POST = withLogging(async (request: NextRequest) => {
                 { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` },
                 { status: 400 }
             );
+        }
+        if (!Number.isInteger(fetch_interval_minutes) || fetch_interval_minutes < 1 || fetch_interval_minutes > 1440) {
+            return NextResponse.json({ success: false, error: 'Fetch interval must be 1 to 1440 minutes' }, { status: 400 });
         }
 
         // Validate that the URL is a reachable RSS feed with at least one item
@@ -153,9 +190,9 @@ export const POST = withLogging(async (request: NextRequest) => {
 
         // Insert new feed
         await execute(
-            `INSERT INTO rss_feed_config (name, feed_url, category, is_active)
-             VALUES (?, ?, ?, ?)`,
-            [name, feed_url, category.toLowerCase(), is_active]
+            `INSERT INTO rss_feed_config (name, feed_url, category, is_active, fetch_interval_minutes)
+             VALUES (?, ?, ?, ?, ?)`,
+            [name, feed_url, category.toLowerCase(), is_active, fetch_interval_minutes]
         );
 
         return NextResponse.json({ 
@@ -183,7 +220,12 @@ export const PUT = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { id, name, feed_url, category, is_active } = body;
+        const { id, name, feed_url, category, is_active, fetch_interval_minutes = 120 } = body;
+
+        assertSourcePolicyConfigured();
+        if (isBlockedSource(feed_url, name)) {
+            return NextResponse.json({ success: false, error: 'This publisher is excluded from the site' }, { status: 422 });
+        }
 
         // Validation
         if (!id || !name || !feed_url || !category) {
@@ -209,6 +251,9 @@ export const PUT = withLogging(async (request: NextRequest) => {
                 { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` },
                 { status: 400 }
             );
+        }
+        if (!Number.isInteger(fetch_interval_minutes) || fetch_interval_minutes < 1 || fetch_interval_minutes > 1440) {
+            return NextResponse.json({ success: false, error: 'Fetch interval must be 1 to 1440 minutes' }, { status: 400 });
         }
 
         // Check if feed exists
@@ -240,9 +285,9 @@ export const PUT = withLogging(async (request: NextRequest) => {
         // Update feed
         await execute(
             `UPDATE rss_feed_config
-             SET name = ?, feed_url = ?, category = ?, is_active = ?
+             SET name = ?, feed_url = ?, category = ?, is_active = ?, fetch_interval_minutes = ?
              WHERE id = ?`,
-            [name, feed_url, category.toLowerCase(), is_active ?? true, id]
+            [name, feed_url, category.toLowerCase(), is_active ?? true, fetch_interval_minutes, id]
         );
 
         return NextResponse.json({ 

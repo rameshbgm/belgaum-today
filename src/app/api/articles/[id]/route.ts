@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
-import { Article } from '@/types';
+import { Article, FEED_CATEGORIES } from '@/types';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 import { getCurrentUser } from '@/lib/auth';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { withLogging } from '@/lib/withLogging';
@@ -80,6 +81,18 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
             ai_confidence,
             requires_review,
         } = body;
+
+        assertSourcePolicyConfigured();
+        const existingArticle = await query<Array<{ title: string; category: string; source_name: string; source_url: string }>>(
+            'SELECT title, category, source_name, source_url FROM articles WHERE id = ? LIMIT 1', [id]
+        );
+        if (!existingArticle[0]) return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        const nextTitle = title ?? existingArticle[0].title;
+        const nextCategory = category ?? existingArticle[0].category;
+        if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||
+            isBlockedSource(source_url ?? existingArticle[0].source_url, `${source_name ?? existingArticle[0].source_name} ${nextTitle}`)) {
+            return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
+        }
 
         // Build update query dynamically
         const updates: string[] = [];

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
 import { withLogging } from '@/lib/withLogging';
+import { distinctStories } from '@/lib/story-clusters';
 
 // GET /api/search - Full-text search
 export const GET = withLogging(async (request: NextRequest) => {
@@ -13,7 +14,8 @@ export const GET = withLogging(async (request: NextRequest) => {
     const sortBy = searchParams.get('sortBy') || 'newest';
 
     try {
-        let sql = `SELECT * FROM articles WHERE status = 'published'`;
+        let sql = `SELECT * FROM articles WHERE status = 'published'
+                   AND source_url NOT LIKE 'https://news.google.com/%'`;
         const params: unknown[] = [];
 
         // Full-text search
@@ -61,7 +63,7 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         return NextResponse.json({
             success: true,
-            data: articles,
+            data: distinctStories(articles),
         });
     } catch (error) {
         console.error('Search error:', error instanceof Error ? error.message : error);

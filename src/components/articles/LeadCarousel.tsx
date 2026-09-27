@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { PublisherLink } from './PublisherLink';
 import { TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate } from '@/lib/utils';
@@ -16,6 +16,7 @@ export interface LeadCarouselArticle {
     featured_image: string | null;
     category: string;
     source_name: string;
+    source_url: string;
     published_at: string | Date | null;
     created_at?: string | Date;
     rank_position?: number;
@@ -52,8 +53,7 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
         >
-            <Link
-                href={`/article/${article.slug}`}
+            <PublisherLink article={article}
                 className="block relative"
             >
                 {article.featured_image ? (
@@ -97,7 +97,7 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                         )}
                     </div>
                 </div>
-            </Link>
+            </PublisherLink>
 
             {/* Navigation arrows */}
             {total > 1 && (

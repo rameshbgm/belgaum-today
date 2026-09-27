@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, insert } from '@/lib/db';
-import { Article, ApiResponse, PaginatedResponse } from '@/types';
+import { Article, ApiResponse, PaginatedResponse, FEED_CATEGORIES } from '@/types';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
@@ -14,7 +15,7 @@ export const GET = withLogging(async (request: NextRequest) => {
     const limit = parseInt(searchParams.get('limit') || '20');
 
     try {
-        let sql = `SELECT * FROM articles WHERE status = 'published'`;
+        let sql = `SELECT * FROM articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
         const params: unknown[] = [];
 
         if (category && category !== 'all') {
@@ -39,7 +40,7 @@ export const GET = withLogging(async (request: NextRequest) => {
         const articles = await query<Article[]>(sql, params);
 
         // Get total count
-        let countSql = `SELECT COUNT(*) as total FROM articles WHERE status = 'published'`;
+        let countSql = `SELECT COUNT(*) as total FROM articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
         const countParams: unknown[] = [];
         if (category && category !== 'all') {
             countSql += ` AND category = ?`;
@@ -115,6 +116,11 @@ export const POST = withLogging(async (request: NextRequest) => {
                 { success: false, error: 'Missing required fields', code: 400 },
                 { status: 400 }
             );
+        }
+        assertSourcePolicyConfigured();
+        if (!FEED_CATEGORIES.includes(category) || hasNonEnglishScript(title) ||
+            isBlockedSource(source_url, `${source_name} ${title}`)) {
+            return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
         }
 
         const slug = generateSlug(title);

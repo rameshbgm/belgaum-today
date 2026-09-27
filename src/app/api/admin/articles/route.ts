@@ -3,6 +3,8 @@ import { query, execute, insert } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
+import { FEED_CATEGORIES } from '@/types';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,6 +114,11 @@ export const POST = withLogging(async (request: NextRequest) => {
         const publishedAt = status === 'published' ? new Date() : null;
         const finalSourceName = source_name || 'Belgaum Today';
         const finalSourceUrl = source_url || `https://belgaum.today/blog/${slug}`;
+        assertSourcePolicyConfigured();
+        if (!FEED_CATEGORIES.includes(category) || hasNonEnglishScript(title) ||
+            isBlockedSource(finalSourceUrl, `${finalSourceName} ${title}`)) {
+            return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
+        }
 
         const id = await insert(
             `INSERT INTO articles

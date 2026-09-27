@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Eye } from 'lucide-react';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatRelativeTime, formatNumber } from '@/lib/utils';
+import { PublisherLink } from './PublisherLink';
 
 interface CategorySection {
     category: Category;
@@ -43,7 +44,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                                 <ul className="space-y-3">
                                     {catArticles.map((a) => (
                                         <li key={a.id}>
-                                            <Link href={`/article/${a.slug}`} className="group block">
+                                            <PublisherLink article={a} className="group block">
                                                 <h3 className="font-display text-[14px] font-semibold leading-snug text-ink group-hover:text-primary transition-colors line-clamp-2">
                                                     {a.title}
                                                 </h3>
@@ -54,7 +55,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                                                         {formatNumber(a.view_count ?? 0)}
                                                     </span>
                                                 </span>
-                                            </Link>
+                                            </PublisherLink>
                                         </li>
                                     ))}
                                 </ul>
@@ -66,7 +67,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                 <ul className="divide-y divide-hairline">
                     {articles.map((a) => (
                         <li key={a.id}>
-                            <Link href={`/article/${a.slug}`} className="group block py-3.5">
+                            <PublisherLink article={a} className="group block py-3.5">
                                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                                     {CATEGORY_META[a.category]?.name}
                                 </span>
@@ -82,7 +83,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                                         {formatNumber(a.view_count ?? 0)}
                                     </span>
                                 </span>
-                            </Link>
+                            </PublisherLink>
                         </li>
                     ))}
                 </ul>

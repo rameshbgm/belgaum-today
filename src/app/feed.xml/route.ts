@@ -1,60 +1,42 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
+import { publisherUrl } from '@/lib/source-policy';
+
+function escapeXml(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 export async function GET() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Belgaum Today';
 
-    // Mock articles for development
-    const mockArticles: Article[] = [
-        {
-            id: 1,
-            title: 'Belgaum Celebrates Annual Cultural Festival',
-            slug: 'belgaum-celebrates-annual-cultural-festival',
-            excerpt: 'The historic city of Belgaum came alive this weekend with vibrant cultural performances.',
-            content: '',
-            featured_image: null,
-            category: 'belgaum',
-            source_name: 'Belgaum Times',
-            source_url: 'https://example.com/belgaum-festival',
-            status: 'published',
-            featured: true,
-            ai_generated: false,
-            ai_confidence: null,
-            requires_review: false,
-            view_count: 1250,
-            reading_time: 3,
-            published_at: new Date(),
-            created_at: new Date(),
-            updated_at: new Date(),
-        },
-    ];
-
     let articles: Article[] = [];
 
     try {
         articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 250`
+            `SELECT * FROM articles WHERE status = 'published'
+             AND source_url NOT LIKE 'https://news.google.com/%'
+             ORDER BY published_at DESC LIMIT 250`
         );
     } catch {
-        articles = mockArticles;
+        articles = [];
     }
 
-    const rssItems = articles.map((article) => {
+    const rssItems = articles.filter(article => publisherUrl(article.source_url)).map((article) => {
         const pubDate = article.published_at
             ? new Date(article.published_at).toUTCString()
             : new Date().toUTCString();
 
         return `
     <item>
-      <title><![CDATA[${article.title}]]></title>
-      <link>${siteUrl}/article/${article.slug}</link>
-      <description><![CDATA[${article.excerpt || ''}]]></description>
+      <title>${escapeXml(article.title)}</title>
+      <link>${escapeXml(article.source_url)}</link>
+      <description>${escapeXml(article.excerpt || '')}</description>
       <pubDate>${pubDate}</pubDate>
-      <category>${article.category}</category>
-      <source url="${article.source_url}">${article.source_name}</source>
-      <guid isPermaLink="true">${siteUrl}/article/${article.slug}</guid>
+      <category>${escapeXml(article.category)}</category>
+      <source url="${escapeXml(article.source_url)}">${escapeXml(article.source_name)}</source>
+      <guid isPermaLink="false">${siteUrl}/article/${encodeURIComponent(article.slug)}</guid>
     </item>`;
     }).join('');
 

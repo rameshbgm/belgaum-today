@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute, insert } from '@/lib/db';
-import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
+import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource, resolvePublisherUrl } from '@/lib/source-policy';
+import { isBelagaviStory } from '@/lib/local-relevance';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { fileLogger } from '@/lib/fileLogger';
@@ -39,9 +41,11 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         fileLogger.info('cron', '✓ Authentication successful');
 
-        const feeds = await query<RssFeedConfig[]>(
+        assertSourcePolicyConfigured();
+        const configuredFeeds = await query<RssFeedConfig[]>(
             `SELECT * FROM rss_feed_config WHERE is_active = true`
         );
+        const feeds = configuredFeeds.filter(feed => dueForScheduledFetch(feed) && !isBlockedSource(feed.feed_url, feed.name));
 
         if (feeds.length === 0) {
             fileLogger.info('cron', '✓ No active feeds found');
@@ -79,7 +83,7 @@ export const GET = withLogging(async (request: NextRequest) => {
         let totalSkipped = 0;
         const errors: string[] = [];
 
-        for (const { feedId, items } of feedResults) {
+        for (const { feedId, items, error: fetchError } of feedResults) {
             const feed = feeds.find((f: RssFeedConfig) => f.id === feedId);
             if (!feed) continue;
 
@@ -87,6 +91,7 @@ export const GET = withLogging(async (request: NextRequest) => {
             let feedNew = 0;
             let feedSkipped = 0;
             const feedErrors: string[] = [];
+            if (fetchError) feedErrors.push(fetchError);
 
             fileLogger.info('cron', `  ┌─ Feed: "${feed.name}" (${feed.category})`, {
                 feedId: feed.id,
@@ -96,10 +101,14 @@ export const GET = withLogging(async (request: NextRequest) => {
 
             for (const item of items) {
                 try {
-                    // Check for duplicate by source_url OR title
+                    if (isBlockedSource(item.link, item.sourceName) || hasNonEnglishScript(item.title)) {
+                        feedSkipped++;
+                        continue;
+                    }
+                    // Keep separate publisher records for the same headline.
                     const existing = await query<{ id: number }[]>(
-                        'SELECT id FROM articles WHERE source_url = ? OR title = ? LIMIT 1',
-                        [item.link, item.title]
+                        'SELECT id FROM articles WHERE source_url = ? LIMIT 1',
+                        [item.link]
                     );
 
                     if (existing.length > 0) {
@@ -110,6 +119,28 @@ export const GET = withLogging(async (request: NextRequest) => {
                         });
                         continue;
                     }
+
+                    const sourceLink = await resolvePublisherUrl(item.link);
+                    if (!sourceLink || isBlockedSource(sourceLink, item.sourceName)) {
+                        feedSkipped++;
+                        continue;
+                    }
+                    if (sourceLink !== item.link) {
+                        const canonicalMatch = await query<{ id: number }[]>(
+                            'SELECT id FROM articles WHERE source_url = ? LIMIT 1', [sourceLink]
+                        );
+                        if (canonicalMatch.length > 0) {
+                            feedSkipped++;
+                            continue;
+                        }
+                    }
+
+                    const isLocal = await isBelagaviStory(item, feed.category === 'belgaum');
+                    if (feed.category === 'belgaum' && !isLocal) {
+                        feedSkipped++;
+                        continue;
+                    }
+                    const articleCategory = isLocal ? 'belgaum' : feed.category;
 
                     let slug = generateSlug(item.title);
                     const slugExists = await query<{ id: number }[]>(
@@ -124,11 +155,11 @@ export const GET = withLogging(async (request: NextRequest) => {
 
                     try {
                         await insert(
-                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
                                 item.title, slug, item.description || item.title, item.description || item.title,
-                                item.imageUrl, feed.category, item.sourceName, item.link,
+                                item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
                                 'published', false, false, 0, readingTime, item.pubDate,
                             ]
                         );
@@ -137,11 +168,11 @@ export const GET = withLogging(async (request: NextRequest) => {
                         // Slug race condition: two feeds inserted same slug concurrently — retry with unique suffix
                         if (msg.includes('Duplicate entry') && msg.includes("for key 'slug'")) {
                             await insert(
-                                `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                                `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                                 [
                                     item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
-                                    item.imageUrl, feed.category, item.sourceName, item.link,
+                                    item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
                                     'published', false, false, 0, readingTime, item.pubDate,
                                 ]
                             );
@@ -174,18 +205,17 @@ export const GET = withLogging(async (request: NextRequest) => {
                 }
             }
 
-            await execute(
-                'UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?',
-                [feedId]
-            );
+            if (!fetchError) {
+                await execute('UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?', [feedId]);
+            }
 
             const feedDuration = Date.now() - feedStart;
             totalNew += feedNew;
             totalSkipped += feedSkipped;
 
             // Insert RSS fetch log to database
-            const logStatus = feedErrors.length === items.length ? 'error' : 
-                             (feedErrors.length > 0 ? 'partial' : 'success');
+            const logStatus = fetchError ? 'error' :
+                (feedErrors.length > 0 ? (feedErrors.length === items.length ? 'error' : 'partial') : 'success');
             try {
                 await insert(
                     `INSERT INTO rss_fetch_logs 

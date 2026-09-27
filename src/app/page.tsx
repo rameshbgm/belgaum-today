@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
-import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
-import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading } from '@/components/articles';
+import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading, StoryCard } from '@/components/articles';
 import type { LeadCarouselArticle } from '@/components/articles';
+import { TopicPreferences } from '@/components/articles/TopicPreferences';
+import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
+import { digestConfigured } from '@/lib/digest';
+import { distinctStories } from '@/lib/story-clusters';
 
 interface MostViewedArticle {
   id: number;
   title: string;
   slug: string;
   source_name: string;
+  source_url: string;
   published_at: string;
   view_count: number;
 }
@@ -37,21 +41,33 @@ interface TrendingArticle {
   featured_image: string | null;
   category: string;
   source_name: string;
+  source_url: string;
   published_at: string;
   rank_position: number;
 }
 
-const LATEST_CATEGORIES = ['india', 'business', 'technology', 'entertainment', 'sports'] as const;
+const LATEST_CATEGORIES = ['belgaum', 'india', 'world', 'business', 'technology', 'entertainment', 'sports'] as const;
 
 async function getArticles(): Promise<{
   articles: Article[];
   trendingArticles: TrendingArticle[];
   mostViewedArticles: MostViewedArticle[];
   categorySections: Array<{ category: typeof LATEST_CATEGORIES[number]; articles: Article[] }>;
+  localArticles: Article[];
+  indiaArticles: Article[];
 }> {
   try {
+    const [localArticles, indiaArticles] = await Promise.all(['belgaum', 'india'].map(category =>
+      query<Article[]>(
+        `SELECT * FROM articles WHERE status = 'published' AND category = ?
+         AND source_url NOT LIKE 'https://news.google.com/%'
+         ORDER BY COALESCE(published_at, created_at) DESC LIMIT 4`, [category]
+      )
+    ));
     const articles = await query<Article[]>(
-      `SELECT * FROM articles WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
+      `SELECT * FROM articles WHERE status = 'published'
+       AND source_url NOT LIKE 'https://news.google.com/%'
+       ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
     );
 
     // Get trending articles across all categories (top 10)
@@ -61,7 +77,7 @@ async function getArticles(): Promise<{
               ta.ai_score, ta.ai_reasoning, ta.rank_position
        FROM trending_articles ta
        JOIN articles a ON ta.article_id = a.id
-       WHERE a.status = 'published'
+       WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
        ORDER BY ta.rank_position ASC
        LIMIT 10`
     );
@@ -74,16 +90,19 @@ async function getArticles(): Promise<{
       featured_image: row.featured_image,
       category: row.category,
       source_name: row.source_name,
+      source_url: row.source_url,
       published_at: new Date(row.published_at).toISOString(),
       rank_position: row.rank_position,
     }));
 
-    // Get most viewed articles from last 10 days
+    // Rank publisher opens from the last 10 days.
     const mostViewed = await query<MostViewedArticle[]>(
-      `SELECT id, title, slug, source_name, published_at, view_count
-       FROM articles
-       WHERE status = 'published'
-         AND published_at >= DATE_SUB(NOW(), INTERVAL 10 DAY)
+      `SELECT a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at,
+              COUNT(sc.id) AS view_count
+       FROM source_clicks sc JOIN articles a ON a.id = sc.article_id
+       WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
+         AND sc.created_at >= DATE_SUB(NOW(), INTERVAL 10 DAY)
+       GROUP BY a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at
        ORDER BY view_count DESC
        LIMIT 15`
     );
@@ -94,7 +113,7 @@ async function getArticles(): Promise<{
         const rows = await query<Article[]>(
           `SELECT id, title, slug, excerpt, category, source_name, source_url, published_at, created_at, view_count, reading_time, featured_image, status, featured, ai_generated, ai_confidence, requires_review
            FROM articles
-           WHERE status = 'published' AND category = ?
+           WHERE status = 'published' AND category = ? AND source_url NOT LIKE 'https://news.google.com/%'
            ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3`,
           [cat]
         );
@@ -103,26 +122,24 @@ async function getArticles(): Promise<{
     );
 
     return {
-      articles,
+      articles: distinctStories(articles),
       trendingArticles: trending,
       mostViewedArticles: mostViewed.map(row => ({
         ...row,
         published_at: new Date(row.published_at).toISOString(),
       })),
-      categorySections: categoryArticles,
+      categorySections: categoryArticles.map(section => ({ ...section, articles: distinctStories(section.articles) })),
+      localArticles: distinctStories(localArticles),
+      indiaArticles: distinctStories(indiaArticles),
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [] };
+    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [] };
   }
 }
 
 export default async function HomePage() {
-  // Self-heal: if the in-process scheduler was reaped on shared hosting, this
-  // fire-and-forget call revives it on the next visit. Cheap when healthy.
-  void reviveSchedulerIfStale();
-
-  const { articles, trendingArticles, mostViewedArticles, categorySections } = await getArticles();
+  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback
   const isFallback = trendingArticles.length === 0;
@@ -135,6 +152,7 @@ export default async function HomePage() {
         featured_image: a.featured_image,
         category: a.category,
         source_name: a.source_name,
+        source_url: a.source_url,
         published_at: a.published_at ? new Date(a.published_at).toISOString() : null,
         created_at: new Date(a.created_at).toISOString(),
       }))
@@ -146,6 +164,7 @@ export default async function HomePage() {
         featured_image: t.featured_image,
         category: t.category,
         source_name: t.source_name,
+        source_url: t.source_url,
         published_at: t.published_at,
         rank_position: t.rank_position,
       }));
@@ -157,8 +176,29 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-10">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
+        {([
+          { title: 'Belagavi', href: '/belgaum', stories: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },
+          { title: 'India', href: '/india', stories: indiaArticles, empty: 'The latest India stories will appear here.' },
+        ] as const).map(section => (
+          <div key={section.title} className="min-w-0">
+            <div className="mb-5 flex items-end justify-between gap-4 border-b border-hairline pb-3">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-ink">{section.title}</h2>
+              <Link href={section.href} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">More stories</Link>
+            </div>
+            {section.stories.length > 0 ? (
+              <div className="space-y-5">
+                <StoryCard article={section.stories[0]} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {section.stories.slice(1, 3).map(story => <StoryCard key={story.id} article={story} variant="brief" />)}
+                </div>
+              </div>
+            ) : <p className="py-12 text-sm text-muted">{section.empty}</p>}
+          </div>
+        ))}
+      </section>
       {/* ── Front page: lead carousel + scrollable latest rail ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b-2 border-ink/85 lg:items-stretch">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 py-10 border-b-2 border-ink/85 lg:items-stretch">
         {/* Lead carousel — AI trending or latest fallback */}
         <div className="lg:col-span-8">
           <LeadCarousel articles={leadArticles} isFallback={isFallback} />
@@ -181,14 +221,14 @@ export default async function HomePage() {
         </aside>
       </section>
 
-      {/* ── More Stories + Most Read ── */}
+      {/* ── More Stories + Most Opened ── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
         <HomepageMoreStories initialArticles={moreStories} />
 
-        {/* Most Read sidebar */}
+        {/* Most Opened sidebar */}
         <aside className="lg:col-span-4">
           <div className="lg:sticky lg:top-20">
-            <SectionHeading accent>Most Read</SectionHeading>
+            <SectionHeading accent>Most Opened</SectionHeading>
             {mostViewedArticles.length > 0 ? (
               <MostRead articles={mostViewedArticles.slice(0, 15)} />
             ) : trendingArticles.length > 0 ? (
@@ -196,6 +236,9 @@ export default async function HomePage() {
             ) : (
               <p className="text-sm text-muted">Nothing trending yet.</p>
             )}
+
+            <TopicPreferences articles={articles} />
+            {digestConfigured() && <DailyDigestSignup />}
 
             {/* RSS pull-quote block */}
             <div className="mt-10 border-t-2 border-ink/85 pt-6">

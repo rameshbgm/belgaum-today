@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
+import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource, resolvePublisherUrl } from '@/lib/source-policy';
+import { isBelagaviStory } from '@/lib/local-relevance';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
@@ -20,6 +22,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         if (!user || user.role !== 'admin') {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
+        assertSourcePolicyConfigured();
 
         const body = await request.json().catch(() => ({}));
         const feedIds: number[] | undefined = body.feedIds;
@@ -45,6 +48,8 @@ export const POST = withLogging(async (request: NextRequest) => {
                 'SELECT * FROM rss_feed_config WHERE is_active = true'
             );
         }
+
+        feeds = feeds.filter(feed => !isBlockedSource(feed.feed_url, feed.name));
 
         if (feeds.length === 0) {
             return NextResponse.json({
@@ -73,7 +78,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         const feedSummaries: Array<{ name: string; category: string; fetched: number; new: number; skipped: number }> = [];
         const errors: string[] = [];
 
-        for (const { feedId, items } of feedResults) {
+        for (const { feedId, items, error: fetchError } of feedResults) {
             const feed = feeds.find((f) => f.id === feedId);
             if (!feed) continue;
 
@@ -81,13 +86,18 @@ export const POST = withLogging(async (request: NextRequest) => {
             let feedNew = 0;
             let feedSkipped = 0;
             const feedErrors: string[] = [];
+            if (fetchError) feedErrors.push(fetchError);
             totalItemsFetched += items.length;
 
             for (const item of items) {
                 try {
+                    if (isBlockedSource(item.link, item.sourceName) || hasNonEnglishScript(item.title)) {
+                        feedSkipped++;
+                        continue;
+                    }
                     const existing = await query<{ id: number }[]>(
-                        'SELECT id FROM articles WHERE source_url = ? OR title = ? LIMIT 1',
-                        [item.link, item.title]
+                        'SELECT id FROM articles WHERE source_url = ? LIMIT 1',
+                        [item.link]
                     );
 
                     if (existing.length > 0) {
@@ -101,6 +111,28 @@ export const POST = withLogging(async (request: NextRequest) => {
                         continue;
                     }
 
+                    const sourceLink = await resolvePublisherUrl(item.link);
+                    if (!sourceLink || isBlockedSource(sourceLink, item.sourceName)) {
+                        feedSkipped++;
+                        continue;
+                    }
+                    if (sourceLink !== item.link) {
+                        const canonicalMatch = await query<{ id: number }[]>(
+                            'SELECT id FROM articles WHERE source_url = ? LIMIT 1', [sourceLink]
+                        );
+                        if (canonicalMatch.length > 0) {
+                            feedSkipped++;
+                            continue;
+                        }
+                    }
+
+                    const isLocal = await isBelagaviStory(item, feed.category === 'belgaum');
+                    if (feed.category === 'belgaum' && !isLocal) {
+                        feedSkipped++;
+                        continue;
+                    }
+                    const articleCategory = isLocal ? 'belgaum' : feed.category;
+
                     let slug = generateSlug(item.title);
                     const slugExists = await query<{ id: number }[]>(
                         'SELECT id FROM articles WHERE slug = ? LIMIT 1',
@@ -113,11 +145,11 @@ export const POST = withLogging(async (request: NextRequest) => {
                     const readingTime = calculateReadingTime(item.description || item.title);
 
                     const articleId = await insert(
-                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, view_count, reading_time, published_at)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, feed.category, item.sourceName, item.link,
+                            item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
                             'published', false, false, 0, readingTime, item.pubDate,
                         ]
                     );
@@ -127,7 +159,7 @@ export const POST = withLogging(async (request: NextRequest) => {
                     await insert(
                         `INSERT INTO rss_fetch_items (run_id, feed_id, feed_name, item_title, item_url, item_pub_date, action, article_id)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [runId, feed.id, feed.name, item.title, item.link, item.pubDate, 'new', articleId]
+                            [runId, feed.id, feed.name, item.title, sourceLink, item.pubDate, 'new', articleId]
                     );
                 } catch (itemError) {
                     const errMsg = itemError instanceof Error ? itemError.message : String(itemError);
@@ -143,18 +175,17 @@ export const POST = withLogging(async (request: NextRequest) => {
                 }
             }
 
-            await execute(
-                'UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?',
-                [feedId]
-            );
+            if (!fetchError) {
+                await execute('UPDATE rss_feed_config SET last_fetched_at = NOW() WHERE id = ?', [feedId]);
+            }
 
             const feedDuration = Date.now() - feedStart;
             totalNew += feedNew;
             totalSkipped += feedSkipped;
 
             // Insert RSS fetch log to database with run_id
-            const logStatus = feedErrors.length === items.length ? 'error' : 
-                             (feedErrors.length > 0 ? 'partial' : 'success');
+            const logStatus = fetchError ? 'error' :
+                (feedErrors.length > 0 ? (feedErrors.length === items.length ? 'error' : 'partial') : 'success');
             try {
                 await insert(
                     `INSERT INTO rss_fetch_logs 

@@ -18,7 +18,7 @@ const features = [
         icon: Cpu,
         title: 'Curated News',
         description:
-            'Our intelligent algorithms sift through hundreds of sources to bring you the most relevant and trending stories, ranked by significance and timeliness.',
+            'We gather headlines from configured publisher feeds. Automated checks help remove duplicates and keep local coverage relevant.',
     },
     {
         icon: MapPin,
@@ -36,7 +36,7 @@ const features = [
         icon: Zap,
         title: 'Real-Time Updates',
         description:
-            'Our RSS aggregation engine monitors dozens of trusted news sources round the clock, delivering breaking news as it happens.',
+            'Our RSS feeds are checked on their configured schedules. Each story links to its original publisher.',
     },
     {
         icon: Newspaper,
@@ -86,7 +86,7 @@ export default function AboutPage() {
                         In a world overflowing with information, finding trustworthy, relevant news shouldn&rsquo;t
                         be hard. Belgaum Today was created with a simple mission: to bring the people of Belgaum
                         and Karnataka a single, reliable destination for news that matters. We aggregate content
-                        from dozens of trusted sources, use AI to curate and analyse trending stories, and present
+                        from configured publisher feeds, use AI to rank trending stories and review uncertain local relevance, and present
                         them in a clean, easy-to-read format — free of clutter and misinformation.
                     </p>
                 </div>

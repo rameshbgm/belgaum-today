@@ -69,8 +69,7 @@ function loadConfig(): AiConfig {
             temperature: config.temperature,
             maxTokens: config.maxTokens,
             requestTimeoutMs: config.requestTimeoutMs,
-            apiKeyLength: config.apiKey.length,
-            keyPreview: config.apiKey.substring(0, 7) + '...',
+            apiKeyConfigured: true,
         });
     } else {
         console.warn('[AI Config] ⚠️ OPENAI_API_KEY not configured — AI features will fail at runtime');
