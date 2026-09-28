@@ -27,7 +27,7 @@ function relatedTitles(a: string, b: string): boolean {
     const right = titleWords(b);
     if (!left.size || !right.size) return false;
     const shared = [...left].filter(word => right.has(word));
-    return shared.length >= 2 || shared.some(word => word.length >= 8);
+    return shared.length >= 2 || shared.some(word => word.length >= 5);
 }
 
 export async function runStoryTracker(): Promise<{ classified: number; clustered: number; pending: number }> {
@@ -57,15 +57,28 @@ export async function runStoryTracker(): Promise<{ classified: number; clustered
         }
     }
 
+    // A tracker pass compares coverage from the four most recent completed RSS
+    // cycles. Keep the cutoff inside MySQL: started_at is app-supplied while
+    // completed_at/created_at use the database clock and can have different TZs.
+    // Reconstruct each cycle's database-clock start from its completion time
+    // and elapsed duration so items fetched during the oldest cycle are included.
+    const recentRunCutoff = `(
+        SELECT MIN(fetch_cycle_started_at) FROM (
+            SELECT MIN(DATE_SUB(completed_at, INTERVAL duration_ms * 1000 MICROSECOND)) AS fetch_cycle_started_at
+            FROM rss_fetch_logs
+            WHERE completed_at IS NOT NULL
+            GROUP BY started_at ORDER BY MAX(completed_at) DESC LIMIT 4
+        ) recent_runs
+    )`;
     const articles = await query<StoryArticle[]>(
         `SELECT id, title, excerpt, category, source_name, published_at, story_event_id
-         FROM public_articles WHERE story_event_id IS NULL
+         FROM public_articles WHERE story_event_id IS NULL AND created_at >= ${recentRunCutoff}
          ORDER BY COALESCE(published_at, created_at) ASC LIMIT 10`
     );
     for (const article of articles) {
         try {
             const candidates = await query<Candidate[]>(
-                `SELECT e.id, e.title, a.excerpt, e.category FROM story_events e
+                 `SELECT e.id, e.title, a.excerpt, e.category FROM story_events e
                  JOIN public_articles a ON a.story_event_id = e.id
                  WHERE e.last_updated_at >= NOW() - INTERVAL 14 DAY
                  ORDER BY e.last_updated_at DESC LIMIT 100`

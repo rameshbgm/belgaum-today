@@ -5,6 +5,7 @@ import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading
 import type { LeadCarouselArticle } from '@/components/articles';
 import { TopicPreferences } from '@/components/articles/TopicPreferences';
 import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
+import { StorySummaryButton } from '@/components/story/StorySummaryButton';
 import { digestConfigured } from '@/lib/digest';
 import { distinctStories } from '@/lib/story-clusters';
 
@@ -193,18 +194,6 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-10">
-      {storyEvents.length > 0 && <section className="border-b-2 border-ink/85 pb-10" aria-label="Story Tracker">
-        <SectionHeading accent>Story Tracker</SectionHeading>
-        <p className="mb-5 text-sm text-muted">Follow how a story develops across Indian publisher feeds.</p>
-        <div className="grid gap-4 md:grid-cols-3">
-          {storyEvents.map(event => <Link key={event.id} href={`/story/${event.id}`} className="rounded-sm border border-hairline p-5 transition-colors hover:border-accent">
-            <p className="text-xs font-bold uppercase tracking-wider text-accent">{event.category} · {event.report_count} reports</p>
-            <h2 className="mt-2 font-display text-xl text-ink">{event.title}</h2>
-            {event.latest_change && <p className="mt-3 text-sm text-muted">Latest: {event.latest_change}</p>}
-            <span className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-accent">View timeline →</span>
-          </Link>)}
-        </div>
-      </section>}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
         {([
           { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },
@@ -271,6 +260,29 @@ export default async function HomePage() {
           </div>
         </aside>
       </section>
+
+      {storyEvents.length > 0 && <section className="mt-12 border-y-2 border-ink/85 py-8 md:py-10" aria-labelledby="story-tracker-heading">
+        <div className="mb-7 flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
+          <div>
+            <h2 id="story-tracker-heading" className="font-display text-2xl font-bold uppercase tracking-[0.06em] text-primary md:text-3xl">Story Tracker</h2>
+            <p className="mt-2 max-w-prose text-sm leading-6 text-muted">See how recent stories develop across Indian publishers. Expand an AI summary to compare reports.</p>
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Latest developing stories</span>
+        </div>
+        <div className="grid gap-x-10 md:grid-cols-2">
+          {storyEvents.map(event => <article key={event.id} className="border-t border-hairline py-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-accent">{event.category} <span aria-hidden="true">·</span> {event.report_count} publisher report{event.report_count === 1 ? '' : 's'}</p>
+            <h3 className="mt-2 font-display text-xl leading-snug text-ink">
+              <Link href={`/story/${event.id}`} className="decoration-accent/50 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{event.title}</Link>
+            </h3>
+            {event.latest_change && <p className="mt-2 text-sm leading-5 text-muted">Latest update: {event.latest_change}</p>}
+            <div className="flex flex-wrap items-center gap-x-5">
+              <StorySummaryButton storyId={event.id} />
+              <Link href={`/story/${event.id}`} className="mt-4 inline-flex min-h-10 items-center text-xs font-bold uppercase tracking-wider text-accent underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">View timeline <span aria-hidden="true" className="ml-1">→</span></Link>
+            </div>
+          </article>)}
+        </div>
+      </section>}
     </div>
   );
 }
