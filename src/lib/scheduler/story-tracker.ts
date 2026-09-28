@@ -1,10 +1,8 @@
 import { callLunaJson } from '@/lib/ai/luna';
 import { query, execute, insert } from '@/lib/db';
-import { classifyIndiaStories } from '@/lib/local-relevance';
 import { fileLogger } from '@/lib/fileLogger';
 
-type PendingArticle = { id: number; title: string; excerpt: string; category: string };
-type StoryArticle = PendingArticle & { source_name: string; published_at: Date | null; story_event_id: number | null };
+type StoryArticle = { id: number; title: string; excerpt: string; category: string; source_name: string; published_at: Date | null; story_event_id: number | null };
 type Candidate = { id: number; title: string; excerpt: string; category: string };
 
 const matchSchema = {
@@ -31,9 +29,7 @@ function relatedTitles(a: string, b: string): boolean {
 }
 
 export async function runStoryTracker(): Promise<{ classified: number; clustered: number; pending: number }> {
-    let classified = 0;
     let clustered = 0;
-    let pending = 0;
     // Use item-level RSS run links so the four-cycle window includes only
     // reports actually returned by configured publisher feeds.
     const recentRunIds = `
@@ -47,37 +43,6 @@ export async function runStoryTracker(): Promise<{ classified: number; clustered
         SELECT article_id FROM rss_fetch_items
         WHERE action IN ('new', 'skipped') AND article_id IS NOT NULL AND run_id IN (${recentRunIds})
     `;
-    const drafts = await query<PendingArticle[]>(
-        `SELECT a.id, a.title, a.excerpt, a.category FROM articles a
-         JOIN rss_feed_config f ON f.id = a.feed_id
-         WHERE a.geo_status = 'pending' AND a.publisher_domain = f.publisher_domain
-         ORDER BY (a.id IN (${recentArticleIds})) DESC, a.created_at DESC LIMIT 30`
-    );
-    let classifications: Awaited<ReturnType<typeof classifyIndiaStories>> = [];
-    try {
-        classifications = await classifyIndiaStories(drafts.map(article => ({
-            title: article.title,
-            description: article.excerpt || article.title,
-        })));
-    } catch (error) {
-        fileLogger.warn('ai', 'Recent feed batch classification deferred', { articleCount: drafts.length, error: String(error) });
-    }
-    for (const [index, article] of drafts.entries()) {
-        const result = classifications[index];
-        if (!result?.certain) { pending++; continue; }
-        const eligible = result.india && (article.category !== 'belgaum' || result.local);
-        try {
-            await execute(
-                `UPDATE articles SET geo_status = ?, status = ?, category = ? WHERE id = ? AND geo_status = 'pending'`,
-                [eligible ? 'india' : 'excluded', eligible ? 'published' : 'archived', eligible && result.local ? 'belgaum' : article.category, article.id]
-            );
-            classified++;
-        } catch (error) {
-            pending++;
-            fileLogger.warn('ai', 'Story eligibility update deferred', { articleId: article.id, error: String(error) });
-        }
-    }
-
     const articles = await query<StoryArticle[]>(
         `SELECT id, title, excerpt, category, source_name, published_at, story_event_id
          FROM public_articles WHERE story_event_id IS NULL AND id IN (${recentArticleIds})
@@ -131,5 +96,5 @@ export async function runStoryTracker(): Promise<{ classified: number; clustered
             break;
         }
     }
-    return { classified, clustered, pending };
+    return { classified: 0, clustered, pending: 0 };
 }

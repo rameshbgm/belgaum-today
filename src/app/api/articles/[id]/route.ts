@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { Article, FEED_CATEGORIES } from '@/types';
-import { publisherDomainUrl, assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
+import { publisherDomainUrl, assertSourcePolicyConfigured, isBlockedSource } from '@/lib/source-policy';
 import { getCurrentUser } from '@/lib/auth';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { withLogging } from '@/lib/withLogging';
@@ -92,7 +92,7 @@ export const PUT = withLogging(async (request: NextRequest, context: { params: P
         }
         const nextTitle = title ?? existingArticle[0].title;
         const nextCategory = category ?? existingArticle[0].category;
-        if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||
+        if (!FEED_CATEGORIES.includes(nextCategory) ||
             isBlockedSource(source_url ?? existingArticle[0].source_url, `${source_name ?? existingArticle[0].source_name} ${nextTitle}`)) {
             return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
         }

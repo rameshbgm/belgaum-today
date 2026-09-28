@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { FEED_CATEGORIES } from '@/types';
-import { publisherDomainUrl, assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
+import { publisherDomainUrl, assertSourcePolicyConfigured, isBlockedSource } from '@/lib/source-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +41,7 @@ export const PUT = withLogging(async (request: NextRequest, context: { params: P
         }
         const nextTitle = title ?? current[0].title;
         const nextCategory = category ?? current[0].category;
-        if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||
+        if (!FEED_CATEGORIES.includes(nextCategory) ||
             isBlockedSource(source_url ?? current[0].source_url, `${source_name ?? current[0].source_name} ${nextTitle}`)) {
             return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
         }

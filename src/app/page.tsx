@@ -183,7 +183,7 @@ export default async function HomePage() {
     <div className="container mx-auto px-4 py-8 md:py-10">
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
         {([
-          { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },
+          { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Local stories will appear here as publisher feeds update.' },
           { title: 'India', href: '/india', articles: indiaArticles, empty: 'The latest India stories will appear here.' },
         ] as const).map(section => (
           <SectionNewsCarousel key={section.title} {...section} />

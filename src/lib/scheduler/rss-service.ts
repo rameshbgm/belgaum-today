@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
-import { publisherDomainUrl, assertSourcePolicyConfigured, directPublisherFeed, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
-import { classifyIndiaStories } from '@/lib/local-relevance';
+import { publisherDomainUrl, assertSourcePolicyConfigured, directPublisherFeed, isBlockedSource } from '@/lib/source-policy';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
 
@@ -98,20 +97,11 @@ export async function runRssFetch(options: {
         const itemLogs: FetchItemLog[] = [];
         if (fetchError) feedErrors.push(fetchError);
 
-        // RSS feeds usually list newest items first. Bound first-run AI work.
-        const batch = items.slice(0, 15);
-        for (const item of items.slice(batch.length)) {
-            feedSkipped++;
-            itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'batch_limit' });
-        }
-        let classifications: Awaited<ReturnType<typeof classifyIndiaStories>> = [];
-        try { classifications = await classifyIndiaStories(batch); }
-        catch (error) { fileLogger.warn('ai', 'Feed classification deferred', { feedId, error: String(error) }); }
-        for (const [index, item] of batch.entries()) {
+        for (const item of items) {
             try {
-                if (isBlockedSource(item.link, feed.name) || hasNonEnglishScript(item.title)) {
+                if (isBlockedSource(item.link, feed.name)) {
                     feedSkipped++;
-                    itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'blocked_source_or_non_english' });
+                    itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'blocked_source' });
                     continue;
                 }
                 const sourceLink = publisherDomainUrl(item.link, feed.publisher_domain!);
@@ -126,32 +116,19 @@ export async function runRssFetch(options: {
                     [item.link, sourceLink]
                 );
 
-                let geoStatus: 'pending' | 'india' | 'excluded' = 'pending';
-                let isLocal = false;
-                try {
-                    const classification = classifications[index];
-                    if (!classification) throw new Error('Classification unavailable');
-                    geoStatus = !classification.certain ? 'pending' : classification.india ? 'india' : 'excluded';
-                    isLocal = geoStatus === 'india' && classification.local;
-                } catch { /* Persist for automatic retry when the model is available. */ }
-                if (geoStatus === 'excluded' || (feed.category === 'belgaum' && geoStatus === 'india' && !isLocal)) {
-                    feedSkipped++;
-                    itemLogs.push({ title: item.title, url: sourceLink, pubDate: item.pubDate, action: 'skipped', skipReason: 'outside_india_or_belagavi' });
-                    continue;
-                }
-                const articleCategory = isLocal ? 'belgaum' : feed.category;
-
                 if (existing.length > 0) {
                     const article = existing[0];
-                    // An exact RSS item proves feed membership for legacy rows.
-                    if (article.status !== 'archived' && article.geo_status === 'pending' &&
-                        (article.feed_id === null || article.feed_id === feed.id)) {
+                    // The item URL proves feed membership, including for legacy rows.
+                    const wasHeldForClassification = (article.status === 'draft' && article.geo_status === 'pending') ||
+                        (article.status === 'archived' && article.geo_status === 'excluded');
+                    if (article.feed_id === null || wasHeldForClassification) {
                         const affected = await execute(
-                            `UPDATE articles SET feed_id = ?, publisher_domain = ?, geo_status = ?,
-                             status = ?, category = ?, source_name = ?
-                             WHERE id = ? AND geo_status = 'pending' AND (feed_id IS NULL OR feed_id = ?)`,
-                            [feed.id, feed.publisher_domain, geoStatus, geoStatus === 'india' ? 'published' : 'draft',
-                             articleCategory, feed.publisher_name || feed.name, article.id, feed.id]
+                            `UPDATE articles SET feed_id = ?, publisher_domain = ?,
+                             status = CASE WHEN (status = 'draft' AND geo_status = 'pending')
+                                            OR (status = 'archived' AND geo_status = 'excluded')
+                                           THEN 'published' ELSE status END,
+                             source_name = ? WHERE id = ?`,
+                            [feed.id, feed.publisher_domain, feed.publisher_name || feed.name, article.id]
                         );
                         if (affected) {
                             feedNew++;
@@ -182,8 +159,8 @@ export async function runRssFetch(options: {
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, articleCategory, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, geoStatus,
-                            geoStatus === 'india' ? 'published' : 'draft', false, false, 0, readingTime, item.pubDate,
+                            item.imageUrl, feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
+                            'published', false, false, 0, readingTime, item.pubDate,
                         ]
                         );
                 } catch (insertErr) {
@@ -194,8 +171,8 @@ export async function runRssFetch(options: {
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
                                 item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
-                                item.imageUrl, articleCategory, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, geoStatus,
-                                geoStatus === 'india' ? 'published' : 'draft', false, false, 0, readingTime, item.pubDate,
+                                item.imageUrl, feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
+                                'published', false, false, 0, readingTime, item.pubDate,
                             ]
                         );
                     } else if (msg.includes('Duplicate entry') && msg.includes("for key 'source_url'")) {

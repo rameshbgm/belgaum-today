@@ -49,14 +49,12 @@ export default async function AiNewsPage() {
                 <span className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary text-white md:h-14 md:w-14"><Sparkles aria-hidden="true" className="h-6 w-6" /></span>
                 <div>
                     <h1 className="font-display text-4xl font-bold leading-none text-ink md:text-6xl">AI News</h1>
-                    <p className="mt-4 max-w-2xl text-base leading-7 text-muted md:text-lg">Follow the stories people are reading as new reports arrive. Open a card for the full timeline, a short AI summary, and links to the original publishers.</p>
                 </div>
             </div>
         </header>
         <section aria-labelledby="tracked-stories" className="pt-8 md:pt-10">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
                 <h2 id="tracked-stories" className="font-display text-2xl font-bold text-ink md:text-3xl">Story tracker</h2>
-                <p className="text-xs text-muted">Stories with two or more reports</p>
             </div>
             {stories.length ? <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-12">
                 {stories.map((story, index) => <Link key={story.id} href={`/story/${story.id}`} className={`group overflow-hidden rounded-xl bg-surface shadow-[0_8px_28px_-20px_rgba(26,23,18,0.35)] outline outline-1 outline-hairline transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_16px_35px_-18px_rgba(26,23,18,0.3)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent ${index === 0 ? 'lg:col-span-7' : index === 1 ? 'lg:col-span-5' : 'lg:col-span-4'}`}>
