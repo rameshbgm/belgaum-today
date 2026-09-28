@@ -7,6 +7,7 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 type Props = { params: Promise<{ category: string }> };
 
@@ -109,6 +110,7 @@ export default async function BlogCategoryPage({ params }: Props) {
                                         {blog.reading_time} min
                                     </span>
                                 </div>
+                                <ArticleViewCount count={blog.view_count} className="mt-2 text-xs text-gray-500 dark:text-gray-400" />
                             </Link>
                         ))}
                     </div>

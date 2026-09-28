@@ -6,6 +6,7 @@ import { PublisherLink } from '@/components/articles/PublisherLink';
 import { Clock, ArrowRight, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 export interface TrendingArticle {
     id: number;
@@ -19,6 +20,7 @@ export interface TrendingArticle {
     ai_score?: number;
     ai_reasoning?: string;
     rank_position?: number;
+    view_count: number;
 }
 
 interface TrendingCarouselProps {
@@ -143,11 +145,12 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                     </p>
 
                     {/* Meta */}
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-300">
                         <span className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4" />
                             {formatRelativeTime(article.published_at)}
                         </span>
+                        <ArticleViewCount count={article.view_count} className="text-white/85" />
                         <span className={`flex items-center gap-1.5 ${colors.btn} font-medium`}>
                             Read Article
                             <ArrowRight className="w-4 h-4" />

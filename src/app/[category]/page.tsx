@@ -178,7 +178,7 @@ async function getTrendingArticles(category: Category): Promise<TrendingArticle[
     try {
         const rows = await query<TrendingArticle[]>(
             `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image,
-                    a.source_name, a.source_url, a.published_at,
+                    a.source_name, a.source_url, a.published_at, a.view_count,
                     ta.ai_score, ta.ai_reasoning, ta.rank_position
              FROM trending_articles ta
              JOIN articles a ON ta.article_id = a.id

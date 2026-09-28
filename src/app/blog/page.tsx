@@ -6,6 +6,7 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 export const metadata: Metadata = {
     title: 'Blog — Belgaum Today',
@@ -107,6 +108,7 @@ export default async function BlogIndexPage() {
                                                 <Clock className="w-4 h-4" />
                                                 {featured.reading_time} min read
                                             </span>
+                                            <ArticleViewCount count={featured.view_count} className="text-white/85" />
                                         </div>
                                     </div>
                                 </div>
@@ -211,6 +213,7 @@ function BlogCard({ blog }: { blog: Article }) {
                     {blog.reading_time} min
                 </span>
             </div>
+            <ArticleViewCount count={blog.view_count} className="mt-2 text-xs text-gray-500 dark:text-gray-400" />
         </Link>
     );
 }

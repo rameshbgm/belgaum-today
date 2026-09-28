@@ -168,6 +168,10 @@ export function Header() {
                         >
                             <Search className="w-4 h-4" /> Search
                         </Link>
+                        <div className="flex items-center gap-5 border-t border-hairline pt-2">
+                            <Link href="/feed.xml" onClick={() => setIsMenuOpen(false)} className="py-3 text-sm font-semibold uppercase tracking-wide text-ink/75 hover:text-primary">RSS feed</Link>
+                            <Link href="/admin/login" onClick={() => setIsMenuOpen(false)} className="py-3 text-sm font-semibold uppercase tracking-wide text-ink/75 hover:text-primary">Admin</Link>
+                        </div>
                     </div>
                 </div>
             )}

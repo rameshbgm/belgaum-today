@@ -3,6 +3,7 @@ import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate, stripHtml } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
+import { ArticleViewCount } from './ArticleViewCount';
 
 /**
  * Editorial story card. Two shapes share one component:
@@ -26,6 +27,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                     <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
                         {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
                     </span>
+                    <ArticleViewCount count={article.view_count} className="mt-2 text-xs text-muted" />
                 </PublisherLink>
             </article>
         );
@@ -54,6 +56,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                 <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
                     {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
                 </span>
+                <ArticleViewCount count={article.view_count} className="mt-2 text-xs text-muted" />
             </PublisherLink>
         </article>
     );

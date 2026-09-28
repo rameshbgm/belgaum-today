@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
-import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading, StoryCard } from '@/components/articles';
+import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading, SectionNewsCarousel } from '@/components/articles';
 import type { LeadCarouselArticle } from '@/components/articles';
 import { TopicPreferences } from '@/components/articles/TopicPreferences';
 import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
@@ -31,6 +31,7 @@ interface TrendingRow {
   ai_score: number;
   ai_reasoning: string;
   rank_position: number;
+  view_count: number;
 }
 
 interface TrendingArticle {
@@ -44,6 +45,7 @@ interface TrendingArticle {
   source_url: string;
   published_at: string;
   rank_position: number;
+  view_count: number;
 }
 
 const LATEST_CATEGORIES = ['belgaum', 'india', 'world', 'business', 'technology', 'entertainment', 'sports'] as const;
@@ -73,7 +75,7 @@ async function getArticles(): Promise<{
     // Get trending articles across all categories (top 10)
     const trendingRows = await query<TrendingRow[]>(
       `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.category,
-              a.source_name, a.source_url, a.published_at,
+              a.source_name, a.source_url, a.published_at, a.view_count,
               ta.ai_score, ta.ai_reasoning, ta.rank_position
        FROM trending_articles ta
        JOIN articles a ON ta.article_id = a.id
@@ -93,17 +95,16 @@ async function getArticles(): Promise<{
       source_url: row.source_url,
       published_at: new Date(row.published_at).toISOString(),
       rank_position: row.rank_position,
+      view_count: row.view_count,
     }));
 
-    // Rank publisher opens from the last 10 days.
+    // Rank by article-page views.
     const mostViewed = await query<MostViewedArticle[]>(
-      `SELECT a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at,
-              COUNT(sc.id) AS view_count
-       FROM source_clicks sc JOIN articles a ON a.id = sc.article_id
+      `SELECT a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at, a.view_count
+       FROM articles a
        WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
-         AND sc.created_at >= DATE_SUB(NOW(), INTERVAL 10 DAY)
-       GROUP BY a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at
-       ORDER BY view_count DESC
+         AND a.view_count > 0
+       ORDER BY a.view_count DESC, COALESCE(a.published_at, a.created_at) DESC
        LIMIT 15`
     );
 
@@ -153,6 +154,7 @@ export default async function HomePage() {
         category: a.category,
         source_name: a.source_name,
         source_url: a.source_url,
+        view_count: a.view_count,
         published_at: a.published_at ? new Date(a.published_at).toISOString() : null,
         created_at: new Date(a.created_at).toISOString(),
       }))
@@ -167,6 +169,7 @@ export default async function HomePage() {
         source_url: t.source_url,
         published_at: t.published_at,
         rank_position: t.rank_position,
+        view_count: t.view_count,
       }));
 
   // Compose the broadsheet sections
@@ -178,23 +181,10 @@ export default async function HomePage() {
     <div className="container mx-auto px-4 py-8 md:py-10">
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
         {([
-          { title: 'Belagavi', href: '/belgaum', stories: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },
-          { title: 'India', href: '/india', stories: indiaArticles, empty: 'The latest India stories will appear here.' },
+          { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },
+          { title: 'India', href: '/india', articles: indiaArticles, empty: 'The latest India stories will appear here.' },
         ] as const).map(section => (
-          <div key={section.title} className="min-w-0">
-            <div className="mb-5 flex items-end justify-between gap-4 border-b border-hairline pb-3">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-ink">{section.title}</h2>
-              <Link href={section.href} className="text-xs font-bold uppercase tracking-widest text-primary hover:underline">More stories</Link>
-            </div>
-            {section.stories.length > 0 ? (
-              <div className="space-y-5">
-                <StoryCard article={section.stories[0]} />
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {section.stories.slice(1, 3).map(story => <StoryCard key={story.id} article={story} variant="brief" />)}
-                </div>
-              </div>
-            ) : <p className="py-12 text-sm text-muted">{section.empty}</p>}
-          </div>
+          <SectionNewsCarousel key={section.title} {...section} />
         ))}
       </section>
       {/* ── Front page: lead carousel + scrollable latest rail ── */}
@@ -221,14 +211,14 @@ export default async function HomePage() {
         </aside>
       </section>
 
-      {/* ── More Stories + Most Opened ── */}
+      {/* ── More Stories + Most Viewed ── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
         <HomepageMoreStories initialArticles={moreStories} />
 
-        {/* Most Opened sidebar */}
+        {/* Most Viewed sidebar */}
         <aside className="lg:col-span-4">
           <div className="lg:sticky lg:top-20">
-            <SectionHeading accent>Most Opened</SectionHeading>
+            <SectionHeading accent>Most Viewed</SectionHeading>
             {mostViewedArticles.length > 0 ? (
               <MostRead articles={mostViewedArticles.slice(0, 15)} />
             ) : trendingArticles.length > 0 ? (

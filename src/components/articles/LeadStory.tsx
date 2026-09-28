@@ -3,6 +3,7 @@ import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
+import { ArticleViewCount } from './ArticleViewCount';
 
 /**
  * Full-bleed editorial lead story — the "front page cover".
@@ -40,10 +41,11 @@ export function LeadStory({ article }: { article: Article }) {
                     <p className="hidden md:block mt-4 text-base text-white/80 max-w-2xl leading-relaxed">
                         {truncate(article.excerpt || '', 200)}
                     </p>
-                    <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-white/70">
+                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs uppercase tracking-wider text-white/70">
                         <span className="font-semibold text-white">{article.source_name}</span>
                         <span className="w-1 h-1 rounded-full bg-white/40" />
                         <span>{formatRelativeTime(article.published_at || article.created_at)}</span>
+                        <ArticleViewCount count={article.view_count} className="text-white/85" />
                     </div>
                 </div>
             </PublisherLink>

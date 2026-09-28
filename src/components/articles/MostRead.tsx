@@ -12,8 +12,7 @@ interface MostReadArticle {
 }
 
 /**
- * "Most Opened" — stories readers followed to their publishers.
- * A classic newspaper "most popular" list, restyled editorially.
+ * Most viewed article pages, ranked by the article view counter.
  */
 export function MostRead({ articles }: { articles: MostReadArticle[] }) {
     return (

@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { PublisherLink } from './PublisherLink';
-import { Eye, Clock, Info, ExternalLink, Flame } from 'lucide-react';
+import { Clock, Info, ExternalLink, Flame } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
+import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
+import { ArticleViewCount } from './ArticleViewCount';
 
 interface ArticleCardProps {
     article: Article;
@@ -81,8 +82,8 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                 )}
 
                 {/* Meta */}
-                <div className={`flex items-center justify-between text-muted ${compact ? 'text-xs' : 'text-xs'}`}>
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                         {/* Source with Tooltip */}
                         <Tooltip
                             content={
@@ -100,7 +101,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                             }
                             position="bottom"
                         >
-                            <span className="flex items-center gap-1 cursor-pointer hover:text-accent transition-colors">
+                            <span className="inline-flex max-w-full items-center gap-1 break-words cursor-pointer hover:text-accent transition-colors">
                                 {article.source_name}
                                 <Info className="w-3 h-3" />
                             </span>
@@ -109,19 +110,12 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                         {/* Time */}
                         <span className="flex items-center gap-0.5">
                             <Clock className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />
-                            <span className="hidden md:inline">{formatRelativeTime(article.published_at || article.created_at)}</span>
-                            <span className="md:hidden">{formatRelativeTime(article.published_at || article.created_at).split(' ')[0]}</span>
+                            <span>{formatRelativeTime(article.published_at || article.created_at)}</span>
                         </span>
                     </div>
 
                     {/* Views — rendered red for hot articles */}
-                    <span className={`flex items-center gap-0.5 ${isHot ? 'font-semibold text-red-600' : ''}`}>
-                        {isHot
-                            ? <Flame className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />
-                            : <Eye className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />}
-                        <span className="hidden md:inline">{formatNumber(article.view_count)}</span>
-                        <span className="md:hidden">{article.view_count > 999 ? `${Math.floor(article.view_count / 1000)}k` : article.view_count}</span>
-                    </span>
+                    <ArticleViewCount count={article.view_count} className={`shrink-0 ${isHot ? 'font-semibold text-red-600' : ''}`} />
                 </div>
             </div>
         </article>

@@ -7,6 +7,7 @@ import { TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORY_META } from '@/types';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
+import { ArticleViewCount } from './ArticleViewCount';
 
 export interface LeadCarouselArticle {
     id: number;
@@ -20,6 +21,7 @@ export interface LeadCarouselArticle {
     published_at: string | Date | null;
     created_at?: string | Date;
     rank_position?: number;
+    view_count: number;
 }
 
 interface LeadCarouselProps {
@@ -54,17 +56,17 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
             onMouseLeave={() => setPaused(false)}
         >
             <PublisherLink article={article}
-                className="block relative"
+                className="block relative min-h-[340px] aspect-[4/3] sm:aspect-[16/9]"
             >
                 {article.featured_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                         src={article.featured_image}
                         alt={article.title}
-                        className="w-full h-auto block"
+                        className="absolute inset-0 h-full w-full object-cover"
                     />
                 ) : (
-                    <div className="aspect-[16/10]">
+                    <div className="absolute inset-0">
                         <NewsFallbackImage seed={article.id} />
                     </div>
                 )}
@@ -81,20 +83,21 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                         </span>
                     </div>
 
-                    <h2 className="font-display text-3xl md:text-5xl font-black leading-[1.04] text-white tracking-[-0.02em] max-w-3xl">
+                    <h2 className="line-clamp-4 font-display text-2xl sm:text-3xl md:text-5xl font-black leading-[1.04] text-white tracking-[-0.02em] max-w-3xl">
                         {article.title}
                     </h2>
                     <p className="hidden md:block mt-4 text-base text-white/80 max-w-2xl leading-relaxed">
                         {truncate(article.excerpt || '', 200)}
                     </p>
-                    <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-white/70">
-                        <span className="font-semibold text-white">{article.source_name}</span>
+                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs uppercase tracking-wider text-white/70">
+                        <span className="max-w-full truncate font-semibold text-white">{article.source_name}</span>
                         {timestamp && (
                             <>
                                 <span className="w-1 h-1 rounded-full bg-white/40" />
                                 <span>{formatRelativeTime(timestamp)}</span>
                             </>
                         )}
+                        <ArticleViewCount count={article.view_count} className="text-white/85" />
                     </div>
                 </div>
             </PublisherLink>
@@ -104,14 +107,14 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                 <>
                     <button
                         onClick={(e) => { e.preventDefault(); prev(); }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-all hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:left-3 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Previous story"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={(e) => { e.preventDefault(); next(); }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-all hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:right-3 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Next story"
                     >
                         <ChevronRight className="w-5 h-5" />

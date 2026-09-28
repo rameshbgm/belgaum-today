@@ -15,6 +15,7 @@ export { HomepageMoreStories } from './HomepageMoreStories';
 export { LatestRail } from './LatestRail';
 export { MostRead } from './MostRead';
 export { StoryCard } from './StoryCard';
+export { ArticleViewCount } from './ArticleViewCount';
+export { SectionNewsCarousel } from './SectionNewsCarousel';
 export { SectionHeading } from './SectionHeading';
 export type { SubCategory } from './CategorySearchHeader';
-

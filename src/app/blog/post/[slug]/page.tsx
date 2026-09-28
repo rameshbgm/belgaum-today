@@ -8,7 +8,7 @@ import { Calendar, Clock, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import { query, execute } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, formatNumber } from '@/lib/utils';
-import { ShareButtons, NewsFallbackImage } from '@/components/articles';
+import { ShareButtons, NewsFallbackImage, ArticleViewCount } from '@/components/articles';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -194,6 +194,7 @@ export default async function BlogPostPage({ params }: Props) {
                                     <p className="text-xs text-gray-400 mt-1">
                                         {post.reading_time} min read
                                     </p>
+                                    <ArticleViewCount count={post.view_count} className="mt-1 text-xs text-gray-500 dark:text-gray-400" />
                                 </Link>
                             ))}
                         </div>
