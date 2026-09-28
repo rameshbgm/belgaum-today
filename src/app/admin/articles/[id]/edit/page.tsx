@@ -235,7 +235,7 @@ export default function ArticleEditPage() {
                         </Button>
 
                         {!isNew && (
-                            <Link href={`/article/${slug}`} target="_blank">
+                            <Link href={`/admin/articles/${articleId}/preview`} target="_blank">
                                 <Button variant="outline" size="sm">
                                     <Eye className="w-4 h-4 mr-2" />
                                     Preview

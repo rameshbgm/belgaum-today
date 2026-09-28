@@ -76,7 +76,7 @@ export async function reviveSchedulerIfStale(): Promise<void> {
         // Don't await the body — let the page render while this runs.
         void (async () => {
             try {
-                await runRssFetch();
+                await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'recovery' });
                 await runStoryTracker();
                 await runTrendingAnalysis();
                 await beatSuccess();

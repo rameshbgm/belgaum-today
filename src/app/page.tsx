@@ -5,7 +5,6 @@ import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading
 import type { LeadCarouselArticle } from '@/components/articles';
 import { TopicPreferences } from '@/components/articles/TopicPreferences';
 import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
-import { StorySummaryButton } from '@/components/story/StorySummaryButton';
 import { digestConfigured } from '@/lib/digest';
 import { distinctStories } from '@/lib/story-clusters';
 
@@ -51,8 +50,6 @@ interface TrendingArticle {
   view_count: number;
 }
 
-interface StoryEventRow { id: number; title: string; category: string; last_updated_at: Date; report_count: number; latest_change: string | null }
-
 const LATEST_CATEGORIES = ['belgaum', 'india', 'business', 'technology', 'entertainment', 'sports'] as const;
 
 async function getArticles(): Promise<{
@@ -62,7 +59,6 @@ async function getArticles(): Promise<{
   categorySections: Array<{ category: typeof LATEST_CATEGORIES[number]; articles: Article[] }>;
   localArticles: Article[];
   indiaArticles: Article[];
-  storyEvents: StoryEventRow[];
 }> {
   try {
     const [localArticles, indiaArticles] = await Promise.all(['belgaum', 'india'].map(category =>
@@ -128,14 +124,6 @@ async function getArticles(): Promise<{
       })
     );
 
-    const storyEvents = await query<StoryEventRow[]>(
-      `SELECT e.id, e.title, e.category, e.last_updated_at, COUNT(a.id) AS report_count,
-        (SELECT u.change_text FROM story_event_updates u JOIN public_articles pa ON pa.id = u.article_id
-         WHERE u.story_event_id = e.id AND u.change_text IS NOT NULL ORDER BY u.created_at DESC, u.id DESC LIMIT 1) AS latest_change
-       FROM story_events e JOIN public_articles a ON a.story_event_id = e.id
-       GROUP BY e.id, e.title, e.category, e.last_updated_at
-       ORDER BY e.last_updated_at DESC LIMIT 6`
-    );
     return {
       articles: distinctStories(articles),
       trendingArticles: trending,
@@ -146,16 +134,15 @@ async function getArticles(): Promise<{
       categorySections: categoryArticles.map(section => ({ ...section, articles: distinctStories(section.articles) })),
       localArticles: distinctStories(localArticles),
       indiaArticles: distinctStories(indiaArticles),
-      storyEvents,
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [], storyEvents: [] };
+    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [] };
   }
 }
 
 export default async function HomePage() {
-  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles, storyEvents } = await getArticles();
+  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback
   const isFallback = trendingArticles.length === 0;
@@ -261,28 +248,6 @@ export default async function HomePage() {
         </aside>
       </section>
 
-      {storyEvents.length > 0 && <section className="mt-12 border-y-2 border-ink/85 py-8 md:py-10" aria-labelledby="story-tracker-heading">
-        <div className="mb-7 flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
-          <div>
-            <h2 id="story-tracker-heading" className="font-display text-2xl font-bold uppercase tracking-[0.06em] text-primary md:text-3xl">Story Tracker</h2>
-            <p className="mt-2 max-w-prose text-sm leading-6 text-muted">See how recent stories develop across Indian publishers. Expand an AI summary to compare reports.</p>
-          </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Latest developing stories</span>
-        </div>
-        <div className="grid gap-x-10 md:grid-cols-2">
-          {storyEvents.map(event => <article key={event.id} className="border-t border-hairline py-5">
-            <p className="text-xs font-bold uppercase tracking-wider text-accent">{event.category} <span aria-hidden="true">·</span> {event.report_count} publisher report{event.report_count === 1 ? '' : 's'}</p>
-            <h3 className="mt-2 font-display text-xl leading-snug text-ink">
-              <Link href={`/story/${event.id}`} className="decoration-accent/50 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">{event.title}</Link>
-            </h3>
-            {event.latest_change && <p className="mt-2 text-sm leading-5 text-muted">Latest update: {event.latest_change}</p>}
-            <div className="flex flex-wrap items-center gap-x-5">
-              <StorySummaryButton storyId={event.id} />
-              <Link href={`/story/${event.id}`} className="mt-4 inline-flex min-h-10 items-center text-xs font-bold uppercase tracking-wider text-accent underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">View timeline <span aria-hidden="true" className="ml-1">→</span></Link>
-            </div>
-          </article>)}
-        </div>
-      </section>}
     </div>
   );
 }

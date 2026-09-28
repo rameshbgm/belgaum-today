@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insert, execute } from '@/lib/db';
 import { withLogging } from '@/lib/withLogging';
+import { getCurrentUser } from '@/lib/auth';
 
 // POST /api/track/view - Track article view
 export const POST = withLogging(async (request: NextRequest) => {
     try {
+        // Editorial visits should not influence reader trends or article counts.
+        const user = await getCurrentUser();
+        if (user?.role === 'admin' || user?.role === 'editor') {
+            return NextResponse.json({ success: true, counted: false });
+        }
         const body = await request.json();
         const { articleId, category, pageView } = body;
 

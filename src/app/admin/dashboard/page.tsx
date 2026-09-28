@@ -429,7 +429,7 @@ export default function AdminDashboardPage() {
                                             {dayData.articles.map((article) => (
                                                 <a
                                                     key={article.id}
-                                                    href={`/article/${article.slug}`}
+                                                    href={`/admin/articles/${article.id}/preview`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer group"

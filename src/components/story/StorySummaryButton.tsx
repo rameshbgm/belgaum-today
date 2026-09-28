@@ -3,17 +3,19 @@
 import { useId, useState } from 'react';
 import { AlertCircle, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 
-type StorySummary = {
+export type StorySummary = {
+    version: 2;
     summary: string;
+    summarySourceNumbers: number[];
     developments: Array<{ text: string; sourceNumbers: number[] }>;
     sources: Array<{ id: number; title: string; publisher: string; url: string; fullTextFetched: boolean }>;
 };
 
-export function StorySummaryButton({ storyId }: { storyId: number }) {
+export function StorySummaryButton({ storyId, initialSummary = null }: { storyId: number; initialSummary?: StorySummary | null }) {
     const panelId = useId();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(Boolean(initialSummary));
     const [loading, setLoading] = useState(false);
-    const [summary, setSummary] = useState<StorySummary | null>(null);
+    const [summary, setSummary] = useState<StorySummary | null>(initialSummary);
     const [error, setError] = useState<string | null>(null);
 
     async function revealSummary() {
@@ -61,7 +63,14 @@ export function StorySummaryButton({ storyId }: { storyId: number }) {
                 </div>}
 
                 {summary && <div className="max-w-3xl">
-                    <p className="text-sm leading-6 text-ink">{summary.summary}</p>
+                    <p className="text-base leading-7 text-ink">{summary.summary}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                        <span>Sources:</span>
+                        {summary.summarySourceNumbers.map(sourceNumber => {
+                            const source = summary.sources[sourceNumber];
+                            return source ? <a key={sourceNumber} href={source.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline underline-offset-2">{source.publisher} ↗</a> : null;
+                        })}
+                    </div>
                     {summary.developments.length > 0 && <ul className="mt-4 space-y-3">
                         {summary.developments.map((development, index) => <li key={`${index}-${development.text}`} className="text-sm leading-5 text-ink">
                             <span>{development.text}</span>
@@ -82,7 +91,7 @@ export function StorySummaryButton({ storyId }: { storyId: number }) {
                                 <span className="text-muted">{source.fullTextFetched ? 'full article read' : 'RSS excerpt used'}</span>
                             </li>)}
                         </ul>
-                        <p className="mt-3 text-[11px] text-muted">AI summary based on the linked reports. Open the sources for full context.</p>
+                        <p className="mt-3 text-[11px] text-muted">AI generated text can make mistakes. Check the linked reports.</p>
                     </div>
                 </div>}
             </div>}

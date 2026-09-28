@@ -10,7 +10,7 @@ export const GET = withLogging(async (request: NextRequest) => {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     try {
-        const result = await runRssFetch();
+        const result = await runRssFetch({ triggerType: 'cron', triggeredBy: 'cron' });
         return NextResponse.json({ success: true, ...result });
     } catch (error) {
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });

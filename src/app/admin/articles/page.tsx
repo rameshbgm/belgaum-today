@@ -293,10 +293,8 @@ export default function AdminArticlesPage() {
                                         </td>
                                         <td className="px-4 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Link href={`/article/${article.slug}`}>
-                                                    <button className="p-1.5 text-gray-500 hover:text-blue-600 rounded">
-                                                        <Eye className="w-4 h-4" />
-                                                    </button>
+                                                <Link href={`/admin/articles/${article.id}/preview`} aria-label={`Preview ${article.title}`} title="Preview without counting a view" className="rounded p-1.5 text-gray-500 hover:text-blue-600">
+                                                    <Eye className="h-4 w-4" />
                                                 </Link>
                                                 <Link href={`/admin/articles/${article.id}/edit`}>
                                                     <button className="p-1.5 text-gray-500 hover:text-blue-600 rounded">

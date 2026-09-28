@@ -14,7 +14,7 @@ let isRunning = false;
 export async function register() {
     // Local development can read the configured database without launching
     // background ingestion jobs against it.
-    if (process.env.NODE_ENV !== 'production') return;
+    if (process.env.NODE_ENV !== 'production' || process.env.DISABLE_BACKGROUND_SCHEDULER === '1') return;
     const { runRssFetch } = await import('@/lib/scheduler/rss-service');
     const { runTrendingAnalysis } = await import('@/lib/scheduler/trending-service');
     const { runStoryTracker } = await import('@/lib/scheduler/story-tracker');
@@ -31,7 +31,7 @@ export async function register() {
         let failed = false;
 
         try {
-            await runRssFetch();
+            await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'scheduler' });
         } catch (err) {
             failed = true;
             const msg = err instanceof Error ? err.message : String(err);

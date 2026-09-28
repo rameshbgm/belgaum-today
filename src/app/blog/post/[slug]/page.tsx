@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Calendar, Clock, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import { query, execute } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, formatNumber } from '@/lib/utils';
 import { ShareButtons, NewsFallbackImage, ArticleViewCount } from '@/components/articles';
@@ -72,9 +73,12 @@ export default async function BlogPostPage({ params }: Props) {
     const blog = await getBlog(slug);
     if (!blog) notFound();
 
+    const user = await getCurrentUser();
     const [related] = await Promise.all([
         getRelatedBlogs(blog.category, blog.id),
-        execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [blog.id]).catch(() => {}),
+        user?.role === 'admin' || user?.role === 'editor'
+            ? Promise.resolve()
+            : execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [blog.id]).catch(() => {}),
     ]);
 
     const catMeta = CATEGORY_META[blog.category as Category];
