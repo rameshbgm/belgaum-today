@@ -4,7 +4,7 @@ import { Article } from '@/types';
 import { withLogging } from '@/lib/withLogging';
 
 // GET /api/articles/slug/[slug] - Get article by slug
-export const GET = withLogging(async (request: NextRequest, context) => {
+export const GET = withLogging(async (request: NextRequest, context: { params: Promise<{ slug: string }> }) => {
     const resolvedParams = await context?.params;
     const slug = resolvedParams?.slug;
 

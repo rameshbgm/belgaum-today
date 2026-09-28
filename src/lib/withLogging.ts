@@ -15,8 +15,8 @@ type RouteHandler = (
     context?: { params?: Promise<Record<string, string>> }
 ) => Promise<NextResponse> | NextResponse;
 
-export function withLogging(handler: RouteHandler): RouteHandler {
-    return async (request: NextRequest, context?: { params?: Promise<Record<string, string>> }) => {
+export function withLogging<T extends (...args: never[]) => Promise<NextResponse> | NextResponse>(handler: T): T {
+    const wrapped: RouteHandler = async (request, context) => {
         const startTime = Date.now();
         const method = request.method;
         const url = new URL(request.url);
@@ -36,7 +36,7 @@ export function withLogging(handler: RouteHandler): RouteHandler {
 
         try {
             // Execute the actual handler
-            const response = await handler(request, context);
+            const response = await (handler as unknown as RouteHandler)(request, context);
             const durationMs = Date.now() - startTime;
 
             // Log response
@@ -58,4 +58,9 @@ export function withLogging(handler: RouteHandler): RouteHandler {
             throw error;
         }
     };
+
+    // Preserve the wrapped handler's parameter signature. Next.js validates
+    // route exports and rejects a one-argument handler if the wrapper widens
+    // it to an optional route context parameter.
+    return wrapped as unknown as T;
 }

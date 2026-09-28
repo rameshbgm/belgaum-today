@@ -8,6 +8,8 @@ import { formatDate, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: 'Blog — Belgaum Today',
     description: 'In-depth articles, guides and stories written by the Belgaum Today editorial team.',

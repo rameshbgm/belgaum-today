@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 /**
  * PUT /api/admin/articles/[id] — Update an article
  */
-export const PUT = withLogging(async (request: NextRequest, context) => {
+export const PUT = withLogging(async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 
@@ -121,7 +121,7 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
 /**
  * DELETE /api/admin/articles/[id] — Delete an article
  */
-export const DELETE = withLogging(async (request: NextRequest, context) => {
+export const DELETE = withLogging(async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 

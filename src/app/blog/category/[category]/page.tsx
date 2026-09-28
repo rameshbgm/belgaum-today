@@ -9,6 +9,8 @@ import { formatDate, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
+export const dynamic = 'force-dynamic';
+
 type Props = { params: Promise<{ category: string }> };
 
 const VALID_CATEGORIES = Object.keys(CATEGORY_META) as Category[];

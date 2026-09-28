@@ -7,7 +7,7 @@ import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { withLogging } from '@/lib/withLogging';
 
 // GET /api/articles/[id] - Get single article
-export const GET = withLogging(async (request: NextRequest, context) => {
+export const GET = withLogging(async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 
@@ -45,7 +45,7 @@ export const GET = withLogging(async (request: NextRequest, context) => {
 });
 
 // PUT /api/articles/[id] - Update article
-export const PUT = withLogging(async (request: NextRequest, context) => {
+export const PUT = withLogging(async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 
@@ -195,7 +195,7 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
 });
 
 // DELETE /api/articles/[id] - Delete article
-export const DELETE = withLogging(async (request: NextRequest, context) => {
+export const DELETE = withLogging(async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
     const resolvedParams = await context?.params;
     const id = resolvedParams?.id;
 

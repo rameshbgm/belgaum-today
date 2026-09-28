@@ -1,23 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Header, Footer } from "@/components/layout";
 import { ToastProvider } from "@/components/ui";
 import { AdScripts } from "@/components/AdScripts";
 import { headers } from "next/headers";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '900'],
-  variable: '--font-fraunces',
-});
 
 export const metadata: Metadata = {
   title: {
@@ -105,7 +91,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} ${fraunces.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <ToastProvider>
           <a href="#main-content" className="skip-link">
             Skip to main content

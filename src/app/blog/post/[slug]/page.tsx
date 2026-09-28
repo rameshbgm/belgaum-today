@@ -10,6 +10,8 @@ import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, formatNumber } from '@/lib/utils';
 import { ShareButtons, NewsFallbackImage, ArticleViewCount } from '@/components/articles';
 
+export const dynamic = 'force-dynamic';
+
 type Props = { params: Promise<{ slug: string }> };
 
 async function getBlog(slug: string): Promise<Article | null> {
