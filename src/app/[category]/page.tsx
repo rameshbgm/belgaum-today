@@ -8,6 +8,7 @@ import { TrendingArticle } from '@/components/TrendingCarousel';
 import { distinctStories } from '@/lib/story-clusters';
 
 const validCategories = TOP_LEVEL_CATEGORIES;
+export const dynamic = 'force-dynamic';
 
 /* ── Per-category theme configuration ── */
 const CATEGORY_THEME: Record<Category, {
@@ -155,14 +156,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
-export async function generateStaticParams() {
-    return validCategories.map((category) => ({ category }));
-}
-
 async function getCategoryArticles(category: Category): Promise<Article[]> {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' AND category = ?
+            `SELECT * FROM public_articles WHERE status = 'published' AND category = ?
              AND source_url NOT LIKE 'https://news.google.com/%'
              ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`,
             [category]
@@ -181,7 +178,7 @@ async function getTrendingArticles(category: Category): Promise<TrendingArticle[
                     a.source_name, a.source_url, a.published_at, a.view_count,
                     ta.ai_score, ta.ai_reasoning, ta.rank_position
              FROM trending_articles ta
-             JOIN articles a ON ta.article_id = a.id
+             JOIN public_articles a ON ta.article_id = a.id
              WHERE ta.category = ? AND a.status = 'published'
                AND a.source_url NOT LIKE 'https://news.google.com/%'
              ORDER BY ta.rank_position ASC

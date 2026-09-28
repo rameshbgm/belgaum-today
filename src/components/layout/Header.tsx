@@ -19,20 +19,21 @@ export function Header() {
     const [dateline, setDateline] = useState('');
 
     useEffect(() => {
+        let nextDarkMode = false;
         if (typeof window !== 'undefined') {
-            const isDark = localStorage.getItem('darkMode') === 'true' ||
+            nextDarkMode = localStorage.getItem('darkMode') === 'true' ||
                 (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            setIsDarkMode(isDark);
-            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.classList.toggle('dark', nextDarkMode);
         }
 
         // Build the dateline client-side to avoid SSR locale mismatch
         const now = new Date();
-        setDateline(`${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`);
+        const nextDateline = `${WEEKDAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+        const timer = window.setTimeout(() => { setIsDarkMode(nextDarkMode); setDateline(nextDateline); }, 0);
 
         const handleScroll = () => setIsScrolled(window.scrollY > 60);
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        return () => { window.clearTimeout(timer); window.removeEventListener('scroll', handleScroll); };
     }, []);
 
     const toggleDarkMode = () => {

@@ -11,15 +11,15 @@ export const maxDuration = 60;
 /**
  * GET /api/cron/trending-analysis?secret=<TRENDING_CRON_SECRET>
  * Background job to run AI trending analysis for all categories.
- * 
+ *
  * This runs independently from RSS fetching to:
  * - Reduce coupling and complexity
  * - Control AI API costs with configurable intervals
  * - Allow trending to run even when no new articles are fetched
- * 
+ *
  * Interval: Configured via TRENDING_ANALYSIS_INTERVAL_HOURS env var (default: 4 hours)
  * External cron should call this endpoint every 4 hours
- * 
+ *
  * Detailed logs are written to logs/ai-YYYY-MM-DD.log and logs/cron-YYYY-MM-DD.log
  */
 export const GET = withLogging(async (request: NextRequest) => {
@@ -46,10 +46,10 @@ export const GET = withLogging(async (request: NextRequest) => {
 
         // Get all active categories with published articles
         const categories = await query<{ category: string; article_count: number }[]>(
-            `SELECT category, COUNT(*) as article_count 
-             FROM articles 
-             WHERE status = 'published' 
-             GROUP BY category 
+            `SELECT category, COUNT(*) as article_count
+             FROM public_articles
+             WHERE status = 'published'
+             GROUP BY category
              HAVING article_count > 0`
         );
 
@@ -76,9 +76,9 @@ export const GET = withLogging(async (request: NextRequest) => {
 
                 // Get recent articles for analysis (top 50 most recent)
                 const recentArticles = await query<ArticleForAnalysis[]>(
-                    `SELECT id, title, excerpt, source_name, published_at 
-                     FROM articles 
-                     WHERE category = ? AND status = 'published' 
+                    `SELECT id, title, excerpt, source_name, published_at
+                     FROM public_articles
+                     WHERE category = ? AND status = 'published'
                      ORDER BY published_at DESC LIMIT 50`,
                     [category]
                 );
@@ -119,7 +119,7 @@ export const GET = withLogging(async (request: NextRequest) => {
             } catch (trendErr) {
                 const errMsg = trendErr instanceof Error ? trendErr.message : String(trendErr);
                 const trendDuration = Date.now() - trendingStart;
-                
+
                 results.push({ category, trending: 0, duration: trendDuration, error: errMsg });
                 errors.push(`${category}: ${errMsg}`);
 

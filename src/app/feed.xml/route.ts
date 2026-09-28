@@ -15,7 +15,7 @@ export async function GET() {
 
     try {
         articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published'
+            `SELECT * FROM public_articles WHERE status = 'published'
              AND source_url NOT LIKE 'https://news.google.com/%'
              ORDER BY published_at DESC LIMIT 250`
         );

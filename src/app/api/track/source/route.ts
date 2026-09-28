@@ -17,7 +17,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         const articles = await query<Array<{ source_name: string; source_url: string }>>(
-            `SELECT source_name, source_url FROM articles WHERE id = ? AND status = 'published' LIMIT 1`,
+            `SELECT source_name, source_url FROM public_articles WHERE id = ? LIMIT 1`,
             [articleId]
         );
         if (!articles[0] || !publisherUrl(articles[0].source_url)) {

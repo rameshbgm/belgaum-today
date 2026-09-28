@@ -14,7 +14,7 @@ export const GET = withLogging(async (request: NextRequest) => {
     const sortBy = searchParams.get('sortBy') || 'newest';
 
     try {
-        let sql = `SELECT * FROM articles WHERE status = 'published'
+        let sql = `SELECT * FROM public_articles WHERE status = 'published'
                    AND source_url NOT LIKE 'https://news.google.com/%'`;
         const params: unknown[] = [];
 

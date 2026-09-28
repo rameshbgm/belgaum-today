@@ -17,7 +17,7 @@ export const GET = withLogging(async () => {
             SELECT t.name, COUNT(at.article_id) as count
             FROM tags t
             JOIN article_tags at ON t.id = at.tag_id
-            JOIN articles a ON at.article_id = a.id
+            JOIN public_articles a ON at.article_id = a.id
             WHERE a.status = 'published'
               AND a.published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
             GROUP BY t.id, t.name
@@ -35,7 +35,7 @@ export const GET = withLogging(async () => {
         // Strategy 2: Get most covered source names as proxies for trending topics
         const sourceTopics = await query<Array<{ name: string; count: number }>>(`
             SELECT source_name as name, COUNT(*) as count
-            FROM articles
+            FROM public_articles
             WHERE status = 'published'
               AND published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
             GROUP BY source_name
@@ -47,7 +47,7 @@ export const GET = withLogging(async () => {
             // Also get most active categories as topics
             const categoryTopics = await query<Array<{ name: string; count: number }>>(`
                 SELECT category as name, COUNT(*) as count
-                FROM articles
+                FROM public_articles
                 WHERE status = 'published'
                   AND published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
                 GROUP BY category

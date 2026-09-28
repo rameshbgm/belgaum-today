@@ -14,13 +14,15 @@ export function TopicPreferences({ articles }: { articles: Article[] }) {
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
+        let next = DEFAULT_TOPICS;
         try {
             const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
             if (Array.isArray(stored)) {
-                setFollowed(stored.filter((value): value is Category => TOP_LEVEL_CATEGORIES.includes(value)));
+                next = stored.filter((value): value is Category => TOP_LEVEL_CATEGORIES.includes(value));
             }
         } catch { /* Keep defaults when local storage is unavailable. */ }
-        setLoaded(true);
+        const timer = window.setTimeout(() => { setFollowed(next); setLoaded(true); }, 0);
+        return () => window.clearTimeout(timer);
     }, []);
 
     const toggle = (category: Category) => {

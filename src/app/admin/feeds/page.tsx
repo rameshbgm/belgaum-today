@@ -9,7 +9,9 @@ import { Button, Card, CardContent, Badge, Input, useToast } from '@/components/
 interface Feed {
     id: number;
     name: string;
+    publisher_name: string | null;
     feed_url: string;
+    publisher_domain: string | null;
     fetch_interval_minutes: number;
     category: string;
     is_active: boolean;
@@ -51,7 +53,9 @@ export default function RSSFeedsPage() {
     const [editingFeed, setEditingFeed] = useState<Feed | null>(null);
     const [formData, setFormData] = useState({
         name: '',
+        publisher_name: '',
         feed_url: '',
+        publisher_domain: '',
         category: 'india',
         fetch_interval_minutes: 120,
         is_active: true
@@ -79,11 +83,16 @@ export default function RSSFeedsPage() {
     }, [fetchFeeds]);
 
     const toggleFeed = async (id: number, current: boolean) => {
-        await fetch('/api/admin/feeds', {
+        const response = await fetch('/api/admin/feeds', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ feedId: id, is_active: !current }),
         });
+        const result = await response.json();
+        if (!response.ok) {
+            showToast(result.error || 'Could not change feed status', 'error');
+            return;
+        }
         showToast(`Feed ${current ? 'disabled' : 'enabled'}`, 'success');
         fetchFeeds();
     };
@@ -174,7 +183,9 @@ export default function RSSFeedsPage() {
         setEditingFeed(null);
         setFormData({
             name: '',
+            publisher_name: '',
             feed_url: '',
+            publisher_domain: '',
             category: 'india',
             fetch_interval_minutes: 120,
             is_active: true
@@ -186,7 +197,9 @@ export default function RSSFeedsPage() {
         setEditingFeed(feed);
         setFormData({
             name: feed.name,
+            publisher_name: feed.publisher_name || feed.name.split(' - ')[0],
             feed_url: feed.feed_url,
+            publisher_domain: feed.publisher_domain || '',
             category: feed.category,
             fetch_interval_minutes: feed.fetch_interval_minutes,
             is_active: Boolean(feed.is_active),
@@ -407,8 +420,8 @@ export default function RSSFeedsPage() {
 
         // Sort
         result.sort((a, b) => {
-            let aVal: any = a[sortField];
-            let bVal: any = b[sortField];
+            let aVal: string | number = a[sortField] ?? '';
+            let bVal: string | number = b[sortField] ?? '';
 
             if (sortField === 'last_successful_at') {
                 aVal = aVal ? new Date(aVal).getTime() : 0;
@@ -752,6 +765,7 @@ export default function RSSFeedsPage() {
                                         <div>
                                             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{feed.name}</span>
                                             <p className="text-xs text-gray-400 truncate max-w-xs">{feed.feed_url}</p>
+                                            <p className="text-xs text-gray-400">{feed.publisher_domain ? `Publisher · ${feed.publisher_domain}` : 'Set a direct publisher domain to enable'}</p>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
@@ -857,6 +871,19 @@ export default function RSSFeedsPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Publisher name *
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.publisher_name}
+                                    onChange={(e) => setFormData({ ...formData, publisher_name: e.target.value })}
+                                    placeholder="The Hindu"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Feed URL *
                                 </label>
                                 <Input
@@ -870,6 +897,20 @@ export default function RSSFeedsPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Indian publisher domain *
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.publisher_domain}
+                                    onChange={(e) => setFormData({ ...formData, publisher_domain: e.target.value })}
+                                    placeholder="thehindu.com"
+                                    required
+                                />
+                                <p className="mt-1 text-xs text-gray-500">The feed and article links must be on this Indian publisher domain.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Category *
                                 </label>
                                 <select
@@ -879,7 +920,6 @@ export default function RSSFeedsPage() {
                                     required
                                 >
                                     <option value="india">India</option>
-                                    <option value="world">World</option>
                                     <option value="business">Business</option>
                                     <option value="technology">Technology</option>
                                     <option value="sports">Sports</option>

@@ -12,8 +12,12 @@ const STARTUP_DELAY_MS = 10_000;
 let isRunning = false;
 
 export async function register() {
+    // Local development can read the configured database without launching
+    // background ingestion jobs against it.
+    if (process.env.NODE_ENV !== 'production') return;
     const { runRssFetch } = await import('@/lib/scheduler/rss-service');
     const { runTrendingAnalysis } = await import('@/lib/scheduler/trending-service');
+    const { runStoryTracker } = await import('@/lib/scheduler/story-tracker');
 
     async function fetchAndAnalyze() {
         // Skip this tick if the previous one is still running.
@@ -33,6 +37,15 @@ export async function register() {
             const msg = err instanceof Error ? err.message : String(err);
             console.error('[Scheduler] RSS fetch error:', err);
             await beatError(`RSS: ${msg}`);
+        }
+
+        try {
+            await runStoryTracker();
+        } catch (err) {
+            failed = true;
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error('[Scheduler] Story Tracker error:', err);
+            await beatError(`Story Tracker: ${msg}`);
         }
 
         try {

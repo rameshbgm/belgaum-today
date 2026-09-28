@@ -29,7 +29,7 @@ interface CronResult {
 
 export default function AdminDashboardPage() {
     const { showToast } = useToast();
-    const [stats, setStats] = useState<(DashboardStats & { totalClicks?: number; feedStatus?: any[]; topArticlesByDate?: any[] }) | null>(null);
+    const [stats, setStats] = useState<(DashboardStats & { totalClicks?: number; feedStatus?: unknown[]; topArticlesByDate?: Array<{ date: string; articles: Array<{ id: number; title: string; slug: string; views: number; rank: number }> }> }) | null>(null);
     const sched = stats?.scheduler;
     const [isLoading, setIsLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);

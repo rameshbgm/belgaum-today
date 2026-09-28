@@ -41,13 +41,13 @@ export type Category =
   | 'finance';
 
 export const FEED_CATEGORIES: Category[] = [
-  'belgaum', 'india', 'world', 'business', 'technology', 'sports',
+  'belgaum', 'india', 'business', 'technology', 'sports',
   'entertainment', 'travel', 'science', 'health', 'lifestyle', 'food',
   'education', 'environment', 'culture', 'finance',
 ];
 
 export const TOP_LEVEL_CATEGORIES: Category[] = [
-  'belgaum', 'india', 'world', 'business', 'technology', 'sports', 'entertainment',
+  'belgaum', 'india', 'business', 'technology', 'sports', 'entertainment',
 ];
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';

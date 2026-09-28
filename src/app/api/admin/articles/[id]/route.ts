@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { FEED_CATEGORIES } from '@/types';
-import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
+import { publisherDomainUrl, assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,10 +32,13 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
         } = body;
 
         assertSourcePolicyConfigured();
-        const current = await query<Array<{ title: string; source_name: string; source_url: string; category: string }>>(
-            'SELECT title, source_name, source_url, category FROM articles WHERE id = ? LIMIT 1', [id]
+        const current = await query<Array<{ title: string; source_name: string; source_url: string; category: string; publisher_domain: string | null }>>(
+            'SELECT title, source_name, source_url, category, publisher_domain FROM articles WHERE id = ? LIMIT 1', [id]
         );
         if (!current[0]) return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        if (source_url !== undefined && current[0].publisher_domain && !publisherDomainUrl(source_url, current[0].publisher_domain)) {
+            return NextResponse.json({ success: false, error: 'Source URL must remain on the publisher domain' }, { status: 422 });
+        }
         const nextTitle = title ?? current[0].title;
         const nextCategory = category ?? current[0].category;
         if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||

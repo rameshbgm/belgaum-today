@@ -116,7 +116,7 @@ function SearchContent() {
     };
 
     // Use history item
-    const useHistoryItem = (item: string) => {
+    const selectHistoryItem = (item: string) => {
         setQuery(item);
     };
 
@@ -294,7 +294,7 @@ function SearchContent() {
                         {searchHistory.map((item, index) => (
                             <button
                                 key={index}
-                                onClick={() => useHistoryItem(item)}
+                                onClick={() => selectHistoryItem(item)}
                                 className="px-3 py-1.5 text-sm bg-[#F3EEE4] dark:bg-[#2A251E] text-ink rounded-full hover:bg-primary/10 transition-colors"
                             >
                                 {item}

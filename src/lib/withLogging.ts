@@ -21,7 +21,10 @@ export function withLogging(handler: RouteHandler): RouteHandler {
         const method = request.method;
         const url = new URL(request.url);
         const path = url.pathname;
-        const query = Object.fromEntries(url.searchParams.entries());
+        const query = Object.fromEntries([...url.searchParams.entries()].map(([key, value]) => [
+            key,
+            /secret|token|password|key/i.test(key) ? '[REDACTED]' : value,
+        ]));
 
         // Log incoming request
         fileLogger.apiRequest(method, path, {

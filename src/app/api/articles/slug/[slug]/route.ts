@@ -17,7 +17,7 @@ export const GET = withLogging(async (request: NextRequest, context) => {
 
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE slug = ? AND status = 'published' LIMIT 1`,
+            `SELECT * FROM public_articles WHERE slug = ? AND status = 'published' LIMIT 1`,
             [slug]
         );
 

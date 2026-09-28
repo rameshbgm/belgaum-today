@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { Article, FEED_CATEGORIES } from '@/types';
-import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
+import { publisherDomainUrl, assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
 import { getCurrentUser } from '@/lib/auth';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { withLogging } from '@/lib/withLogging';
@@ -20,7 +20,7 @@ export const GET = withLogging(async (request: NextRequest, context) => {
 
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE id = ? LIMIT 1`,
+            `SELECT * FROM public_articles WHERE id = ? LIMIT 1`,
             [id]
         );
 
@@ -83,10 +83,13 @@ export const PUT = withLogging(async (request: NextRequest, context) => {
         } = body;
 
         assertSourcePolicyConfigured();
-        const existingArticle = await query<Array<{ title: string; category: string; source_name: string; source_url: string }>>(
-            'SELECT title, category, source_name, source_url FROM articles WHERE id = ? LIMIT 1', [id]
+        const existingArticle = await query<Array<{ title: string; category: string; source_name: string; source_url: string; publisher_domain: string | null }>>(
+            'SELECT title, category, source_name, source_url, publisher_domain FROM articles WHERE id = ? LIMIT 1', [id]
         );
         if (!existingArticle[0]) return NextResponse.json({ success: false, error: 'Article not found' }, { status: 404 });
+        if (source_url !== undefined && existingArticle[0].publisher_domain && !publisherDomainUrl(source_url, existingArticle[0].publisher_domain)) {
+            return NextResponse.json({ success: false, error: 'Source URL must remain on the publisher domain' }, { status: 422 });
+        }
         const nextTitle = title ?? existingArticle[0].title;
         const nextCategory = category ?? existingArticle[0].category;
         if (!FEED_CATEGORIES.includes(nextCategory) || hasNonEnglishScript(nextTitle) ||

@@ -1,6 +1,6 @@
 /**
  * RSS Feed Parser & Validator
- * Parses RSS XML from Hindustan Times and The Hindu,
+ * Parses RSS XML from admin-configured publisher feeds,
  * validates entries, extracts images, and returns structured items.
  */
 
@@ -22,6 +22,8 @@ export interface RssFeedConfig {
     is_active: boolean;
     last_fetched_at: Date | null;
     fetch_interval_minutes: number;
+    publisher_domain: string | null;
+    publisher_name: string | null;
 }
 
 export interface FeedFetchResult {
@@ -128,42 +130,6 @@ function extractImageUrl(itemXml: string): string | null {
     return null;
 }
 
-/**
- * Parse Google News description HTML to extract title, link, and source
- */
-function parseGoogleNewsDescription(html: string): { title: string; link: string; source: string } | null {
-    // Google News format: <a href="URL" target="_blank">Title</a> <font color="#6f6f6f">Source</font>
-    const linkMatch = html.match(/<a\s+href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/);
-    const sourceMatch = html.match(/<font[^>]*>([^<]+)<\/font>/);
-    
-    if (linkMatch) {
-        return {
-            title: stripHtml(linkMatch[2]),
-            link: linkMatch[1],
-            source: sourceMatch ? stripHtml(sourceMatch[1]) : 'News.google.com',
-        };
-    }
-    
-    return null;
-}
-
-/**
- * Derive source name from feed URL
- */
-function getSourceName(feedUrl: string): string {
-    if (feedUrl.includes('hindustantimes.com')) return 'Hindustan Times';
-    if (feedUrl.includes('thehindu.com')) return 'The Hindu';
-    if (feedUrl.includes('news.google.com')) return 'News.google.com';
-    if (feedUrl.includes('oneindia.com')) return 'OneIndia';
-    // Fallback: extract domain name
-    try {
-        const domain = new URL(feedUrl).hostname.replace('www.', '');
-        return domain.charAt(0).toUpperCase() + domain.slice(1);
-    } catch {
-        return 'Unknown Source';
-    }
-}
-
 const BROWSER_USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -182,7 +148,6 @@ async function fetchWithBrowserHeaders(url: string): Promise<Response> {
         'Accept-Encoding': 'gzip, deflate, br',
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
-        'Referer': 'https://www.google.com/',
     };
 
     let res = await fetch(url, { headers, redirect: 'follow', next: { revalidate: 0 } });
@@ -203,7 +168,7 @@ async function fetchWithBrowserHeaders(url: string): Promise<Response> {
 /**
  * Parse RSS XML feed and return validated items
  */
-export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
+export async function parseRssFeed(feedUrl: string, sourceName?: string): Promise<RssItem[]> {
     const response = await fetchWithBrowserHeaders(feedUrl);
 
     if (!response.ok) {
@@ -211,44 +176,24 @@ export async function parseRssFeed(feedUrl: string): Promise<RssItem[]> {
     }
 
     const xml = await response.text();
-    const sourceName = getSourceName(feedUrl);
+    const feedSourceName = sourceName || new URL(feedUrl).hostname.replace(/^www\./, '');
     const items: RssItem[] = [];
 
     // Split XML into individual <item> blocks
     const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
     let match;
 
-    const isGoogleNews = feedUrl.includes('news.google.com');
 
     while ((match = itemRegex.exec(xml)) !== null) {
         const itemXml = match[1];
 
         // Extract fields
-        let title = extractTag(itemXml, 'title');
-        let link = extractLink(itemXml);
-        let description = extractTag(itemXml, 'description');
+        const title = extractTag(itemXml, 'title');
+        const link = extractLink(itemXml);
+        const description = extractTag(itemXml, 'description');
         const pubDateStr = extractTag(itemXml, 'pubDate');
-        let guid = extractTag(itemXml, 'guid') || link;
-        let itemSourceName = sourceName;
-
-        // Special handling for Google News feeds
-        if (isGoogleNews && description) {
-            const googleNewsData = parseGoogleNewsDescription(description);
-            if (googleNewsData) {
-                title = googleNewsData.title;
-                link = googleNewsData.link;
-                itemSourceName = googleNewsData.source;
-                // Clean description becomes just the title
-                description = googleNewsData.title;
-            } else {
-                // Fallback: strip HTML even if parser didn't match
-                description = stripHtml(description);
-            }
-        }
-        if (isGoogleNews && itemSourceName === 'News.google.com') {
-            const publisher = extractTag(itemXml, 'source');
-            if (publisher) itemSourceName = stripHtml(publisher);
-        }
+        const guid = extractTag(itemXml, 'guid') || link;
+        const itemSourceName = feedSourceName;
 
         // Validation: must have title and link at minimum
         if (!title || !link) {
@@ -305,7 +250,7 @@ export async function fetchAllFeeds(
 ): Promise<FeedFetchResult[]> {
     return Promise.all(feeds.map(async feed => {
         try {
-            return { feedId: feed.id, items: await parseRssFeed(feed.feed_url), error: null };
+            return { feedId: feed.id, items: await parseRssFeed(feed.feed_url, feed.publisher_name || feed.name), error: null };
         } catch (error) {
             return {
                 feedId: feed.id,

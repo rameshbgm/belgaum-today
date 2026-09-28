@@ -8,6 +8,8 @@ import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
 import { digestConfigured } from '@/lib/digest';
 import { distinctStories } from '@/lib/story-clusters';
 
+export const dynamic = 'force-dynamic';
+
 interface MostViewedArticle {
   id: number;
   title: string;
@@ -48,7 +50,9 @@ interface TrendingArticle {
   view_count: number;
 }
 
-const LATEST_CATEGORIES = ['belgaum', 'india', 'world', 'business', 'technology', 'entertainment', 'sports'] as const;
+interface StoryEventRow { id: number; title: string; category: string; last_updated_at: Date; report_count: number; latest_change: string | null }
+
+const LATEST_CATEGORIES = ['belgaum', 'india', 'business', 'technology', 'entertainment', 'sports'] as const;
 
 async function getArticles(): Promise<{
   articles: Article[];
@@ -57,17 +61,18 @@ async function getArticles(): Promise<{
   categorySections: Array<{ category: typeof LATEST_CATEGORIES[number]; articles: Article[] }>;
   localArticles: Article[];
   indiaArticles: Article[];
+  storyEvents: StoryEventRow[];
 }> {
   try {
     const [localArticles, indiaArticles] = await Promise.all(['belgaum', 'india'].map(category =>
       query<Article[]>(
-        `SELECT * FROM articles WHERE status = 'published' AND category = ?
+        `SELECT * FROM public_articles WHERE status = 'published' AND category = ?
          AND source_url NOT LIKE 'https://news.google.com/%'
          ORDER BY COALESCE(published_at, created_at) DESC LIMIT 4`, [category]
       )
     ));
     const articles = await query<Article[]>(
-      `SELECT * FROM articles WHERE status = 'published'
+      `SELECT * FROM public_articles WHERE status = 'published'
        AND source_url NOT LIKE 'https://news.google.com/%'
        ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
     );
@@ -78,7 +83,7 @@ async function getArticles(): Promise<{
               a.source_name, a.source_url, a.published_at, a.view_count,
               ta.ai_score, ta.ai_reasoning, ta.rank_position
        FROM trending_articles ta
-       JOIN articles a ON ta.article_id = a.id
+       JOIN public_articles a ON ta.article_id = a.id
        WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
        ORDER BY ta.rank_position ASC
        LIMIT 10`
@@ -101,7 +106,7 @@ async function getArticles(): Promise<{
     // Rank by article-page views.
     const mostViewed = await query<MostViewedArticle[]>(
       `SELECT a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at, a.view_count
-       FROM articles a
+       FROM public_articles a
        WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
          AND a.view_count > 0
        ORDER BY a.view_count DESC, COALESCE(a.published_at, a.created_at) DESC
@@ -113,7 +118,7 @@ async function getArticles(): Promise<{
       LATEST_CATEGORIES.map(async (cat) => {
         const rows = await query<Article[]>(
           `SELECT id, title, slug, excerpt, category, source_name, source_url, published_at, created_at, view_count, reading_time, featured_image, status, featured, ai_generated, ai_confidence, requires_review
-           FROM articles
+           FROM public_articles
            WHERE status = 'published' AND category = ? AND source_url NOT LIKE 'https://news.google.com/%'
            ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3`,
           [cat]
@@ -122,6 +127,14 @@ async function getArticles(): Promise<{
       })
     );
 
+    const storyEvents = await query<StoryEventRow[]>(
+      `SELECT e.id, e.title, e.category, e.last_updated_at, COUNT(a.id) AS report_count,
+        (SELECT u.change_text FROM story_event_updates u JOIN public_articles pa ON pa.id = u.article_id
+         WHERE u.story_event_id = e.id AND u.change_text IS NOT NULL ORDER BY u.created_at DESC, u.id DESC LIMIT 1) AS latest_change
+       FROM story_events e JOIN public_articles a ON a.story_event_id = e.id
+       GROUP BY e.id, e.title, e.category, e.last_updated_at
+       ORDER BY e.last_updated_at DESC LIMIT 6`
+    );
     return {
       articles: distinctStories(articles),
       trendingArticles: trending,
@@ -132,15 +145,16 @@ async function getArticles(): Promise<{
       categorySections: categoryArticles.map(section => ({ ...section, articles: distinctStories(section.articles) })),
       localArticles: distinctStories(localArticles),
       indiaArticles: distinctStories(indiaArticles),
+      storyEvents,
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [] };
+    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [], storyEvents: [] };
   }
 }
 
 export default async function HomePage() {
-  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles } = await getArticles();
+  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles, storyEvents } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback
   const isFallback = trendingArticles.length === 0;
@@ -179,6 +193,18 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-10">
+      {storyEvents.length > 0 && <section className="border-b-2 border-ink/85 pb-10" aria-label="Story Tracker">
+        <SectionHeading accent>Story Tracker</SectionHeading>
+        <p className="mb-5 text-sm text-muted">Follow how a story develops across Indian publisher feeds.</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {storyEvents.map(event => <Link key={event.id} href={`/story/${event.id}`} className="rounded-sm border border-hairline p-5 transition-colors hover:border-accent">
+            <p className="text-xs font-bold uppercase tracking-wider text-accent">{event.category} · {event.report_count} reports</p>
+            <h2 className="mt-2 font-display text-xl text-ink">{event.title}</h2>
+            {event.latest_change && <p className="mt-3 text-sm text-muted">Latest: {event.latest_change}</p>}
+            <span className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-accent">View timeline →</span>
+          </Link>)}
+        </div>
+      </section>}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
         {([
           { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Fresh English local stories will appear here as publisher feeds update.' },

@@ -6,7 +6,7 @@ export async function runTrendingAnalysis(): Promise<{ categoriesProcessed: numb
     fileLogger.info('ai', '═══ Scheduled AI trending analysis started ═══');
 
     const categories = await query<{ category: string }[]>(
-        `SELECT DISTINCT category FROM articles WHERE status = 'published' AND category != ''`
+        `SELECT DISTINCT category FROM public_articles WHERE status = 'published' AND category != ''`
     );
 
     if (categories.length === 0) {
@@ -20,7 +20,7 @@ export async function runTrendingAnalysis(): Promise<{ categoriesProcessed: numb
         try {
             const recentArticles = await query<ArticleForAnalysis[]>(
                 `SELECT id, title, excerpt, source_name, published_at
-                 FROM articles
+                 FROM public_articles
                  WHERE category = ? AND status = 'published'
                  ORDER BY published_at DESC LIMIT 50`,
                 [category]

@@ -1,0 +1,113 @@
+import { callLunaJson } from '@/lib/ai/luna';
+import { query, execute, insert } from '@/lib/db';
+import { classifyIndiaStory } from '@/lib/local-relevance';
+import { fileLogger } from '@/lib/fileLogger';
+
+type PendingArticle = { id: number; title: string; excerpt: string; category: string };
+type StoryArticle = PendingArticle & { source_name: string; published_at: Date | null; story_event_id: number | null };
+type Candidate = { id: number; title: string; excerpt: string; category: string };
+
+const matchSchema = {
+    type: 'object', additionalProperties: false,
+    properties: {
+        sameEvent: { type: 'boolean' },
+        supportedChange: { type: 'boolean' },
+        changeText: { type: ['string', 'null'] },
+    },
+    required: ['sameEvent', 'supportedChange', 'changeText'],
+};
+
+function titleWords(value: string): Set<string> {
+    const stop = new Set(['the', 'and', 'for', 'with', 'from', 'this', 'that', 'news', 'india', 'indian', 'after', 'over']);
+    return new Set(value.toLowerCase().match(/[a-z]{4,}/g)?.filter(word => !stop.has(word)) || []);
+}
+
+function relatedTitles(a: string, b: string): boolean {
+    const left = titleWords(a);
+    const right = titleWords(b);
+    if (!left.size || !right.size) return false;
+    const shared = [...left].filter(word => right.has(word));
+    return shared.length >= 2 || shared.some(word => word.length >= 8);
+}
+
+export async function runStoryTracker(): Promise<{ classified: number; clustered: number; pending: number }> {
+    let classified = 0;
+    let clustered = 0;
+    let pending = 0;
+    const drafts = await query<PendingArticle[]>(
+        `SELECT a.id, a.title, a.excerpt, a.category FROM articles a
+         JOIN rss_feed_config f ON f.id = a.feed_id
+         WHERE a.geo_status = 'pending' AND a.publisher_domain = f.publisher_domain
+         ORDER BY a.id LIMIT 10`
+    );
+    for (const article of drafts) {
+        try {
+            const result = await classifyIndiaStory({ title: article.title, description: article.excerpt || article.title });
+            if (!result.certain) { pending++; continue; }
+            const eligible = result.india && (article.category !== 'belgaum' || result.local);
+            await execute(
+                `UPDATE articles SET geo_status = ?, status = ?, category = ? WHERE id = ? AND geo_status = 'pending'`,
+                [eligible ? 'india' : 'excluded', eligible ? 'published' : 'archived', eligible && result.local ? 'belgaum' : article.category, article.id]
+            );
+            classified++;
+        } catch (error) {
+            pending++;
+            fileLogger.warn('ai', 'Story eligibility retry deferred', { articleId: article.id, error: String(error) });
+            break;
+        }
+    }
+
+    const articles = await query<StoryArticle[]>(
+        `SELECT id, title, excerpt, category, source_name, published_at, story_event_id
+         FROM public_articles WHERE story_event_id IS NULL
+         ORDER BY COALESCE(published_at, created_at) ASC LIMIT 10`
+    );
+    for (const article of articles) {
+        try {
+            const candidates = await query<Candidate[]>(
+                `SELECT e.id, e.title, a.excerpt, e.category FROM story_events e
+                 JOIN public_articles a ON a.story_event_id = e.id
+                 WHERE e.last_updated_at >= NOW() - INTERVAL 14 DAY
+                 ORDER BY e.last_updated_at DESC LIMIT 100`
+            );
+            const related = candidates.filter(candidate => relatedTitles(article.title, candidate.title)).slice(0, 8);
+            let eventId: number | null = null;
+            let changeText: string | null = null;
+            let createdEvent = false;
+            for (const candidate of related) {
+                const result = await callLunaJson<{ sameEvent: boolean; supportedChange: boolean; changeText: string | null }>(
+                    'story_match',
+                    'Decide whether both reports describe the same specific real-world event. If the new report explicitly adds a fact absent from the previous report, give one plain sentence supported by the excerpts. Otherwise return null changeText and supportedChange false. Do not infer consequences.',
+                    { previous: candidate, incoming: article }, matchSchema, 12000,
+                );
+                if (result.sameEvent) {
+                    eventId = candidate.id;
+                    changeText = result.supportedChange && result.changeText ? result.changeText.slice(0, 320) : null;
+                    break;
+                }
+            }
+            if (!eventId) {
+                eventId = await insert(
+                    `INSERT INTO story_events (title, category, first_seen_at, last_updated_at) VALUES (?, ?, NOW(), NOW())`,
+                    [article.title.slice(0, 255), article.category]
+                );
+                createdEvent = true;
+            }
+            const claimed = await execute('UPDATE articles SET story_event_id = ? WHERE id = ? AND story_event_id IS NULL', [eventId, article.id]);
+            if (!claimed) {
+                if (createdEvent) await execute('DELETE FROM story_events WHERE id = ?', [eventId]);
+                continue;
+            }
+            await insert(
+                `INSERT IGNORE INTO story_event_updates (story_event_id, article_id, change_text) VALUES (?, ?, ?)`,
+                [eventId, article.id, changeText]
+            );
+            await execute('UPDATE story_events SET last_updated_at = NOW() WHERE id = ?', [eventId]);
+            clustered++;
+        } catch (error) {
+            fileLogger.warn('ai', 'Story clustering deferred', { articleId: article.id, error: String(error) });
+            break;
+        }
+    }
+    return { classified, clustered, pending };
+}

@@ -29,7 +29,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         if (requestedCategories && requestedCategories.length > 0) {
             // Run only the requested categories (verify they have articles)
             const existing = await query<{ category: string }[]>(
-                `SELECT DISTINCT category FROM articles 
+                `SELECT DISTINCT category FROM public_articles
                  WHERE status = 'published' AND category IN (${requestedCategories.map(() => '?').join(',')})`,
                 requestedCategories
             );
@@ -37,7 +37,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         } else {
             // Run all categories that have published articles
             const all = await query<{ category: string }[]>(
-                `SELECT DISTINCT category FROM articles WHERE status = 'published'`
+                `SELECT DISTINCT category FROM public_articles WHERE status = 'published'`
             );
             categoriesToProcess = all.map((r) => r.category);
         }
@@ -63,9 +63,9 @@ export const POST = withLogging(async (request: NextRequest) => {
             try {
                 // Get latest 50 articles for this category
                 const recentArticles = await query<ArticleForAnalysis[]>(
-                    `SELECT id, title, excerpt, source_name, published_at 
-                     FROM articles 
-                     WHERE category = ? AND status = 'published' 
+                    `SELECT id, title, excerpt, source_name, published_at
+                     FROM public_articles
+                     WHERE category = ? AND status = 'published'
                      ORDER BY published_at DESC LIMIT 50`,
                     [category]
                 );

@@ -1,19 +1,23 @@
 import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
-import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource, resolvePublisherUrl } from '@/lib/source-policy';
-import { isBelagaviStory } from '@/lib/local-relevance';
+import { publisherDomainUrl, assertSourcePolicyConfigured, directPublisherFeed, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
+import { classifyIndiaStories } from '@/lib/local-relevance';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
 
-export async function runRssFetch(): Promise<{ newArticles: number; skipped: number; errors: number; feedsProcessed: number }> {
+export async function runRssFetch(options: { feedIds?: number[]; categories?: string[]; force?: boolean } = {}): Promise<{ newArticles: number; skipped: number; errors: number; feedsProcessed: number }> {
     const start = Date.now();
     fileLogger.info('cron', '═══ Scheduled RSS fetch started ═══');
 
     assertSourcePolicyConfigured();
     const configuredFeeds = await query<RssFeedConfig[]>(
-        `SELECT * FROM rss_feed_config WHERE is_active = true`
+        `SELECT * FROM rss_feed_config WHERE is_active = true AND publisher_domain IS NOT NULL`
     );
-    const feeds = configuredFeeds.filter(feed => dueForScheduledFetch(feed) && !isBlockedSource(feed.feed_url, feed.name));
+    const feeds = configuredFeeds.filter(feed =>
+        (options.force || dueForScheduledFetch(feed)) &&
+        (!options.feedIds?.length || options.feedIds.includes(feed.id)) &&
+        (!options.categories?.length || options.categories.includes(feed.category)) &&
+        directPublisherFeed(feed.feed_url, feed.publisher_domain!) && !isBlockedSource(feed.feed_url, feed.name));
 
     if (feeds.length === 0) {
         fileLogger.info('cron', 'No active feeds found');
@@ -37,43 +41,59 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
         const feedErrors: string[] = [];
         if (fetchError) feedErrors.push(fetchError);
 
-        for (const item of items) {
+        // RSS feeds usually list newest items first. Bound first-run AI work.
+        const batch = items.slice(0, 15);
+        let classifications: Awaited<ReturnType<typeof classifyIndiaStories>> = [];
+        try { classifications = await classifyIndiaStories(batch); }
+        catch (error) { fileLogger.warn('ai', 'Feed classification deferred', { feedId, error: String(error) }); }
+        for (const [index, item] of batch.entries()) {
             try {
-                if (isBlockedSource(item.link, item.sourceName) || hasNonEnglishScript(item.title)) {
+                if (isBlockedSource(item.link, feed.name) || hasNonEnglishScript(item.title)) {
                     feedSkipped++;
                     continue;
                 }
-                const existing = await query<{ id: number }[]>(
-                    'SELECT id FROM articles WHERE source_url = ? LIMIT 1',
-                    [item.link]
-                );
-
-                if (existing.length > 0) {
-                    feedSkipped++;
-                    continue;
-                }
-
-                const sourceLink = await resolvePublisherUrl(item.link);
+                const sourceLink = publisherDomainUrl(item.link, feed.publisher_domain!);
                 if (!sourceLink || isBlockedSource(sourceLink, item.sourceName)) {
                     feedSkipped++;
                     continue;
                 }
-                if (sourceLink !== item.link) {
-                    const canonicalMatch = await query<{ id: number }[]>(
-                        'SELECT id FROM articles WHERE source_url = ? LIMIT 1', [sourceLink]
-                    );
-                    if (canonicalMatch.length > 0) {
-                        feedSkipped++;
-                        continue;
-                    }
-                }
 
-                const isLocal = await isBelagaviStory(item, feed.category === 'belgaum');
-                if (feed.category === 'belgaum' && !isLocal) {
+                const existing = await query<Array<{ id: number; status: string; feed_id: number | null; geo_status: string }>>(
+                    'SELECT id, status, feed_id, geo_status FROM articles WHERE source_url IN (?, ?) LIMIT 1',
+                    [item.link, sourceLink]
+                );
+
+                let geoStatus: 'pending' | 'india' | 'excluded' = 'pending';
+                let isLocal = false;
+                try {
+                    const classification = classifications[index];
+                    if (!classification) throw new Error('Classification unavailable');
+                    geoStatus = !classification.certain ? 'pending' : classification.india ? 'india' : 'excluded';
+                    isLocal = geoStatus === 'india' && classification.local;
+                } catch { /* Persist for automatic retry when the model is available. */ }
+                if (geoStatus === 'excluded' || (feed.category === 'belgaum' && geoStatus === 'india' && !isLocal)) {
                     feedSkipped++;
                     continue;
                 }
                 const articleCategory = isLocal ? 'belgaum' : feed.category;
+
+                if (existing.length > 0) {
+                    const article = existing[0];
+                    // An exact RSS item proves feed membership for legacy rows.
+                    if (article.status !== 'archived' && article.geo_status === 'pending' &&
+                        (article.feed_id === null || article.feed_id === feed.id)) {
+                        const affected = await execute(
+                            `UPDATE articles SET feed_id = ?, publisher_domain = ?, geo_status = ?,
+                             status = ?, category = ?, source_name = ?
+                             WHERE id = ? AND geo_status = 'pending' AND (feed_id IS NULL OR feed_id = ?)`,
+                            [feed.id, feed.publisher_domain, geoStatus, geoStatus === 'india' ? 'published' : 'draft',
+                             articleCategory, feed.publisher_name || feed.name, article.id, feed.id]
+                        );
+                        if (affected && geoStatus === 'india') { feedNew++; continue; }
+                    }
+                    feedSkipped++;
+                    continue;
+                }
 
                 let slug = generateSlug(item.title);
                 const slugExists = await query<{ id: number }[]>(
@@ -88,24 +108,24 @@ export async function runRssFetch(): Promise<{ newArticles: number; skipped: num
 
                 try {
                     await insert(
-                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, publisher_domain, geo_status, status, featured, ai_generated, view_count, reading_time, published_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
-                            'published', false, false, 0, readingTime, item.pubDate,
+                            item.imageUrl, articleCategory, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, geoStatus,
+                            geoStatus === 'india' ? 'published' : 'draft', false, false, 0, readingTime, item.pubDate,
                         ]
                     );
                 } catch (insertErr) {
                     const msg = insertErr instanceof Error ? insertErr.message : String(insertErr);
                     if (msg.includes('Duplicate entry') && msg.includes("for key 'slug'")) {
                         await insert(
-                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, status, featured, ai_generated, view_count, reading_time, published_at)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, feed_id, publisher_domain, geo_status, status, featured, ai_generated, view_count, reading_time, published_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
                                 item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
-                                item.imageUrl, articleCategory, item.sourceName, sourceLink, feed.id,
-                                'published', false, false, 0, readingTime, item.pubDate,
+                                item.imageUrl, articleCategory, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, geoStatus,
+                                geoStatus === 'india' ? 'published' : 'draft', false, false, 0, readingTime, item.pubDate,
                             ]
                         );
                     } else if (msg.includes('Duplicate entry') && msg.includes("for key 'source_url'")) {

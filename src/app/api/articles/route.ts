@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, insert } from '@/lib/db';
-import { Article, ApiResponse, PaginatedResponse, FEED_CATEGORIES } from '@/types';
-import { assertSourcePolicyConfigured, hasNonEnglishScript, isBlockedSource } from '@/lib/source-policy';
-import { generateSlug, calculateReadingTime } from '@/lib/utils';
-import { getCurrentUser } from '@/lib/auth';
+import { query } from '@/lib/db';
+import { Article, ApiResponse, PaginatedResponse } from '@/types';
 import { withLogging } from '@/lib/withLogging';
 
 // GET /api/articles - Get paginated articles
@@ -15,7 +12,7 @@ export const GET = withLogging(async (request: NextRequest) => {
     const limit = parseInt(searchParams.get('limit') || '20');
 
     try {
-        let sql = `SELECT * FROM articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
+        let sql = `SELECT * FROM public_articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
         const params: unknown[] = [];
 
         if (category && category !== 'all') {
@@ -40,7 +37,7 @@ export const GET = withLogging(async (request: NextRequest) => {
         const articles = await query<Article[]>(sql, params);
 
         // Get total count
-        let countSql = `SELECT COUNT(*) as total FROM articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
+        let countSql = `SELECT COUNT(*) as total FROM public_articles WHERE status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'`;
         const countParams: unknown[] = [];
         if (category && category !== 'all') {
             countSql += ` AND category = ?`;
@@ -81,67 +78,7 @@ export const GET = withLogging(async (request: NextRequest) => {
     }
 });
 
-// POST /api/articles - Create new article (admin only)
-export const POST = withLogging(async (request: NextRequest) => {
-    try {
-        const user = await getCurrentUser();
-
-        if (!user || (user.role !== 'admin' && user.role !== 'editor')) {
-            return NextResponse.json(
-                { success: false, error: 'Unauthorized', code: 401 },
-                { status: 401 }
-            );
-        }
-
-        const body = await request.json();
-        const {
-            title,
-            excerpt,
-            content,
-            featured_image,
-            category,
-            source_name,
-            source_url,
-            status = 'draft',
-            featured = false,
-            ai_generated = false,
-            ai_confidence,
-            requires_review = false,
-            tags = [],
-        } = body;
-
-        // Validation
-        if (!title || !content || !category || !source_name || !source_url) {
-            return NextResponse.json(
-                { success: false, error: 'Missing required fields', code: 400 },
-                { status: 400 }
-            );
-        }
-        assertSourcePolicyConfigured();
-        if (!FEED_CATEGORIES.includes(category) || hasNonEnglishScript(title) ||
-            isBlockedSource(source_url, `${source_name} ${title}`)) {
-            return NextResponse.json({ success: false, error: 'This category, language, or publisher is not eligible for publication' }, { status: 422 });
-        }
-
-        const slug = generateSlug(title);
-        const reading_time = calculateReadingTime(content);
-        const published_at = status === 'published' ? new Date() : null;
-
-        const articleId = await insert(
-            `INSERT INTO articles (title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, ai_confidence, requires_review, reading_time, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title, slug, excerpt, content, featured_image, category, source_name, source_url, status, featured, ai_generated, ai_confidence, requires_review, reading_time, published_at]
-        );
-
-        return NextResponse.json({
-            success: true,
-            data: { id: articleId, slug },
-        });
-    } catch (error) {
-        console.error('Error creating article:', error);
-        return NextResponse.json(
-            { success: false, error: 'Failed to create article', code: 500 },
-            { status: 500 }
-        );
-    }
-});
+// News articles are created only by admin-configured RSS ingestion.
+export const POST = withLogging(async () =>
+    NextResponse.json({ success: false, error: 'News is published automatically from admin-added RSS feeds' }, { status: 405 })
+);

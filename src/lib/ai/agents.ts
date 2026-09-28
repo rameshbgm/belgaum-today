@@ -1,33 +1,6 @@
-/**
- * Trending Article Analysis — LangChain-powered AI ranking
- *
- * Uses LangChain JS with OpenAI's gpt-4o-mini model.
- * Configuration is loaded from environment variables at startup (.env.local).
- * No database configuration, no admin panel for AI settings.
- *
- * Performance tuning:
- *   - Model: gpt-4o-mini (cost-effective, fast)
- *   - Temperature: 0.3 (consistent rankings)
- *   - Max Tokens: 1000 (sufficient for JSON output)
- *   - Timeout: 45 seconds
- *
- * Every call is logged to:
- *   - logs/ai-YYYY-MM-DD.log (detailed request/response/metrics)
- *   - Console output (structured logging with logData)
- */
-
-import { config } from '@/lib/ai/config';
-import { getSystemPrompt, getDefaultSystemPrompt } from '@/lib/ai/system-prompt';
-import { buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompts';
-import { logger } from '@/lib/logger';
+import { callLunaJson } from '@/lib/ai/luna';
 import { fileLogger } from '@/lib/fileLogger';
 import { query } from '@/lib/db';
-
-// LangChain imports
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-
-// ── Types ──
 
 export interface ArticleForAnalysis {
     id: number;
@@ -44,330 +17,65 @@ export interface TrendingResult {
     reasoning: string;
 }
 
-// ── Logging (Database + File) ──
+const schema = {
+    type: 'object', additionalProperties: false,
+    properties: {
+        articles: {
+            type: 'array', items: {
+                type: 'object', additionalProperties: false,
+                properties: { articleId: { type: 'integer' }, score: { type: 'integer' }, reasoning: { type: 'string' } },
+                required: ['articleId', 'score', 'reasoning'],
+            },
+        },
+    },
+    required: ['articles'],
+};
 
-async function logAgentCall(data: {
-    model: string;
-    category: string;
-    status: 'success' | 'error' | 'fallback';
-    inputArticles: number;
-    outputTrending: number;
-    promptTokens: number;
-    durationMs: number;
-    errorMessage?: string;
-    requestSummary?: string;
-    responseSummary?: string;
-    systemPrompt?: string;
-    userPrompt?: string;
-    rawResponse?: string;
-}): Promise<void> {
-    const logData: Record<string, unknown> = {
-        model: data.model,
-        category: data.category,
-        status: data.status,
-        inputArticles: data.inputArticles,
-        outputTrending: data.outputTrending,
-        promptTokens: data.promptTokens,
-        durationMs: data.durationMs,
-    };
+export async function analyzeTrendingArticles(articles: ArticleForAnalysis[], category: string, count = 7): Promise<TrendingResult[]> {
+    if (articles.length <= count) return articles.map((article, index) => ({
+        articleId: article.id, rank: index + 1, score: 100 - index * 5, reasoning: 'Recent configured source',
+    }));
+    const start = Date.now();
+    try {
+        const result = await callLunaJson<{ articles: Array<{ articleId: number; score: number; reasoning: string }> }>(
+            'trending_news',
+            `Choose up to ${count} distinct, newsworthy ${category} stories. Use only the supplied article IDs. Return strongest first.`,
+            articles.slice(0, 50).map(article => ({ ...article, excerpt: article.excerpt?.slice(0, 240) })),
+            schema,
+        );
+        const allowed = new Set(articles.map(article => article.id));
+        const seen = new Set<number>();
+        const selected = result.articles.filter(item => {
+            if (!allowed.has(item.articleId) || seen.has(item.articleId)) return false;
+            seen.add(item.articleId);
+            return true;
+        }).slice(0, count).map((item, index) => ({
+            articleId: item.articleId,
+            rank: index + 1,
+            score: Math.min(100, Math.max(0, item.score)),
+            reasoning: item.reasoning.slice(0, 200),
+        }));
+        if (selected.length === 0) throw new Error('No valid article IDs in ranking');
+        await logCall(category, 'success', articles.length, selected.length, Date.now() - start);
+        return selected;
+    } catch (error) {
+        fileLogger.error('ai', 'Trending ranking failed', { category, error: String(error) });
+        await logCall(category, 'fallback', articles.length, count, Date.now() - start);
+        return articles.slice().sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
+            .slice(0, count).map((article, index) => ({
+                articleId: article.id, rank: index + 1, score: 90 - index * 5, reasoning: 'Selected by recency',
+            }));
+    }
+}
 
-    if (data.errorMessage) logData.error = data.errorMessage;
-    if (data.requestSummary) logData.requestSummary = data.requestSummary;
-    if (data.responseSummary) logData.responseSummary = data.responseSummary;
-
-    // Insert log into database
+async function logCall(category: string, status: 'success' | 'fallback', inputArticles: number, outputTrending: number, durationMs: number) {
     try {
         await query(
-            `INSERT INTO ai_agent_logs 
-            (provider, model, category, status, input_articles, output_trending, 
-             prompt_tokens, duration_ms, error_message, request_summary, response_summary) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                'OpenAI',
-                data.model,
-                data.category,
-                data.status,
-                data.inputArticles,
-                data.outputTrending,
-                data.promptTokens,
-                data.durationMs,
-                data.errorMessage || null,
-                data.requestSummary || null,
-                data.responseSummary || null,
-            ]
+            `INSERT INTO ai_agent_logs (provider, model, category, status, input_articles, output_trending, prompt_tokens, duration_ms)
+             VALUES ('OpenAI', 'gpt-6-luna', ?, ?, ?, ?, 0, ?)`,
+            [category, status, inputArticles, outputTrending, durationMs]
         );
-    } catch (dbError) {
-        // Don't fail the AI call if logging fails - just log to file
-        fileLogger.error('ai', `Failed to insert agent log to database`, { 
-            error: dbError instanceof Error ? dbError.message : String(dbError),
-            logData 
-        });
-    }
-
-    // Also log to file for debugging
-    if (data.status === 'success') {
-        fileLogger.info('ai', `✓ AI CALL SUCCESS [OpenAI/${data.model}] for [${data.category}] (${data.durationMs}ms)`, logData);
-    } else if (data.status === 'error') {
-        fileLogger.error('ai', `✕ AI CALL ERROR [OpenAI/${data.model}] for [${data.category}] (${data.durationMs}ms)`, logData);
-    } else {
-        fileLogger.warn('ai', `⚠ AI FALLBACK for [${data.category}]: ${data.errorMessage}`, logData);
-    }
-
-    // Log full request/response to file (debug level)
-    if (data.systemPrompt) {
-        fileLogger.debug('ai', `[REQUEST] System Prompt for [${data.category}]:`, {
-            model: data.model,
-            prompt: data.systemPrompt,
-        });
-    }
-    if (data.userPrompt) {
-        fileLogger.debug('ai', `[REQUEST] User Prompt for [${data.category}]:`, {
-            model: data.model,
-            prompt: data.userPrompt.substring(0, 3000),
-        });
-    }
-    if (data.rawResponse) {
-        fileLogger.debug('ai', `[RESPONSE] Raw AI response for [${data.category}]:`, {
-            model: data.model,
-            response: data.rawResponse.substring(0, 5000),
-        });
-    }
-}
-
-/** Rough token estimate (~4 chars per token) */
-function estimateTokens(text: string): number {
-    return Math.ceil(text.length / 4);
-}
-
-
-
-// ── LangChain Model Factory ──
-
-/**
- * Create a ChatOpenAI instance using configuration from .env
- * Model: gpt-4o-mini (configured via OPENAI_MODEL)
- * Temperature, max_tokens, and other settings come from AiConfig
- */
-async function createLangChainModel(): Promise<BaseChatModel> {
-    fileLogger.info('ai', `🔗 LangChain: Creating ChatOpenAI model (${config.model})`);
-
-    const { ChatOpenAI } = await import('@langchain/openai');
-
-    // gpt-5-nano and newer o-series models use max_completion_tokens, not max_tokens
-    const usesCompletionTokens = config.model.startsWith('gpt-5') || config.model.startsWith('o1') || config.model.startsWith('o3');
-
-    const model = new ChatOpenAI({
-        apiKey: config.apiKey,
-        modelName: config.model,
-        temperature: config.temperature,
-        maxTokens: usesCompletionTokens ? undefined : config.maxTokens,
-        timeout: config.requestTimeoutMs,
-        modelKwargs: {
-            response_format: { type: 'json_object' },
-            ...(usesCompletionTokens ? { max_completion_tokens: config.maxTokens } : {}),
-        },
-    });
-
-    fileLogger.info('ai', `🔗 LangChain: ChatOpenAI created`, {
-        model: config.model,
-        temperature: config.temperature,
-        maxTokens: config.maxTokens,
-        timeoutMs: config.requestTimeoutMs,
-    });
-
-    return model;
-}
-
-/**
- * Call the LangChain model with system + user messages.
- * Returns the raw text response.
- */
-async function callLangChainModel(
-    systemPrompt: string,
-    userPrompt: string
-): Promise<string> {
-    const model = await createLangChainModel();
-
-    fileLogger.info('ai', `🚀 LangChain invoke: ${config.model}`, {
-        systemPromptLength: systemPrompt.length,
-        userPromptLength: userPrompt.length,
-    });
-
-    const response = await model.invoke([
-        new SystemMessage(systemPrompt),
-        new HumanMessage(userPrompt),
-    ]);
-
-    // Extract text content from the response
-    const content = typeof response.content === 'string'
-        ? response.content.trim()
-        : Array.isArray(response.content)
-            ? response.content
-                .filter((c): c is { type: 'text'; text: string } => typeof c === 'object' && 'type' in c && c.type === 'text')
-                .map(c => c.text)
-                .join('')
-                .trim()
-            : String(response.content).trim();
-
-    // Log usage metadata if available
-    const usage = response.usage_metadata as Record<string, number> | undefined;
-    if (usage) {
-        fileLogger.info('ai', `📊 LangChain usage: ${config.model}`, {
-            inputTokens: usage.input_tokens,
-            outputTokens: usage.output_tokens,
-            totalTokens: usage.total_tokens,
-        });
-    }
-
-    fileLogger.info('ai', `📥 LangChain response received (${content.length} chars)`, {
-        model: config.model,
-        responsePreview: content.substring(0, 300),
-    });
-
-    return content;
-}
-
-// ── Public API ──
-
-/**
- * Analyze articles using OpenAI gpt-4o-mini and return trending results.
- * Configuration is loaded from environment variables at startup.
- * Falls back to recency-based selection if AI call fails or config is incomplete.
- */
-export async function analyzeTrendingArticles(
-    articles: ArticleForAnalysis[],
-    category: string,
-    count: number = 7
-): Promise<TrendingResult[]> {
-    // Check if AI config is valid before proceeding
-    if (!config.isValid) {
-        fileLogger.warn('ai', `[${category}] AI config not available — OPENAI_API_KEY not set`);
-        await logger.aiFallback('AI config not available (missing OPENAI_API_KEY)');
-        return fallbackTrending(articles, count);
-    }
-
-    fileLogger.info('ai', `━━━ Trending Analysis [${config.model}] for [${category}] ━━━`, {
-        articleCount: articles.length, requestedCount: count,
-    });
-
-    if (articles.length === 0) {
-        fileLogger.warn('ai', `No articles provided for [${category}], returning empty`);
-        return [];
-    }
-
-    if (articles.length <= count) {
-        fileLogger.info('ai', `Only ${articles.length} articles for [${category}] (≤ ${count}), including all without AI`);
-        return articles.map((a, i) => ({
-            articleId: a.id, rank: i + 1, score: 100 - i * 10,
-            reasoning: 'Included — fewer articles than requested trending count',
-        }));
-    }
-
-    const startTime = Date.now();
-    await logger.aiCallStart('OpenAI', config.model, category);
-
-    try {
-        const systemPrompt = getSystemPrompt(category, count);
-        const userPrompt = buildUserPrompt(articles, category, count);
-        const totalPromptTokens = estimateTokens(systemPrompt + userPrompt);
-
-        fileLogger.info('ai', `📝 Prompts built for [${category}]`, {
-            systemPromptLength: systemPrompt.length,
-            userPromptLength: userPrompt.length,
-            estimatedTokens: totalPromptTokens,
-            articleIds: articles.map(a => a.id),
-        });
-
-        // Call LangChain model
-        const rawResponse = await callLangChainModel(systemPrompt, userPrompt);
-
-        if (!rawResponse) throw new Error('Empty response from LangChain model');
-
-        // Parse JSON — handle potential markdown wrapping
-        const jsonStr = rawResponse.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
-        let parsedResponse = JSON.parse(jsonStr);
-        
-        // Handle different response formats
-        let results: TrendingResult[];
-        if (Array.isArray(parsedResponse)) {
-            results = parsedResponse;
-        } else if (parsedResponse.trendingArticles && Array.isArray(parsedResponse.trendingArticles)) {
-            results = parsedResponse.trendingArticles;
-        } else if (parsedResponse.results && Array.isArray(parsedResponse.results)) {
-            results = parsedResponse.results;
-        } else if (parsedResponse.trending && Array.isArray(parsedResponse.trending)) {
-            results = parsedResponse.trending;
-        } else {
-            // Try to find the first array value in the response object
-            const firstArrayKey = Object.keys(parsedResponse).find(k => Array.isArray(parsedResponse[k]));
-            if (firstArrayKey) {
-                results = parsedResponse[firstArrayKey];
-            } else {
-                throw new Error('AI response is not in expected format (missing array)');
-            }
-        }
-
-        const durationMs = Date.now() - startTime;
-        await logger.aiCallComplete('OpenAI', config.model, category, durationMs);
-
-        // Validate and ensure proper ranking
-        const validated = results
-            .filter((r) => r.articleId && r.rank && articles.some((a) => a.id === r.articleId))
-            .sort((a, b) => a.rank - b.rank)
-            .slice(0, count)
-            .map((r, i) => ({ ...r, rank: i + 1 }));
-
-        // Build summaries for the log
-        const articleTitles = articles.slice(0, 5).map(a => a.title).join('; ');
-        const requestSummary = `${articles.length} articles for "${category}". Top titles: ${articleTitles}${articles.length > 5 ? '...' : ''}`;
-        const responseSummary = validated.map(r => `#${r.rank} id=${r.articleId} score=${r.score} "${r.reasoning}"`).join(' | ');
-
-        fileLogger.info('ai', `🏆 Trending results for [${category}]:`, {
-            model: config.model,
-            durationMs, validatedCount: validated.length, rawResultCount: results.length,
-            results: validated,
-        });
-
-        await logAgentCall({
-            model: config.model, category, status: 'success',
-            inputArticles: articles.length, outputTrending: validated.length,
-            promptTokens: totalPromptTokens, durationMs,
-            requestSummary, responseSummary,
-            systemPrompt, userPrompt, rawResponse,
-        });
-
-        return validated;
     } catch (error) {
-        const durationMs = Date.now() - startTime;
-        const errorType = error instanceof Error ? error.message : String(error);
-        await logger.aiCallError('OpenAI', config.model, errorType);
-
-        fileLogger.error('ai', `✕ AI analysis FAILED [${config.model}] for [${category}]`, {
-            model: config.model,
-            durationMs, error: errorType,
-            stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5).join('\n') : undefined,
-        });
-
-        await logAgentCall({
-            model: config.model, category, status: 'error',
-            inputArticles: articles.length, outputTrending: 0,
-            promptTokens: 0, durationMs,
-            errorMessage: errorType.substring(0, 2000),
-            requestSummary: `${articles.length} articles for "${category}" — LangChain call failed`,
-        });
-
-        return fallbackTrending(articles, count);
+        fileLogger.warn('ai', 'Could not persist AI call log', { error: String(error) });
     }
-}
-
-/** Fallback when AI call fails — pick most recent articles */
-function fallbackTrending(articles: ArticleForAnalysis[], count: number): TrendingResult[] {
-    fileLogger.info('ai', `📋 Fallback trending: selecting ${count} most recent articles by date`);
-    return articles
-        .sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime())
-        .slice(0, count)
-        .map((a, i) => ({
-            articleId: a.id, rank: i + 1, score: 90 - i * 5,
-            reasoning: 'Selected by recency (AI call failed)',
-        }));
 }

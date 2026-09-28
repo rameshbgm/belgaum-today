@@ -7,7 +7,7 @@ import { withLogging } from '@/lib/withLogging';
 export const GET = withLogging(async () => {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' AND featured = true ORDER BY published_at DESC LIMIT 5`
+            `SELECT * FROM public_articles WHERE status = 'published' AND featured = true ORDER BY published_at DESC LIMIT 5`
         );
 
         return NextResponse.json({

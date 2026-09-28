@@ -37,7 +37,9 @@ export function publisherUrl(url: string): string | null {
     try {
         const parsed = new URL(url);
         if (!['http:', 'https:'].includes(parsed.protocol)) return null;
-        if (parsed.hostname === 'news.google.com' || parsed.hostname.endsWith('.news.google.com')) return null;
+        const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+        if (host === 'news.google.com' || host.endsWith('.news.google.com') ||
+            host === 'reuters.com' || host.endsWith('.reuters.com')) return null;
         if (isBlockedSource(parsed.href)) return null;
         for (const key of [...parsed.searchParams.keys()]) {
             if (key.startsWith('utm_') || ['fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key)) {
@@ -50,15 +52,21 @@ export function publisherUrl(url: string): string | null {
     }
 }
 
-export async function resolvePublisherUrl(url: string): Promise<string | null> {
-    const direct = publisherUrl(url);
-    if (direct) return direct;
-    if (!url.startsWith('https://news.google.com/')) return null;
+/** Publisher domain configured by admin, never a feed aggregator or URL path. */
+export function normalizePublisherDomain(value: string): string | null {
+    const host = value.trim().toLowerCase().replace(/^www\./, '');
+    if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host) || host.split('.').length < 2) return null;
+    return host;
+}
 
-    try {
-        const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(5000) });
-        return publisherUrl(response.url);
-    } catch {
-        return null;
-    }
+export function publisherDomainUrl(url: string, domain: string): string | null {
+    const clean = publisherUrl(url);
+    const expected = normalizePublisherDomain(domain);
+    if (!clean || !expected) return null;
+    const host = new URL(clean).hostname.toLowerCase().replace(/^www\./, '');
+    return host === expected || host.endsWith(`.${expected}`) ? clean : null;
+}
+
+export function directPublisherFeed(feedUrl: string, domain: string): boolean {
+    return publisherDomainUrl(feedUrl, domain) !== null;
 }

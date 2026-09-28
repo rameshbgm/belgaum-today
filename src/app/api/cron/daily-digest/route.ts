@@ -8,6 +8,7 @@ export const maxDuration = 60;
 
 type Subscriber = { id: number; email: string; topics_json: string | string[] | null };
 type DigestStory = { id: number; title: string; source_name: string; source_url: string; category: string };
+type DigestEvent = { id: number; title: string; category: string; report_count: number; latest_change: string | null };
 
 export async function GET(request: NextRequest) {
     if (!process.env.CRON_SECRET || request.nextUrl.searchParams.get('secret') !== process.env.CRON_SECRET) {
@@ -34,19 +35,28 @@ export async function GET(request: NextRequest) {
             const topics = digestTopics(stored);
             if (topics.length === 0) continue;
             const stories = await query<DigestStory[]>(
-                `SELECT id, title, source_name, source_url, category FROM articles
+                `SELECT id, title, source_name, source_url, category FROM public_articles
                  WHERE status = 'published' AND published_at >= NOW() - INTERVAL 24 HOUR
                    AND source_url NOT LIKE 'https://news.google.com/%'
                    AND category IN (${topics.map(() => '?').join(',')})
                  ORDER BY (category = 'belgaum') DESC, published_at DESC LIMIT 8`, topics
             );
             const eligible = stories.filter(story => publisherUrl(story.source_url));
-            if (eligible.length === 0) continue;
+            const events = await query<DigestEvent[]>(
+                `SELECT e.id, e.title, e.category, COUNT(a.id) AS report_count,
+                  (SELECT u.change_text FROM story_event_updates u JOIN public_articles pa ON pa.id = u.article_id
+                   WHERE u.story_event_id = e.id AND u.change_text IS NOT NULL ORDER BY u.created_at DESC, u.id DESC LIMIT 1) AS latest_change
+                 FROM story_events e JOIN public_articles a ON a.story_event_id = e.id
+                 WHERE e.last_updated_at >= NOW() - INTERVAL 24 HOUR AND e.category IN (${topics.map(() => '?').join(',')})
+                 GROUP BY e.id, e.title, e.category ORDER BY MAX(a.published_at) DESC LIMIT 4`, topics
+            );
+            if (eligible.length === 0 && events.length === 0) continue;
             const unsubscribe = `${site}/api/digest/unsubscribe?id=${subscriber.id}&token=${unsubscribeToken(subscriber.id, subscriber.email)}`;
             const list = eligible.map(story =>
                 `<li style="margin:0 0 14px"><a href="${escapeHtml(story.source_url)}">${escapeHtml(story.title)}</a><br><small>${escapeHtml(story.source_name)} · ${escapeHtml(story.category)}</small></li>`
             ).join('');
-            const html = `<h1>Today's news from Belgaum Today</h1><ul>${list}</ul><p><a href="${escapeHtml(unsubscribe)}">Unsubscribe</a></p>`;
+            const eventList = events.map(event => `<li style="margin:0 0 14px"><a href="${escapeHtml(`${site}/story/${event.id}`)}">${escapeHtml(event.title)}</a><br><small>${event.report_count} publisher reports · ${escapeHtml(event.category)}</small>${event.latest_change ? `<br>${escapeHtml(event.latest_change)}` : ''}</li>`).join('');
+            const html = `<h1>Today's news from Belgaum Today</h1>${eventList ? `<h2>Story Tracker</h2><ul>${eventList}</ul>` : ''}${list ? `<h2>Latest reports</h2><ul>${list}</ul>` : ''}<p><a href="${escapeHtml(unsubscribe)}">Unsubscribe</a></p>`;
             await sendDigestEmail(subscriber.email, 'Your daily Belgaum Today news', html, `digest-${today}-${subscriber.id}`);
             await execute('UPDATE newsletter_subscriptions SET last_sent_on = CURDATE() WHERE id = ?', [subscriber.id]);
             sent++;

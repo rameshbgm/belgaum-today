@@ -91,13 +91,16 @@ export const POST = withLogging(async (request: NextRequest) => {
             content,
             featured_image,
             category,
-            source_name,
             source_url,
             status = 'draft',
             featured = false,
             is_blog = false,
             tags = [],
         } = body;
+
+        if (is_blog !== true) {
+            return NextResponse.json({ success: false, error: 'News articles come only from admin-added RSS feeds' }, { status: 405 });
+        }
 
         if (!title?.trim()) {
             return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
@@ -112,7 +115,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         const slug = generateSlug(title);
         const readingTime = calculateReadingTime(content);
         const publishedAt = status === 'published' ? new Date() : null;
-        const finalSourceName = source_name || 'Belgaum Today';
+        const finalSourceName = 'Belgaum Today';
         const finalSourceUrl = source_url || `https://belgaum.today/blog/${slug}`;
         assertSourcePolicyConfigured();
         if (!FEED_CATEGORIES.includes(category) || hasNonEnglishScript(title) ||

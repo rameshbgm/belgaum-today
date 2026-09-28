@@ -71,11 +71,13 @@ export async function reviveSchedulerIfStale(): Promise<void> {
 
         const { runRssFetch } = await import('@/lib/scheduler/rss-service');
         const { runTrendingAnalysis } = await import('@/lib/scheduler/trending-service');
+        const { runStoryTracker } = await import('@/lib/scheduler/story-tracker');
 
         // Don't await the body — let the page render while this runs.
         void (async () => {
             try {
                 await runRssFetch();
+                await runStoryTracker();
                 await runTrendingAnalysis();
                 await beatSuccess();
             } catch (err) {

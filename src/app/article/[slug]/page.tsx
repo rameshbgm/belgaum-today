@@ -18,7 +18,7 @@ type Props = {
 async function getArticle(slug: string): Promise<Article | null> {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE slug = ? AND status = 'published' LIMIT 1`,
+            `SELECT * FROM public_articles WHERE slug = ? AND status = 'published' LIMIT 1`,
             [slug]
         );
         return articles.length > 0 ? articles[0] : null;
@@ -30,7 +30,7 @@ async function getArticle(slug: string): Promise<Article | null> {
 async function getRelatedArticles(category: string, currentId: number): Promise<Article[]> {
     try {
         const articles = await query<Article[]>(
-            `SELECT * FROM articles WHERE status = 'published' AND category = ? AND id != ? ORDER BY published_at DESC LIMIT 4`,
+            `SELECT * FROM public_articles WHERE status = 'published' AND category = ? AND id != ? ORDER BY published_at DESC LIMIT 4`,
             [category, currentId]
         );
         return articles;

@@ -15,7 +15,8 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
     const [canShare, setCanShare] = useState(false);
 
     useEffect(() => {
-        setCanShare('share' in navigator);
+        const timer = window.setTimeout(() => setCanShare('share' in navigator), 0);
+        return () => window.clearTimeout(timer);
     }, []);
 
     const encodedUrl = encodeURIComponent(url);
