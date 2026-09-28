@@ -594,6 +594,10 @@ iframe {
   scroll-snap-align: start;
 }
 
+.section-news-track--single .section-news-slide {
+  flex-basis: 100%;
+}
+
 @media (min-width: 640px) {
   .section-news-slide {
     flex-basis: calc((100% - 1rem) / 2);

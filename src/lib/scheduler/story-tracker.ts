@@ -54,8 +54,8 @@ export async function runStoryTracker(): Promise<{ classified: number; clustered
             const candidates = await query<Candidate[]>(
                  `SELECT e.id, e.title, a.excerpt, e.category FROM story_events e
                  JOIN public_articles a ON a.story_event_id = e.id
-                 WHERE e.last_updated_at >= NOW() - INTERVAL 14 DAY
-                 ORDER BY e.last_updated_at DESC LIMIT 100`
+                 WHERE e.last_updated_at >= NOW() - INTERVAL 14 DAY AND e.category = ?
+                 ORDER BY e.last_updated_at DESC LIMIT 100`, [article.category]
             );
             const related = candidates.filter(candidate => relatedTitles(article.title, candidate.title)).slice(0, 8);
             let eventId: number | null = null;

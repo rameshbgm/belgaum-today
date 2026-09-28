@@ -13,9 +13,10 @@ interface SectionNewsCarouselProps {
     href: string;
     articles: Article[];
     empty: string;
+    compact?: boolean;
 }
 
-export function SectionNewsCarousel({ title, href, articles, empty }: SectionNewsCarouselProps) {
+export function SectionNewsCarousel({ title, href, articles, empty, compact = false }: SectionNewsCarouselProps) {
     const track = useRef<HTMLDivElement>(null);
     const [current, setCurrent] = useState(0);
     const [visibleCount, setVisibleCount] = useState(1);
@@ -94,7 +95,7 @@ export function SectionNewsCarousel({ title, href, articles, empty }: SectionNew
                 >
                     <div
                         ref={track}
-                        className="section-news-track"
+                        className={`section-news-track ${compact ? 'section-news-track--single' : ''}`}
                         onScroll={measure}
                         onKeyDown={event => {
                             if (event.key === 'ArrowRight') { event.preventDefault(); scrollToIndex(current + 1); }
@@ -106,7 +107,7 @@ export function SectionNewsCarousel({ title, href, articles, empty }: SectionNew
                         {articles.map((article, index) => (
                             <article className="section-news-slide" key={article.id} role="group" aria-roledescription="slide" aria-label={(index + 1) + ' of ' + articles.length}>
                                 <PublisherLink article={article} className="group/story flex min-h-36 h-full flex-col border-l border-primary/65 py-2 pl-3 pr-2 sm:min-h-40 sm:pl-4">
-                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{article.category === 'belgaum' ? 'Belagavi' : 'India'}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{title}</span>
                                     <h3 className="mt-1 font-display text-base font-semibold leading-snug text-ink transition-colors group-hover/story:text-primary sm:text-lg">
                                         {article.title}
                                     </h3>

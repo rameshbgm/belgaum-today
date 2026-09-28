@@ -31,8 +31,8 @@ const schema = {
     required: ['articles'],
 };
 
-export async function analyzeTrendingArticles(articles: ArticleForAnalysis[], category: string, count = 7): Promise<TrendingResult[]> {
-    if (articles.length <= count) return articles.map((article, index) => ({
+export async function analyzeTrendingArticles(articles: ArticleForAnalysis[], category: string, count = 7, requireAi = false): Promise<TrendingResult[]> {
+    if (!requireAi && articles.length <= count) return articles.map((article, index) => ({
         articleId: article.id, rank: index + 1, score: 100 - index * 5, reasoning: 'Recent configured source',
     }));
     const start = Date.now();
@@ -61,6 +61,7 @@ export async function analyzeTrendingArticles(articles: ArticleForAnalysis[], ca
     } catch (error) {
         fileLogger.error('ai', 'Trending ranking failed', { category, error: String(error) });
         await logCall(category, 'fallback', articles.length, count, Date.now() - start);
+        if (requireAi) return [];
         return articles.slice().sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime())
             .slice(0, count).map((article, index) => ({
                 articleId: article.id, rank: index + 1, score: 90 - index * 5, reasoning: 'Selected by recency',

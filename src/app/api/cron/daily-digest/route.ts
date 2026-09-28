@@ -46,8 +46,12 @@ export async function GET(request: NextRequest) {
                 `SELECT e.id, e.title, e.category, COUNT(a.id) AS report_count,
                   (SELECT u.change_text FROM story_event_updates u JOIN public_articles pa ON pa.id = u.article_id
                    WHERE u.story_event_id = e.id AND u.change_text IS NOT NULL ORDER BY u.created_at DESC, u.id DESC LIMIT 1) AS latest_change
-                 FROM story_events e JOIN public_articles a ON a.story_event_id = e.id
+                 FROM ai_suggested_stories pick
+                 JOIN story_events e ON e.id = pick.story_event_id
+                 JOIN story_event_summaries summary ON summary.story_event_id = e.id
+                 JOIN public_articles a ON a.story_event_id = e.id
                  WHERE e.last_updated_at >= NOW() - INTERVAL 24 HOUR AND e.category IN (${topics.map(() => '?').join(',')})
+                   AND summary.source_updated_at >= e.last_updated_at
                  GROUP BY e.id, e.title, e.category ORDER BY MAX(a.published_at) DESC LIMIT 4`, topics
             );
             if (eligible.length === 0 && events.length === 0) continue;

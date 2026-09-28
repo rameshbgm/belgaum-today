@@ -50,24 +50,21 @@ interface TrendingArticle {
   view_count: number;
 }
 
-const LATEST_CATEGORIES = ['belgaum', 'india', 'business', 'technology', 'entertainment', 'sports'] as const;
+const LATEST_CATEGORIES = ['india', 'technology', 'sports', 'belgaum', 'business', 'entertainment'] as const;
+const FRONT_PAGE_CATEGORIES = [
+  { category: 'india', title: 'India', empty: 'India stories will appear here as feeds update.' },
+  { category: 'technology', title: 'Technology', empty: 'Technology stories will appear here as feeds update.' },
+  { category: 'sports', title: 'Sports', empty: 'Sports stories will appear here as feeds update.' },
+  { category: 'belgaum', title: 'Belagavi', empty: 'Belagavi stories will appear here as feeds update.' },
+] as const;
 
 async function getArticles(): Promise<{
   articles: Article[];
   trendingArticles: TrendingArticle[];
   mostViewedArticles: MostViewedArticle[];
   categorySections: Array<{ category: typeof LATEST_CATEGORIES[number]; articles: Article[] }>;
-  localArticles: Article[];
-  indiaArticles: Article[];
 }> {
   try {
-    const [localArticles, indiaArticles] = await Promise.all(['belgaum', 'india'].map(category =>
-      query<Article[]>(
-        `SELECT * FROM public_articles WHERE status = 'published' AND category = ?
-         AND source_url NOT LIKE 'https://news.google.com/%'
-         ORDER BY COALESCE(published_at, created_at) DESC LIMIT 4`, [category]
-      )
-    ));
     const articles = await query<Article[]>(
       `SELECT * FROM public_articles WHERE status = 'published'
        AND source_url NOT LIKE 'https://news.google.com/%'
@@ -110,14 +107,14 @@ async function getArticles(): Promise<{
        LIMIT 15`
     );
 
-    // Fetch 3 latest articles per category for the scrollable Latest rail
+    // Each front-page category scrolls independently; Latest uses its first three.
     const categoryArticles = await Promise.all(
       LATEST_CATEGORIES.map(async (cat) => {
         const rows = await query<Article[]>(
           `SELECT id, title, slug, excerpt, category, source_name, source_url, published_at, created_at, view_count, reading_time, featured_image, status, featured, ai_generated, ai_confidence, requires_review
            FROM public_articles
            WHERE status = 'published' AND category = ? AND source_url NOT LIKE 'https://news.google.com/%'
-           ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3`,
+           ORDER BY COALESCE(published_at, created_at) DESC LIMIT 8`,
           [cat]
         );
         return { category: cat, articles: rows };
@@ -132,17 +129,15 @@ async function getArticles(): Promise<{
         published_at: new Date(row.published_at).toISOString(),
       })),
       categorySections: categoryArticles.map(section => ({ ...section, articles: distinctStories(section.articles) })),
-      localArticles: distinctStories(localArticles),
-      indiaArticles: distinctStories(indiaArticles),
     };
   } catch (error) {
     console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [], localArticles: [], indiaArticles: [] };
+    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [] };
   }
 }
 
 export default async function HomePage() {
-  const { articles, trendingArticles, mostViewedArticles, categorySections, localArticles, indiaArticles } = await getArticles();
+  const { articles, trendingArticles, mostViewedArticles, categorySections } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback
   const isFallback = trendingArticles.length === 0;
@@ -174,6 +169,9 @@ export default async function HomePage() {
         view_count: t.view_count,
       }));
 
+  const indiaLead = leadArticles.findIndex(article => article.category === 'india');
+  if (indiaLead > 0) leadArticles.unshift(...leadArticles.splice(indiaLead, 1));
+
   // Compose the broadsheet sections
   const rest = articles.slice(0);
   const latest = rest.slice(0, 6);                // fallback flat list
@@ -181,16 +179,8 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-10">
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pb-10 border-b-2 border-ink/85" aria-label="Local and India news">
-        {([
-          { title: 'Belagavi', href: '/belgaum', articles: localArticles, empty: 'Local stories will appear here as publisher feeds update.' },
-          { title: 'India', href: '/india', articles: indiaArticles, empty: 'The latest India stories will appear here.' },
-        ] as const).map(section => (
-          <SectionNewsCarousel key={section.title} {...section} />
-        ))}
-      </section>
       {/* ── Front page: lead carousel + scrollable latest rail ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 py-10 border-b-2 border-ink/85 lg:items-stretch">
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b-2 border-ink/85 lg:items-stretch">
         {/* Lead carousel — AI trending or latest fallback */}
         <div className="lg:col-span-8">
           <LeadCarousel articles={leadArticles} isFallback={isFallback} />
@@ -203,7 +193,7 @@ export default async function HomePage() {
           <div className="flex-1 overflow-y-auto border border-hairline rounded-sm p-3"
                style={{ maxHeight: 'min(68vw, 520px)' }}>
             {categorySections.length > 0 ? (
-              <LatestRail articles={latest} categorySections={categorySections} />
+              <LatestRail articles={latest} categorySections={categorySections.map(section => ({ ...section, articles: section.articles.slice(0, 3) }))} />
             ) : latest.length > 0 ? (
               <LatestRail articles={latest} />
             ) : (
@@ -211,6 +201,19 @@ export default async function HomePage() {
             )}
           </div>
         </aside>
+      </section>
+
+      <section className="grid grid-cols-1 gap-x-6 gap-y-9 border-b-2 border-ink/85 py-10 sm:grid-cols-2 xl:grid-cols-4" aria-label="News by category">
+        {FRONT_PAGE_CATEGORIES.map(section => (
+          <SectionNewsCarousel
+            key={section.category}
+            title={section.title}
+            href={`/${section.category}`}
+            articles={categorySections.find(item => item.category === section.category)?.articles || []}
+            empty={section.empty}
+            compact
+          />
+        ))}
       </section>
 
       {/* ── More Stories + Most Viewed ── */}

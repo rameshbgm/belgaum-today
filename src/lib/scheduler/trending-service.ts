@@ -1,6 +1,7 @@
 import { query, execute, insert } from '@/lib/db';
 import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { fileLogger } from '@/lib/fileLogger';
+import { selectAiSuggestion } from '@/lib/scheduler/ai-suggestions';
 
 export async function runTrendingAnalysis(): Promise<{ categoriesProcessed: number; totalTrending: number }> {
     fileLogger.info('ai', '═══ Scheduled AI trending analysis started ═══');
@@ -28,7 +29,9 @@ export async function runTrendingAnalysis(): Promise<{ categoriesProcessed: numb
 
             if (recentArticles.length === 0) continue;
 
-            const trending = await analyzeTrendingArticles(recentArticles, category, 7);
+            const trending = await analyzeTrendingArticles(recentArticles, category, 7, true);
+            if (!trending.length) continue;
+            await selectAiSuggestion(category, trending);
             const batchId = `${category}-${Date.now()}`;
 
             await execute('DELETE FROM trending_articles WHERE category = ?', [category]);

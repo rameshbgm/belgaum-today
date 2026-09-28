@@ -15,7 +15,10 @@ type Update = { id: number; change_text: string | null; created_at: Date; title:
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
     const id = Number((await params).id);
     if (!Number.isSafeInteger(id) || id < 1) notFound();
-    const [event] = await query<Event[]>('SELECT * FROM story_events WHERE id = ? LIMIT 1', [id]);
+    const [event] = await query<Event[]>(
+        'SELECT e.* FROM story_events e JOIN ai_suggested_stories pick ON pick.story_event_id = e.id JOIN public_articles chosen ON chosen.id = pick.article_id WHERE e.id = ? LIMIT 1',
+        [id]
+    );
     if (!event) notFound();
     const [updates, cachedSummaries] = await Promise.all([query<Update[]>(`
         SELECT u.id, u.change_text, u.created_at, a.title, a.excerpt, a.featured_image,

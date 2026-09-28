@@ -3,9 +3,10 @@ import { query, execute, insert } from '@/lib/db';
 import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
+import { selectAiSuggestion } from '@/lib/scheduler/ai-suggestions';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * POST /api/admin/trending — Trigger AI trending analysis (authenticated admin)
@@ -76,7 +77,9 @@ export const POST = withLogging(async (request: NextRequest) => {
                 }
 
                 // Run AI trending analysis
-                const trending = await analyzeTrendingArticles(recentArticles, category, 7);
+                const trending = await analyzeTrendingArticles(recentArticles, category, 7, true);
+                if (!trending.length) throw new Error('AI did not return a valid category ranking');
+                await selectAiSuggestion(category, trending);
                 const batchId = `${category}-${Date.now()}`;
 
                 // Replace old trending for this category

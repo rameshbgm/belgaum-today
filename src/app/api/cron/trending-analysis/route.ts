@@ -4,9 +4,10 @@ import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { logger } from '@/lib/logger';
 import { fileLogger } from '@/lib/fileLogger';
 import { withLogging } from '@/lib/withLogging';
+import { selectAiSuggestion } from '@/lib/scheduler/ai-suggestions';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /**
  * GET /api/cron/trending-analysis?secret=<TRENDING_CRON_SECRET>
@@ -91,7 +92,9 @@ export const GET = withLogging(async (request: NextRequest) => {
                 }
 
                 // Run AI analysis to select top 7 trending articles
-                const trending = await analyzeTrendingArticles(recentArticles, category, 7);
+                const trending = await analyzeTrendingArticles(recentArticles, category, 7, true);
+                if (!trending.length) throw new Error('AI did not return a valid category ranking');
+                await selectAiSuggestion(category, trending);
                 const batchId = `${category}-${Date.now()}`;
 
                 // Clear old trending entries for this category
