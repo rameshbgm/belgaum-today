@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { query } from '@/lib/db';
 import { TOP_LEVEL_CATEGORIES } from '@/types';
 import { SITE_URL } from '@/lib/site-url';
+import { AI_NEWS_ENABLED } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +18,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     let blogCategories: BlogCategoryRow[] = [];
     try {
         [stories, blogs, blogCategories] = await Promise.all([
-            query<StoryRow[]>(`SELECT e.id, e.last_updated_at FROM ai_suggested_stories pick
+            AI_NEWS_ENABLED ? query<StoryRow[]>(`SELECT e.id, e.last_updated_at FROM ai_suggested_stories pick
                 JOIN story_events e ON e.id = pick.story_event_id
                 JOIN story_event_summaries s ON s.story_event_id = e.id
                 JOIN public_articles chosen ON chosen.id = pick.article_id
-                WHERE s.source_updated_at >= e.last_updated_at`),
+                WHERE s.source_updated_at >= e.last_updated_at`) : Promise.resolve([]),
             query<BlogRow[]>(`SELECT slug, updated_at, published_at FROM articles
                 WHERE status = 'published' AND source_name = 'Belgaum Today'
                 ORDER BY COALESCE(published_at, created_at) DESC LIMIT 1000`),
@@ -32,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
         { url: SITE_URL },
-        { url: `${SITE_URL}/ai-news` },
+        ...(AI_NEWS_ENABLED ? [{ url: `${SITE_URL}/ai-news` }] : []),
         { url: `${SITE_URL}/blog` },
         { url: `${SITE_URL}/about` },
         ...TOP_LEVEL_CATEGORIES.map(category => ({ url: `${SITE_URL}/${category}` })),

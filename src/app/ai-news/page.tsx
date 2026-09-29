@@ -5,14 +5,16 @@ import { query } from '@/lib/db';
 import { stripHtml, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from '@/components/articles';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { AI_NEWS_ENABLED } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = {
+export const metadata: Metadata = AI_NEWS_ENABLED ? {
     title: 'AI News & Story Tracker',
     description: 'Explore one AI-selected story per category, with publisher timelines and source-linked summaries from Belgaum Today.',
     alternates: { canonical: '/ai-news' },
     openGraph: { title: 'AI News & Story Tracker | Belgaum Today', url: '/ai-news', type: 'website' },
-};
+} : { title: 'Page not found', robots: { index: false, follow: false } };
 
 type StoryCard = {
     id: number;
@@ -47,6 +49,7 @@ async function getTrackedStories(): Promise<StoryCard[]> {
 }
 
 export default async function AiNewsPage() {
+    if (!AI_NEWS_ENABLED) notFound();
     const stories = await getTrackedStories();
     const [lead, ...otherStories] = stories;
 

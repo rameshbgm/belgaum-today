@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Menu, X, Sun, Moon, Search, LogIn, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
+import { AI_NEWS_ENABLED } from '@/lib/features';
 
 const categories = TOP_LEVEL_CATEGORIES;
 
@@ -124,10 +125,10 @@ export function Header() {
                                 <span className="absolute -bottom-px left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
                             </Link>
                         ))}
-                        <Link href="/ai-news" className="group relative inline-flex items-center gap-1.5 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary-hover">
+                        {AI_NEWS_ENABLED && <Link href="/ai-news" className="group relative inline-flex items-center gap-1.5 py-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors hover:text-primary-hover">
                             <Sparkles aria-hidden="true" className="h-4 w-4" /> AI News
                             <span className="absolute -bottom-px left-0 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full" />
-                        </Link>
+                        </Link>}
                     </div>
 
                     <Link
@@ -166,9 +167,9 @@ export function Header() {
                                 {CATEGORY_META[cat].name}
                             </Link>
                         ))}
-                        <Link href="/ai-news" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 border-b border-hairline py-3 text-sm font-semibold uppercase tracking-wide text-primary">
+                        {AI_NEWS_ENABLED && <Link href="/ai-news" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 border-b border-hairline py-3 text-sm font-semibold uppercase tracking-wide text-primary">
                             <Sparkles aria-hidden="true" className="h-4 w-4" /> AI News
-                        </Link>
+                        </Link>}
                         <Link
                             href="/search"
                             onClick={() => setIsMenuOpen(false)}

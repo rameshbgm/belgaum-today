@@ -8,6 +8,7 @@ import { StorySummaryButton, type StorySummary } from '@/components/story/StoryS
 import { StorySinceVisit } from '@/components/story/StorySinceVisit';
 import { stripHtml } from '@/lib/utils';
 import type { Metadata } from 'next';
+import { AI_NEWS_ENABLED } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ type Event = { id: number; title: string; category: string; first_seen_at: Date;
 type Update = { id: number; change_text: string | null; created_at: Date; title: string; excerpt: string | null; featured_image: string | null; source_name: string; source_url: string; published_at: Date | null };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    if (!AI_NEWS_ENABLED) return { title: 'Story not found', robots: { index: false } };
     const id = Number((await params).id);
     if (!Number.isSafeInteger(id) || id < 1) return { title: 'Story not found', robots: { index: false } };
     const [story] = await query<Array<Event & { report_count: number; image: string | null }>>(
@@ -38,6 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
+    if (!AI_NEWS_ENABLED) notFound();
     const id = Number((await params).id);
     if (!Number.isSafeInteger(id) || id < 1) notFound();
     const [event] = await query<Event[]>(

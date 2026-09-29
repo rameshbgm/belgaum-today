@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { digestConfigured, digestTopics, escapeHtml, sendDigestEmail, unsubscribeToken } from '@/lib/digest';
 import { assertSourcePolicyConfigured, publisherUrl } from '@/lib/source-policy';
+import { AI_NEWS_ENABLED } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
                  ORDER BY (category = 'belgaum') DESC, published_at DESC LIMIT 8`, topics
             );
             const eligible = stories.filter(story => publisherUrl(story.source_url));
-            const events = await query<DigestEvent[]>(
+            const events = AI_NEWS_ENABLED ? await query<DigestEvent[]>(
                 `SELECT e.id, e.title, e.category, COUNT(a.id) AS report_count,
                   (SELECT u.change_text FROM story_event_updates u JOIN public_articles pa ON pa.id = u.article_id
                    WHERE u.story_event_id = e.id AND u.change_text IS NOT NULL ORDER BY u.created_at DESC, u.id DESC LIMIT 1) AS latest_change
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
                  WHERE e.last_updated_at >= NOW() - INTERVAL 24 HOUR AND e.category IN (${topics.map(() => '?').join(',')})
                    AND summary.source_updated_at >= e.last_updated_at
                  GROUP BY e.id, e.title, e.category ORDER BY MAX(a.published_at) DESC LIMIT 4`, topics
-            );
+            ) : [];
             if (eligible.length === 0 && events.length === 0) continue;
             const unsubscribe = `${site}/api/digest/unsubscribe?id=${subscriber.id}&token=${unsubscribeToken(subscriber.id, subscriber.email)}`;
             const list = eligible.map(story =>
