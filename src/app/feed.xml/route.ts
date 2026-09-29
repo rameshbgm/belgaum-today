@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { Article } from '@/types';
 import { publisherUrl } from '@/lib/source-policy';
+import { SITE_URL } from '@/lib/site-url';
+import { stripHtml } from '@/lib/utils';
 
 function escapeXml(value: string): string {
     return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export async function GET() {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const siteUrl = SITE_URL;
     const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Belgaum Today';
 
     let articles: Article[] = [];
@@ -32,7 +34,7 @@ export async function GET() {
     <item>
       <title>${escapeXml(article.title)}</title>
       <link>${escapeXml(article.source_url)}</link>
-      <description>${escapeXml(article.excerpt || '')}</description>
+      <description>${escapeXml(stripHtml(article.excerpt || ''))}</description>
       <pubDate>${pubDate}</pubDate>
       <category>${escapeXml(article.category)}</category>
       <source url="${escapeXml(article.source_url)}">${escapeXml(article.source_name)}</source>

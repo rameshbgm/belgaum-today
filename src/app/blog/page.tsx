@@ -13,6 +13,8 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
     title: 'Blog — Belgaum Today',
     description: 'In-depth articles, guides and stories written by the Belgaum Today editorial team.',
+    alternates: { canonical: '/blog' },
+    openGraph: { title: 'Belgaum Today Blog', url: '/blog', type: 'website' },
 };
 
 const BLOG_CATEGORIES: Category[] = [

@@ -8,7 +8,9 @@ import { Calendar, Clock, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
 import { query, execute } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { formatDate, formatNumber } from '@/lib/utils';
+import { formatDate, formatNumber, stripHtml } from '@/lib/utils';
+import { SITE_URL } from '@/lib/site-url';
+import { safeJsonLd } from '@/lib/seo';
 import { ShareButtons, NewsFallbackImage, ArticleViewCount } from '@/components/articles';
 
 export const dynamic = 'force-dynamic';
@@ -50,10 +52,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!blog) return { title: 'Not Found' };
     return {
         title: `${blog.title} — Belgaum Today Blog`,
-        description: blog.excerpt ?? undefined,
+        description: stripHtml(blog.excerpt || ''),
+        alternates: { canonical: `/blog/post/${encodeURIComponent(slug)}` },
         openGraph: {
             title: blog.title,
-            description: blog.excerpt ?? '',
+            description: stripHtml(blog.excerpt || ''),
+            url: `/blog/post/${encodeURIComponent(slug)}`,
             type: 'article',
             publishedTime: blog.published_at?.toString(),
             authors: ['Belgaum Today'],
@@ -62,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         twitter: {
             card: 'summary_large_image',
             title: blog.title,
-            description: blog.excerpt ?? '',
+            description: stripHtml(blog.excerpt || ''),
             images: blog.featured_image ? [blog.featured_image] : [],
         },
     };
@@ -85,6 +89,18 @@ export default async function BlogPostPage({ params }: Props) {
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-950">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+                '@context': 'https://schema.org',
+                '@type': 'BlogPosting',
+                headline: blog.title,
+                description: stripHtml(blog.excerpt || ''),
+                image: blog.featured_image || undefined,
+                datePublished: blog.published_at ? new Date(blog.published_at).toISOString() : undefined,
+                dateModified: blog.updated_at ? new Date(blog.updated_at).toISOString() : undefined,
+                author: { '@type': 'Organization', name: 'Belgaum Today' },
+                publisher: { '@type': 'Organization', name: 'Belgaum Today', logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/logo.jpeg` } },
+                mainEntityOfPage: `${SITE_URL}/blog/post/${encodeURIComponent(blog.slug)}`,
+            }) }} />
             {/* Breadcrumb */}
             <div className="border-b border-gray-100 dark:border-gray-800">
                 <div className="container mx-auto px-4 py-3">

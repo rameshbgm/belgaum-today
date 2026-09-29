@@ -28,7 +28,7 @@ function decodeToken(token: string): { userId: number; email: string; role: stri
     }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const startTime = Date.now();
     const method = request.method;

@@ -5,7 +5,7 @@ import { PublisherLink } from './PublisherLink';
 import { Eye, Clock, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate, formatNumber } from '@/lib/utils';
+import { formatRelativeTime, stripHtml, truncate, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 
 interface FeaturedArticleProps {
@@ -62,7 +62,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
 
                 {/* Excerpt */}
                 <p className="text-gray-300 text-lg mb-6 max-w-2xl line-clamp-3">
-                    {truncate(article.excerpt || '', 300)}
+                    {truncate(stripHtml(article.excerpt || ''), 300)}
                 </p>
 
                 {/* Meta & CTA */}

@@ -6,8 +6,10 @@ export const metadata: Metadata = {
     title: 'About Us',
     description:
         'Learn about Belgaum Today — your trusted curated news platform delivering the latest local and national news from Belgaum (Belagavi) and beyond.',
+    alternates: { canonical: '/about' },
     openGraph: {
         title: 'About Us | Belgaum Today',
+        url: '/about',
         description:
             'Learn about Belgaum Today — your trusted curated news platform delivering the latest local and national news.',
     },

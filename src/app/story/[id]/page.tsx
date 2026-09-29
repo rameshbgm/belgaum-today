@@ -6,11 +6,36 @@ import { query } from '@/lib/db';
 import { NewsFallbackImage } from '@/components/articles';
 import { StorySummaryButton, type StorySummary } from '@/components/story/StorySummaryButton';
 import { StorySinceVisit } from '@/components/story/StorySinceVisit';
+import { stripHtml } from '@/lib/utils';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 
 type Event = { id: number; title: string; category: string; first_seen_at: Date; last_updated_at: Date };
 type Update = { id: number; change_text: string | null; created_at: Date; title: string; excerpt: string | null; featured_image: string | null; source_name: string; source_url: string; published_at: Date | null };
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const id = Number((await params).id);
+    if (!Number.isSafeInteger(id) || id < 1) return { title: 'Story not found', robots: { index: false } };
+    const [story] = await query<Array<Event & { report_count: number; image: string | null }>>(
+        `SELECT e.*, COUNT(a.id) AS report_count, MAX(a.featured_image) AS image
+         FROM ai_suggested_stories pick
+         JOIN story_events e ON e.id = pick.story_event_id
+         JOIN story_event_summaries s ON s.story_event_id = e.id
+         JOIN public_articles a ON a.story_event_id = e.id
+         WHERE e.id = ? AND s.source_updated_at >= e.last_updated_at
+         GROUP BY e.id, e.title, e.category, e.first_seen_at, e.last_updated_at`, [id]
+    );
+    if (!story) return { title: 'Story not found', robots: { index: false } };
+    const description = `Follow ${story.report_count} publisher report${story.report_count === 1 ? '' : 's'} on ${story.title}. Read the timeline and linked original sources.`;
+    return {
+        title: `${story.title} — Story Tracker`,
+        description,
+        alternates: { canonical: `/story/${id}` },
+        openGraph: { title: story.title, description, url: `/story/${id}`, type: 'article', modifiedTime: new Date(story.last_updated_at).toISOString(), images: story.image ? [story.image] : [] },
+        twitter: { card: 'summary_large_image', title: story.title, description, images: story.image ? [story.image] : [] },
+    };
+}
 
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {
     const id = Number((await params).id);
@@ -55,7 +80,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                 <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-hairline">
                     {image ? <Image src={image} alt="" fill unoptimized priority sizes="(max-width: 1024px) 100vw, 720px" className="object-cover" /> : <NewsFallbackImage seed={id} />}
                 </div>
-                {latest.excerpt && <p className="mt-5 max-w-prose text-base leading-7 text-muted">{latest.excerpt}</p>}
+                {latest.excerpt && <p className="mt-5 max-w-prose text-base leading-7 text-muted">{stripHtml(latest.excerpt)}</p>}
                 <section className="mt-10 border-t-2 border-ink/85 pt-7" aria-labelledby="timeline-heading">
                     <h2 id="timeline-heading" className="font-display text-3xl font-bold text-ink">How the story unfolded</h2>
                     <ol className="mt-7 border-l border-hairline pl-6">

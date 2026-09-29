@@ -13,7 +13,7 @@ export type StorySummary = {
 
 export function StorySummaryButton({ storyId, initialSummary = null }: { storyId: number; initialSummary?: StorySummary | null }) {
     const panelId = useId();
-    const [open, setOpen] = useState(Boolean(initialSummary));
+    const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [summary, setSummary] = useState<StorySummary | null>(initialSummary);
     const [error, setError] = useState<string | null>(null);

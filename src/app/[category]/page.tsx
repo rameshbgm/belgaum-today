@@ -149,9 +149,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: `${theme.title} — ${theme.tagline}`,
         description: meta.description,
+        alternates: { canonical: `/${category}` },
         openGraph: {
             title: `${theme.title} — ${theme.tagline} | Belgaum Today`,
             description: meta.description,
+            url: `/${category}`,
         },
     };
 }

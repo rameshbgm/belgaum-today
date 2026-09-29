@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate } from '@/lib/utils';
+import { formatRelativeTime, stripHtml, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
 
@@ -39,7 +39,7 @@ export function LeadStory({ article }: { article: Article }) {
                         {article.title}
                     </h2>
                     <p className="hidden md:block mt-4 text-base text-white/80 max-w-2xl leading-relaxed">
-                        {truncate(article.excerpt || '', 200)}
+                        {truncate(stripHtml(article.excerpt || ''), 200)}
                     </p>
                     <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs uppercase tracking-wider text-white/70">
                         <span className="font-semibold text-white">{article.source_name}</span>

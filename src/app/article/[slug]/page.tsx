@@ -9,7 +9,8 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
 import { ShareButtons, ArticleCard, ArticleViewTracker, NewsFallbackImage } from '@/components/articles';
-import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent } from '@/lib/utils';
+import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent, stripHtml } from '@/lib/utils';
+import { SITE_URL } from '@/lib/site-url';
 
 type Props = {
     params: Promise<{ slug: string }>;
@@ -49,11 +50,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
         title: article.title,
-        description: article.excerpt,
+        description: stripHtml(article.excerpt || ''),
         robots: { index: false, follow: true },
         openGraph: {
             title: article.title,
-            description: article.excerpt || '',
+            description: stripHtml(article.excerpt || ''),
+            url: `/article/${encodeURIComponent(slug)}`,
             type: 'article',
             publishedTime: article.published_at?.toISOString(),
             authors: [article.source_name],
@@ -62,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         twitter: {
             card: 'summary_large_image',
             title: article.title,
-            description: article.excerpt || '',
+            description: stripHtml(article.excerpt || ''),
             images: article.featured_image ? [article.featured_image] : [],
         },
     };
@@ -78,43 +80,10 @@ export default async function ArticlePage({ params }: Props) {
 
     const relatedArticles = await getRelatedArticles(article.category, article.id);
     const categoryMeta = CATEGORY_META[article.category];
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const articleUrl = `${siteUrl}/article/${article.slug}`;
-
-    // JSON-LD structured data
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'NewsArticle',
-        headline: article.title,
-        description: article.excerpt,
-        image: article.featured_image,
-        datePublished: article.published_at?.toISOString(),
-        dateModified: article.updated_at.toISOString(),
-        author: {
-            '@type': 'Organization',
-            name: article.source_name,
-        },
-        publisher: {
-            '@type': 'Organization',
-            name: 'Belgaum Today',
-            logo: {
-                '@type': 'ImageObject',
-                url: `${siteUrl}/logo.png`,
-            },
-        },
-        mainEntityOfPage: {
-            '@type': 'WebPage',
-            '@id': articleUrl,
-        },
-    };
+    const articleUrl = `${SITE_URL}/article/${article.slug}`;
 
     return (
         <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            
             {/* Client-side view tracking */}
             <ArticleViewTracker articleId={article.id} category={article.category} />
 
@@ -203,7 +172,7 @@ export default async function ArticlePage({ params }: Props) {
                     // Fallback: show excerpt when content is empty/just a title repeat
                     return article.excerpt ? (
                         <div className="prose dark:prose-invert max-w-none mb-8">
-                            <p>{article.excerpt}</p>
+                            <p>{stripHtml(article.excerpt)}</p>
                         </div>
                     ) : null;
                 })()}

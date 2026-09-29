@@ -4,13 +4,14 @@ import { Header, Footer } from "@/components/layout";
 import { ToastProvider } from "@/components/ui";
 import { AdScripts } from "@/components/AdScripts";
 import { headers } from "next/headers";
+import { SITE_URL } from '@/lib/site-url';
 
 export const metadata: Metadata = {
   title: {
-    default: "Belgaum Today — Local News, Global Standards",
+    default: "Belagavi News Today | India, Technology & Sports | Belgaum Today",
     template: "%s | Belgaum Today",
   },
-  description: "Your trusted source for the latest news from Belgaum (Belagavi) and beyond. Stay updated with India, Business, Technology, Entertainment, Sports, and local Belgaum news — curated and delivered daily.",
+  description: "Latest Belagavi and India headlines from Indian publisher RSS feeds, with technology, sports, business and source-linked AI story timelines.",
   keywords: [
     "Belgaum", "Belagavi", "Belgaum news", "Belagavi news", "Belgaum Today",
     "Karnataka news", "India news", "local news", "breaking news",
@@ -21,10 +22,13 @@ export const metadata: Metadata = {
   creator: "Belgaum Today",
   publisher: "Belgaum Today",
   category: "News",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    types: { 'application/rss+xml': '/feed.xml' },
+  },
   openGraph: {
-    title: "Belgaum Today — Local News, Global Standards",
-    description: "Your trusted source for the latest news from Belgaum (Belagavi) and beyond. India, Business, Technology, Entertainment, Sports & local coverage.",
+    title: "Belagavi News Today | Belgaum Today",
+    description: "Belagavi and India headlines from Indian publishers, plus source-linked story timelines.",
     url: "/",
     siteName: "Belgaum Today",
     locale: "en_IN",
@@ -32,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Belgaum Today — Local News, Global Standards",
-    description: "Your trusted source for the latest news from Belgaum (Belagavi) and beyond.",
+    title: "Belagavi News Today | Belgaum Today",
+    description: "Belagavi and India headlines from Indian publishers, plus source-linked story timelines.",
   },
   robots: {
     index: true,
@@ -44,11 +48,6 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
-    },
-  },
-  alternates: {
-    types: {
-      "application/rss+xml": "/feed.xml",
     },
   },
   verification: {

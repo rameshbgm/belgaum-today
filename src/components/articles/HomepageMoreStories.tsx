@@ -166,7 +166,7 @@ export function HomepageMoreStories({ initialArticles }: HomepageMoreStoriesProp
 
     return (
         <div className="lg:col-span-8">
-            <SectionHeading>More Stories</SectionHeading>
+            <SectionHeading>News feed</SectionHeading>
 
             <div className="space-y-12">
                 {grouped.map(({ key, date, articles: dayArticles }) => {

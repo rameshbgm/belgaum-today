@@ -11,20 +11,23 @@ export function cn(...inputs: ClassValue[]): string {
  * Use this to sanitise RSS/HTML content for plain-text rendering.
  */
 export function stripHtml(html: string): string {
+    const decodePoint = (value: number) => value > 0 && value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff)
+        ? String.fromCodePoint(value) : ' ';
     // Remove CDATA wrappers
     let text = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
-    // Remove HTML tags
-    text = text.replace(/<[^>]*>/g, '');
-    // Decode common HTML entities
-    text = text
-        .replace(/&amp;/g, '&')
+    // RSS descriptions may escape a complete tag, sometimes twice. Decode
+    // before stripping so an encoded <img> cannot become visible markup.
+    for (let pass = 0; pass < 2; pass++) text = text
+        .replace(/&#x([\da-f]+);?/gi, (_, code: string) => decodePoint(parseInt(code, 16)))
+        .replace(/&#(\d+);?/g, (_, code: string) => decodePoint(parseInt(code, 10)))
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
         .replace(/&nbsp;/g, ' ')
-        .replace(/&#x27;/g, "'")
-        .replace(/&#x2F;/g, '/');
+        .replace(/&amp;/g, '&');
+    text = text.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+        .replace(/<[^>]*>/g, '');
     // Collapse whitespace
     text = text.replace(/\s+/g, ' ').trim();
     return text;
@@ -50,7 +53,7 @@ export function sanitizeArticleContent(
     if (!content) return null;
 
     // If it contains HTML, strip it
-    let clean = containsHtml(content) ? stripHtml(content) : content;
+    let clean = stripHtml(content);
     clean = clean.trim();
 
     // If empty after stripping, nothing to show

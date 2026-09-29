@@ -7,8 +7,12 @@ import { TopicPreferences } from '@/components/articles/TopicPreferences';
 import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
 import { digestConfigured } from '@/lib/digest';
 import { distinctStories } from '@/lib/story-clusters';
+import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/site-url';
+import { safeJsonLd } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 interface MostViewedArticle {
   id: number;
@@ -179,6 +183,13 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Belgaum Today',
+        alternateName: 'Belagavi Today',
+        url: SITE_URL,
+      }) }} />
       {/* ── Front page: lead carousel + scrollable latest rail ── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b-2 border-ink/85 lg:items-stretch">
         {/* Lead carousel — AI trending or latest fallback */}
@@ -208,7 +219,6 @@ export default async function HomePage() {
           <SectionNewsCarousel
             key={section.category}
             title={section.title}
-            href={`/${section.category}`}
             articles={categorySections.find(item => item.category === section.category)?.articles || []}
             empty={section.empty}
             compact
@@ -216,7 +226,7 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {/* ── More Stories + Most Viewed ── */}
+      {/* ── News feed + Most Viewed ── */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
         <HomepageMoreStories initialArticles={moreStories} />
 

@@ -4,10 +4,12 @@ import { FileText } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Terms of Service',
+    alternates: { canonical: '/terms-of-service' },
     description:
         'Terms of Service for Belgaum Today — understand the rules and guidelines governing your use of our news aggregation and publishing platform.',
     openGraph: {
         title: 'Terms of Service | Belgaum Today',
+        url: '/terms-of-service',
         description:
             'Terms of Service for Belgaum Today — rules and guidelines governing your use of our platform.',
     },

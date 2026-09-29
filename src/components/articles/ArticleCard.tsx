@@ -6,7 +6,7 @@ import { PublisherLink } from './PublisherLink';
 import { Clock, Info, ExternalLink, Flame } from 'lucide-react';
 import { Badge, Tooltip } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate } from '@/lib/utils';
+import { formatRelativeTime, stripHtml, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
 
@@ -77,7 +77,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                 {/* Excerpt - Hidden in compact mode */}
                 {!compact && (
                     <p className="text-sm text-muted mb-3 line-clamp-2">
-                        {truncate(article.excerpt || '', 150)}
+                        {truncate(stripHtml(article.excerpt || ''), 150)}
                     </p>
                 )}
 

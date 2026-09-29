@@ -73,16 +73,16 @@ export function Header() {
             <div className="container mx-auto px-4 pt-5 pb-4 text-center">
                 <div className="flex items-center justify-center gap-4">
                     <span className="hidden md:block h-px w-16 bg-ink/25" />
-                    <Link href="/" className="inline-flex items-center gap-3">
+                    <Link href="/" className="inline-flex min-w-0 items-center gap-2 sm:gap-3">
                         <Image
                             src="/images/logo.jpeg"
                             alt="Belgaum Today"
                             width={56}
                             height={56}
-                            className="rounded-xl object-contain"
+                            className="h-9 w-9 shrink-0 rounded-lg object-contain sm:h-14 sm:w-14 sm:rounded-xl"
                             priority
                         />
-                        <h1 className="font-display text-4xl md:text-6xl font-black tracking-[-0.02em] text-ink leading-none">
+                        <h1 className="min-w-0 whitespace-nowrap font-display text-[clamp(1.45rem,7vw,2.25rem)] md:text-6xl font-black tracking-[-0.02em] text-ink leading-none">
                             Belgaum<span className="text-primary"> Today</span>
                         </h1>
                     </Link>

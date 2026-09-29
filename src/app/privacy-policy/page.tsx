@@ -4,10 +4,12 @@ import { Shield } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Privacy Policy',
+    alternates: { canonical: '/privacy-policy' },
     description:
         'Privacy Policy for Belgaum Today — learn how we collect, use, and protect your personal information, including disclosures for Google AdSense, Google Analytics, and Meta Pixel.',
     openGraph: {
         title: 'Privacy Policy | Belgaum Today',
+        url: '/privacy-policy',
         description:
             'Privacy Policy for Belgaum Today — learn how we collect, use, and protect your personal information.',
     },

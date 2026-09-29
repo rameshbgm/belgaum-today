@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Article } from '@/types';
@@ -10,13 +9,12 @@ import { ArticleViewCount } from './ArticleViewCount';
 
 interface SectionNewsCarouselProps {
     title: string;
-    href: string;
     articles: Article[];
     empty: string;
     compact?: boolean;
 }
 
-export function SectionNewsCarousel({ title, href, articles, empty, compact = false }: SectionNewsCarouselProps) {
+export function SectionNewsCarousel({ title, articles, empty, compact = false }: SectionNewsCarouselProps) {
     const track = useRef<HTMLDivElement>(null);
     const [current, setCurrent] = useState(0);
     const [visibleCount, setVisibleCount] = useState(1);
@@ -67,22 +65,18 @@ export function SectionNewsCarousel({ title, href, articles, empty, compact = fa
 
     const pageCount = Math.max(1, Math.ceil(articles.length / visibleCount));
     const page = Math.min(pageCount - 1, Math.floor(current / visibleCount));
-    const rangeEnd = Math.min(articles.length, current + visibleCount);
 
     return (
-        <section className="min-w-0" aria-label={title + ' news'}>
-            <div className="mb-4 flex items-end justify-between gap-3 border-b border-hairline pb-3">
+        <section className="flex h-full min-w-0 flex-col" aria-label={title + ' news'}>
+            <div className="mb-4 flex min-h-14 items-end border-b border-hairline pb-3">
                 <h2 className="font-display text-2xl font-bold text-ink sm:text-3xl">{title}</h2>
-                <Link href={href} className="min-h-11 inline-flex items-center text-[11px] font-bold uppercase tracking-[0.14em] text-primary hover:underline sm:text-xs sm:tracking-widest">
-                    More stories
-                </Link>
             </div>
 
             {articles.length === 0 ? (
                 <p className="py-8 text-sm text-muted">{empty}</p>
             ) : (
                 <div
-                    className="group/carousel"
+                    className="group/carousel flex flex-1 flex-col"
                     role="region"
                     aria-roledescription="carousel"
                     aria-label={title + ' stories'}
@@ -95,7 +89,7 @@ export function SectionNewsCarousel({ title, href, articles, empty, compact = fa
                 >
                     <div
                         ref={track}
-                        className={`section-news-track ${compact ? 'section-news-track--single' : ''}`}
+                        className={`section-news-track flex-1 ${compact ? 'section-news-track--single' : ''}`}
                         onScroll={measure}
                         onKeyDown={event => {
                             if (event.key === 'ArrowRight') { event.preventDefault(); scrollToIndex(current + 1); }
@@ -106,7 +100,7 @@ export function SectionNewsCarousel({ title, href, articles, empty, compact = fa
                     >
                         {articles.map((article, index) => (
                             <article className="section-news-slide" key={article.id} role="group" aria-roledescription="slide" aria-label={(index + 1) + ' of ' + articles.length}>
-                                <PublisherLink article={article} className="group/story flex min-h-36 h-full flex-col border-l border-primary/65 py-2 pl-3 pr-2 sm:min-h-40 sm:pl-4">
+                                <PublisherLink article={article} className="group/story flex min-h-52 h-full flex-col border-l border-primary/65 py-2 pl-3 pr-2 sm:pl-4">
                                     <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">{title}</span>
                                     <h3 className="mt-1 font-display text-base font-semibold leading-snug text-ink transition-colors group-hover/story:text-primary sm:text-lg">
                                         {article.title}
@@ -124,9 +118,9 @@ export function SectionNewsCarousel({ title, href, articles, empty, compact = fa
                     </div>
 
                     {articles.length > visibleCount && (
-                        <div className="mt-3 flex min-h-11 items-center justify-between gap-3">
+                        <div className="mt-auto flex min-h-12 items-center justify-between gap-3 pt-3">
                             <p className="text-[11px] tabular-nums text-muted" aria-live="off">
-                                {current + 1}–{rangeEnd} of {articles.length}
+                                {current + 1} of {articles.length}
                             </p>
                             <div className="flex items-center gap-1">
                                 <button type="button" onClick={() => scrollToIndex(current - 1)} aria-label={'Previous ' + title + ' stories'} className="inline-flex h-11 w-11 items-center justify-center text-ink transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
