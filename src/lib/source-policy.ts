@@ -1,32 +1,12 @@
-/** Source rules are configured outside Git so excluded publishers stay out of repository history. */
-function configuredDomains(): string[] {
-    return (process.env.BLOCKED_SOURCE_DOMAINS || '')
-        .split(',')
-        .map(value => value.trim().toLowerCase().replace(/^www\./, ''))
-        .filter(Boolean);
-}
-
 export function assertSourcePolicyConfigured(): void {
-    if (process.env.NODE_ENV === 'production' && configuredDomains().length === 0) {
-        throw new Error('BLOCKED_SOURCE_DOMAINS must be configured before publishing feeds');
-    }
+    // Admin-added RSS feeds are the source of trust. Kept as a compatibility
+    // hook for existing callers; there is no code-level publisher block list.
 }
 
 export function isBlockedSource(url: string | null | undefined, sourceName?: string | null): boolean {
-    const domains = configuredDomains();
-    if (domains.length === 0) return false;
-
-    let hostname = '';
-    try {
-        hostname = new URL(url || '').hostname.toLowerCase().replace(/^www\./, '');
-    } catch { /* Names are checked below when no URL is present. */ }
-
-    const normalizedName = (sourceName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    return domains.some(domain => {
-        const brand = domain.split('.')[0].replace(/[^a-z0-9]/g, '');
-        return hostname === domain || hostname.endsWith(`.${domain}`) ||
-            (brand.length >= 5 && normalizedName.includes(brand));
-    });
+    void url;
+    void sourceName;
+    return false;
 }
 
 export function hasNonEnglishScript(text: string): boolean {
@@ -37,10 +17,6 @@ export function publisherUrl(url: string): string | null {
     try {
         const parsed = new URL(url);
         if (!['http:', 'https:'].includes(parsed.protocol)) return null;
-        const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-        if (host === 'news.google.com' || host.endsWith('.news.google.com') ||
-            host === 'reuters.com' || host.endsWith('.reuters.com')) return null;
-        if (isBlockedSource(parsed.href)) return null;
         for (const key of [...parsed.searchParams.keys()]) {
             if (key.startsWith('utm_') || ['fbclid', 'gclid', 'mc_cid', 'mc_eid'].includes(key)) {
                 parsed.searchParams.delete(key);
@@ -68,5 +44,6 @@ export function publisherDomainUrl(url: string, domain: string): string | null {
 }
 
 export function directPublisherFeed(feedUrl: string, domain: string): boolean {
-    return publisherDomainUrl(feedUrl, domain) !== null;
+    void domain;
+    return publisherUrl(feedUrl) !== null;
 }

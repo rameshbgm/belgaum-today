@@ -1,6 +1,6 @@
 # Publisher feeds and Story Tracker rollout
 
-The admin RSS feed list is the publication source. An active feed is fetched when it has a configured publisher domain and returns direct article URLs on that domain. Google News and Reuters links remain excluded. An article's subject, language, or AI country classification does not decide whether it is published. Inactive feeds stop fetching; articles already published from them remain visible.
+The admin RSS feed list is the publication source. Every active, valid feed is fetched; the publisher domain is retained for attribution and does not need to host the RSS XML. An article's subject, language, or AI country classification does not decide whether it is published. Inactive feeds stop fetching; articles already published from them remain visible.
 
 Production schema: `2026-09-source-attribution-and-digest.sql`, `2026-09-indian-sources-story-tracker.sql`, `2026-09-admin-added-feeds.sql`, `2026-09-story-tracker-ai-summaries.sql`, `2026-09-publish-admin-rss-feeds.sql`, `2026-09-rss-restore-audit.sql`, and `2026-09-ai-suggested-stories.sql` have been applied to the configured Hostinger database. The `geo_status` column is retained for older records but no longer controls publication.
 

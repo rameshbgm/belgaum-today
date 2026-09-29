@@ -4,9 +4,19 @@ import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
 import { parseRssFeed } from '@/lib/rss';
 import { FEED_CATEGORIES } from '@/types';
-import { publisherDomainUrl, assertSourcePolicyConfigured, directPublisherFeed, isBlockedSource, normalizePublisherDomain } from '@/lib/source-policy';
+import { normalizePublisherDomain } from '@/lib/source-policy';
 
 const VALID_CATEGORIES = FEED_CATEGORIES;
+
+function derivePublisherDomain(items: Array<{ link: string }>, feedUrl: string): string | null {
+    for (const value of [...items.map(item => item.link), feedUrl]) {
+        try {
+            const domain = normalizePublisherDomain(new URL(value).hostname);
+            if (domain) return domain;
+        } catch { /* Try the next article URL. */ }
+    }
+    return null;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -94,13 +104,8 @@ export const PATCH = withLogging(async (request: NextRequest) => {
                 { status: 400 }
             );
         }
-        const [feed] = await query<Array<{ feed_url: string; publisher_domain: string | null; category: string }>>(
-            'SELECT feed_url, publisher_domain, category FROM rss_feed_config WHERE id = ?', [feedId]
-        );
+        const [feed] = await query<Array<{ id: number }>>('SELECT id FROM rss_feed_config WHERE id = ?', [feedId]);
         if (!feed) return NextResponse.json({ success: false, error: 'Feed not found' }, { status: 404 });
-        if (is_active && (!feed.publisher_domain || !directPublisherFeed(feed.feed_url, feed.publisher_domain) || feed.category === 'world')) {
-            return NextResponse.json({ success: false, error: 'Use a direct Indian publisher feed before enabling' }, { status: 422 });
-        }
         await execute('UPDATE rss_feed_config SET is_active = ? WHERE id = ?', [is_active, feedId]);
         return NextResponse.json({ success: true, message: `Feed ${is_active ? 'activated' : 'deactivated'}` });
     } catch (error) {
@@ -124,25 +129,15 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { name, publisher_name, feed_url, publisher_domain, category, is_active = true, fetch_interval_minutes = 120 } = body;
-
-        assertSourcePolicyConfigured();
-        if (isBlockedSource(feed_url, name)) {
-            return NextResponse.json({ success: false, error: 'This publisher is excluded from the site' }, { status: 422 });
-        }
+        const { name, publisher_name, feed_url, category, is_active = true, fetch_interval_minutes = 120 } = body;
 
         // Validation
-        const domain = normalizePublisherDomain(String(publisher_domain || ''));
-        if (!name || !publisher_name || !feed_url || !category || !domain) {
+        if (!name || !publisher_name || !feed_url || !category) {
             return NextResponse.json(
-                { success: false, error: 'name, direct feed URL, publisher domain, and category are required' },
+                { success: false, error: 'name, publisher name, feed URL, and category are required' },
                 { status: 400 }
             );
         }
-        if (!directPublisherFeed(feed_url, domain) || category === 'world') {
-            return NextResponse.json({ success: false, error: 'Feed must be hosted by its publisher and cover India' }, { status: 422 });
-        }
-
         // Validate URL format
         try {
             new URL(feed_url);
@@ -165,16 +160,14 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         // Validate that the URL is a reachable RSS feed with at least one item
+        let feedItems: Awaited<ReturnType<typeof parseRssFeed>>;
         try {
-            const feedItems = await parseRssFeed(feed_url);
+            feedItems = await parseRssFeed(feed_url);
             if (feedItems.length === 0) {
                 return NextResponse.json(
                     { success: false, error: 'Feed URL does not return any valid RSS items. Please check the URL and try again.' },
                     { status: 422 }
                 );
-            }
-            if (!feedItems.some(item => publisherDomainUrl(item.link, domain))) {
-                return NextResponse.json({ success: false, error: 'Feed has no direct links on the publisher domain' }, { status: 422 });
             }
         } catch (feedError) {
             console.error('Feed validation error:', feedError);
@@ -183,6 +176,8 @@ export const POST = withLogging(async (request: NextRequest) => {
                 { status: 422 }
             );
         }
+        const domain = derivePublisherDomain(feedItems, feed_url);
+        if (!domain) return NextResponse.json({ success: false, error: 'Could not determine publisher attribution from this feed' }, { status: 422 });
 
         // Check if feed URL already exists
         const existing = await query<Array<{ id: number }>>(
@@ -229,25 +224,15 @@ export const PUT = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { id, name, publisher_name, feed_url, publisher_domain, category, is_active, fetch_interval_minutes = 120 } = body;
-
-        assertSourcePolicyConfigured();
-        if (isBlockedSource(feed_url, name)) {
-            return NextResponse.json({ success: false, error: 'This publisher is excluded from the site' }, { status: 422 });
-        }
+        const { id, name, publisher_name, feed_url, category, is_active, fetch_interval_minutes = 120 } = body;
 
         // Validation
-        const domain = normalizePublisherDomain(String(publisher_domain || ''));
-        if (!id || !name || !publisher_name || !feed_url || !category || !domain) {
+        if (!id || !name || !publisher_name || !feed_url || !category) {
             return NextResponse.json(
-                { success: false, error: 'id, name, direct feed URL, publisher domain, and category are required' },
+                { success: false, error: 'id, name, publisher name, feed URL, and category are required' },
                 { status: 400 }
             );
         }
-        if (!directPublisherFeed(feed_url, domain) || category === 'world') {
-            return NextResponse.json({ success: false, error: 'Feed must be hosted by its publisher and cover India' }, { status: 422 });
-        }
-
         // Validate URL format
         try {
             new URL(feed_url);
@@ -297,9 +282,9 @@ export const PUT = withLogging(async (request: NextRequest) => {
 
         // Update feed
         const feedItems = await parseRssFeed(feed_url);
-        if (!feedItems.some(item => publisherDomainUrl(item.link, domain))) {
-            return NextResponse.json({ success: false, error: 'Feed has no direct links on the publisher domain' }, { status: 422 });
-        }
+        if (feedItems.length === 0) return NextResponse.json({ success: false, error: 'Feed has no valid entries' }, { status: 422 });
+        const domain = derivePublisherDomain(feedItems, feed_url);
+        if (!domain) return NextResponse.json({ success: false, error: 'Could not determine publisher attribution from this feed' }, { status: 422 });
         await execute(
             `UPDATE rss_feed_config
              SET name = ?, publisher_name = ?, feed_url = ?, publisher_domain = ?, category = ?, is_active = ?, fetch_interval_minutes = ?

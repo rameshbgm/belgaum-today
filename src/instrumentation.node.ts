@@ -31,7 +31,11 @@ export async function register() {
         let failed = false;
 
         try {
-            await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'scheduler' });
+            const result = await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'scheduler' });
+            if (result.errors > 0) {
+                failed = true;
+                await beatError(`RSS: ${result.errors} feed or item error(s)`);
+            }
         } catch (err) {
             failed = true;
             const msg = err instanceof Error ? err.message : String(err);

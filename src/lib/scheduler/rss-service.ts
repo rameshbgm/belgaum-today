@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { query, execute, insert } from '@/lib/db';
 import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
-import { publisherDomainUrl, assertSourcePolicyConfigured, directPublisherFeed, isBlockedSource } from '@/lib/source-policy';
+import { publisherUrl, assertSourcePolicyConfigured } from '@/lib/source-policy';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
 
@@ -19,7 +19,7 @@ async function saveFetchItems(runId: string, feed: RssFeedConfig, items: FetchIt
     for (let offset = 0; offset < items.length; offset += 100) {
         const batch = items.slice(offset, offset + 100);
         const unresolved = batch.filter(item => !item.articleId && item.url)
-            .map(item => ({ item, sourceUrl: publisherDomainUrl(item.url!, feed.publisher_domain!) }))
+            .map(item => ({ item, sourceUrl: publisherUrl(item.url!) }))
             .filter((entry): entry is { item: FetchItemLog; sourceUrl: string } => Boolean(entry.sourceUrl));
         const sourceUrls = [...new Set(unresolved.map(entry => entry.sourceUrl))];
         if (sourceUrls.length) {
@@ -58,14 +58,11 @@ export async function runRssFetch(options: {
     fileLogger.info('cron', '═══ Scheduled RSS fetch started ═══');
 
     assertSourcePolicyConfigured();
-    const configuredFeeds = await query<RssFeedConfig[]>(
-        `SELECT * FROM rss_feed_config WHERE is_active = true AND publisher_domain IS NOT NULL`
-    );
+    const configuredFeeds = await query<RssFeedConfig[]>(`SELECT * FROM rss_feed_config WHERE is_active = true`);
     const feeds = configuredFeeds.filter(feed =>
         (options.force || dueForScheduledFetch(feed)) &&
         (!options.feedIds?.length || options.feedIds.includes(feed.id)) &&
-        (!options.categories?.length || options.categories.includes(feed.category)) &&
-        directPublisherFeed(feed.feed_url, feed.publisher_domain!) && !isBlockedSource(feed.feed_url, feed.name));
+        (!options.categories?.length || options.categories.includes(feed.category)));
 
     if (feeds.length === 0) {
         fileLogger.info('cron', 'No active feeds found');
@@ -99,15 +96,10 @@ export async function runRssFetch(options: {
 
         for (const item of items) {
             try {
-                if (isBlockedSource(item.link, feed.name)) {
+                const sourceLink = publisherUrl(item.link);
+                if (!sourceLink) {
                     feedSkipped++;
-                    itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'blocked_source' });
-                    continue;
-                }
-                const sourceLink = publisherDomainUrl(item.link, feed.publisher_domain!);
-                if (!sourceLink || isBlockedSource(sourceLink, item.sourceName)) {
-                    feedSkipped++;
-                    itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'publisher_domain_mismatch' });
+                    itemLogs.push({ title: item.title || '(untitled item)', url: item.link || null, pubDate: item.pubDate, action: 'skipped', skipReason: 'invalid_source_url' });
                     continue;
                 }
 

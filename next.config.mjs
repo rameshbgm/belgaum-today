@@ -75,6 +75,21 @@ const nextConfig = {
         hostname: '**.thehindu.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.news18.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'bsmedia.business-standard.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sc0.blr1.cdn.digitaloceanspaces.com',
+        pathname: '/**',
+      },
     ],
   },
 };

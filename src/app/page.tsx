@@ -10,6 +10,7 @@ import { distinctStories } from '@/lib/story-clusters';
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/site-url';
 import { safeJsonLd } from '@/lib/seo';
+import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { alternates: { canonical: '/' } };
@@ -141,6 +142,9 @@ async function getArticles(): Promise<{
 }
 
 export default async function HomePage() {
+  // Shared hosting may reap the Node process and its interval. A homepage
+  // request safely revives RSS + analysis when the heartbeat has gone stale.
+  void reviveSchedulerIfStale();
   const { articles, trendingArticles, mostViewedArticles, categorySections } = await getArticles();
 
   // Build lead carousel: AI trending if available, else latest 10 as fallback
@@ -191,18 +195,17 @@ export default async function HomePage() {
         url: SITE_URL,
       }) }} />
       {/* ── Front page: lead carousel + scrollable latest rail ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b-2 border-ink/85 lg:items-stretch">
+      <section className="grid grid-cols-1 gap-8 border-b-2 border-ink/85 pb-10 lg:h-[680px] lg:grid-cols-12 lg:items-stretch lg:gap-10 xl:h-[720px]">
         {/* Lead carousel — AI trending or latest fallback */}
-        <div className="lg:col-span-8">
+        <div className="min-h-0 lg:col-span-8">
           <LeadCarousel articles={leadArticles} isFallback={isFallback} />
         </div>
 
         {/* Latest rail — same height as lead, scrollable, 3 per category */}
-        <aside className="lg:col-span-4 flex flex-col">
+        <aside className="flex min-h-0 flex-col lg:col-span-4">
           <SectionHeading accent>Latest</SectionHeading>
           {/* overflow container: scrolls within the exact height of the lead image */}
-          <div className="flex-1 overflow-y-auto border border-hairline rounded-sm p-3"
-               style={{ maxHeight: 'min(68vw, 520px)' }}>
+          <div className="min-h-0 flex-1 overflow-y-auto rounded-sm border border-hairline p-3">
             {categorySections.length > 0 ? (
               <LatestRail articles={latest} categorySections={categorySections.map(section => ({ ...section, articles: section.articles.slice(0, 3) }))} />
             ) : latest.length > 0 ? (

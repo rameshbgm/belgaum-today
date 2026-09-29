@@ -5,7 +5,7 @@ The application code, database change, source cleanup, and scheduled jobs form o
 ## Before release
 
 1. Take a fresh production database backup outside the repository. Confirm a restore path.
-2. Configure `BLOCKED_SOURCE_DOMAINS` in the production Node.js environment with the excluded publisher domain. Keep this value out of Git. Publishing will fail closed when it is absent in production.
+2. Admin-added active RSS feeds are fetched without a code-level publisher block list. Validate each feed in Admin before enabling it.
 3. Pause RSS and trending jobs. Record the current deployment revision and application environment.
 4. Run `node scripts/sweep-public-sources.mjs` with production database variables and inspect the dry run counts. The script archives excluded publisher stories, unresolved Google News links, and non-English stories; it does not delete them.
 

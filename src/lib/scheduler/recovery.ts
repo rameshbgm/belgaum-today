@@ -51,6 +51,7 @@ let recovering = false;
  * caller, so it can't slow the page down.
  */
 export async function reviveSchedulerIfStale(): Promise<void> {
+    if (process.env.DISABLE_BACKGROUND_SCHEDULER === '1') return;
     // Fast in-process guard — blocks repeat triggers within this process.
     if (recovering) return;
     recovering = true;
@@ -76,7 +77,8 @@ export async function reviveSchedulerIfStale(): Promise<void> {
         // Don't await the body — let the page render while this runs.
         void (async () => {
             try {
-                await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'recovery' });
+                const result = await runRssFetch({ triggerType: 'scheduled', triggeredBy: 'recovery' });
+                if (result.errors > 0) throw new Error(`RSS completed with ${result.errors} feed or item error(s)`);
                 await runStoryTracker();
                 await runTrendingAnalysis();
                 await beatSuccess();

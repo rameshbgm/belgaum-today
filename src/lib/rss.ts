@@ -32,6 +32,11 @@ export interface FeedFetchResult {
     error: string | null;
 }
 
+// Large publisher feeds often expose hundreds of historical entries. Import
+// the newest bounded batch on each run so shared-hosting jobs finish reliably;
+// subsequent runs deduplicate those entries before saving anything.
+const MAX_ITEMS_PER_FEED_RUN = 50;
+
 export function dueForScheduledFetch(feed: RssFeedConfig, now = Date.now()): boolean {
     if (!feed.last_fetched_at) return true;
     const last = new Date(feed.last_fetched_at).getTime();
@@ -42,21 +47,25 @@ export function dueForScheduledFetch(feed: RssFeedConfig, now = Date.now()): boo
 /**
  * Strip HTML tags and CDATA wrappers from a string
  */
+function decodeXmlEntities(value: string): string {
+    return value
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&apos;|&#39;|&#x27;/gi, "'")
+        .replace(/&#x2F;/gi, '/');
+}
+
 function stripHtml(html: string): string {
     // Remove CDATA wrappers
     let text = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
     // Remove HTML tags
     text = text.replace(/<[^>]*>/g, '');
     // Decode common HTML entities
-    text = text
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
+    text = decodeXmlEntities(text)
         .replace(/&nbsp;/g, ' ')
-        .replace(/&#x27;/g, "'")
-        .replace(/&#x2F;/g, '/');
+        .replace(/&#160;/g, ' ');
     // Collapse whitespace
     text = text.replace(/\s+/g, ' ').trim();
     return text;
@@ -84,16 +93,16 @@ function extractTag(xml: string, tag: string): string | null {
 function extractLink(itemXml: string): string | null {
     // Standard extractTag covers CDATA and normal <link>...</link>
     const fromTag = extractTag(itemXml, 'link');
-    if (fromTag && fromTag.startsWith('http')) return fromTag;
+    if (fromTag && fromTag.startsWith('http')) return decodeXmlEntities(fromTag);
 
     // Atom: <link href="..."/> or <link rel="alternate" href="..."/>
     const atomHref = itemXml.match(/<link[^>]+href=["']([^"']+)["']/i);
-    if (atomHref) return atomHref[1];
+    if (atomHref) return decodeXmlEntities(atomHref[1]);
 
     // Some RSS 2.0 feeds put the URL between tags without closing properly
     // e.g. <link>https://example.com/story</link> but regex missed it
     const rawLink = itemXml.match(/<link>\s*(https?:\/\/[^\s<]+)\s*<\/link>/i);
-    if (rawLink) return rawLink[1];
+    if (rawLink) return decodeXmlEntities(rawLink[1]);
 
     return fromTag; // return whatever we got (might be null)
 }
@@ -104,15 +113,19 @@ function extractLink(itemXml: string): string | null {
 function extractImageUrl(itemXml: string): string | null {
     // Try media:content url attribute
     const mediaMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/i);
-    if (mediaMatch) return mediaMatch[1];
+    if (mediaMatch) return decodeXmlEntities(mediaMatch[1]);
 
     // Try media:thumbnail url attribute
     const thumbMatch = itemXml.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
-    if (thumbMatch) return thumbMatch[1];
+    if (thumbMatch) return decodeXmlEntities(thumbMatch[1]);
 
     // Try enclosure with image type
-    const enclosureMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image\/[^"']+["']/i);
-    if (enclosureMatch) return enclosureMatch[1];
+    const enclosureTag = itemXml.match(/<enclosure\b[^>]*>/i)?.[0];
+    if (enclosureTag) {
+        const url = enclosureTag.match(/\burl=["']([^"']+)["']/i)?.[1];
+        const type = enclosureTag.match(/\btype=["']([^"']+)["']/i)?.[1];
+        if (url && (!type || type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)(?:\?|$)/i.test(url))) return decodeXmlEntities(url);
+    }
 
     // Try enclosure without type check (often images)
     const enclosureAnyMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
@@ -121,10 +134,11 @@ function extractImageUrl(itemXml: string): string | null {
     }
 
     // Try to find image in description HTML
-    const descContent = extractTag(itemXml, 'description');
-    if (descContent) {
-        const imgMatch = descContent.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch) return imgMatch[1];
+    const htmlContent = extractTag(itemXml, 'description') || extractTag(itemXml, 'content:encoded') ||
+        extractTag(itemXml, 'content') || extractTag(itemXml, 'summary');
+    if (htmlContent) {
+        const imgMatch = htmlContent.match(/<img[^>]+(?:src|data-src)=["']([^"']+)["']/i);
+        if (imgMatch) return decodeXmlEntities(imgMatch[1]);
     }
 
     return null;
@@ -150,7 +164,7 @@ async function fetchWithBrowserHeaders(url: string): Promise<Response> {
         'Pragma': 'no-cache',
     };
 
-    let res = await fetch(url, { headers, redirect: 'follow', next: { revalidate: 0 } });
+    let res = await fetch(url, { headers, redirect: 'follow', next: { revalidate: 0 }, signal: AbortSignal.timeout(15_000) });
 
     // If blocked, retry with a different UA after short delay
     if (!res.ok && res.status === 403) {
@@ -159,6 +173,7 @@ async function fetchWithBrowserHeaders(url: string): Promise<Response> {
             headers: { ...headers, 'User-Agent': getRandomUA() },
             redirect: 'follow',
             next: { revalidate: 0 },
+            signal: AbortSignal.timeout(15_000),
         });
     }
 
@@ -179,8 +194,8 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
     const feedSourceName = sourceName || new URL(feedUrl).hostname.replace(/^www\./, '');
     const items: RssItem[] = [];
 
-    // Split XML into individual <item> blocks
-    const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    // Support both RSS <item> and Atom <entry> documents.
+    const itemRegex = /<(?:item|entry)[^>]*>([\s\S]*?)<\/(?:item|entry)>/gi;
     let match;
 
 
@@ -190,9 +205,11 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
         // Extract fields
         const title = extractTag(itemXml, 'title');
         const link = extractLink(itemXml);
-        const description = extractTag(itemXml, 'description');
-        const pubDateStr = extractTag(itemXml, 'pubDate');
-        const guid = extractTag(itemXml, 'guid') || link;
+        const description = extractTag(itemXml, 'description') || extractTag(itemXml, 'content:encoded') ||
+            extractTag(itemXml, 'summary') || extractTag(itemXml, 'content');
+        const pubDateStr = extractTag(itemXml, 'pubDate') || extractTag(itemXml, 'published') ||
+            extractTag(itemXml, 'updated') || extractTag(itemXml, 'dc:date');
+        const guid = extractTag(itemXml, 'guid') || extractTag(itemXml, 'id') || link;
         const itemSourceName = feedSourceName;
 
         // Validation: must have title and link at minimum
@@ -234,10 +251,11 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
             guid: guid || link,
             sourceName: itemSourceName,
         });
+        if (items.length >= MAX_ITEMS_PER_FEED_RUN) break;
     }
 
-    if (items.length === 0 && /<item(?:\s|>)/i.test(xml)) {
-        throw new Error('RSS document contains items, but none could be parsed');
+    if (items.length === 0 && /<(?:item|entry)(?:\s|>)/i.test(xml)) {
+        throw new Error('Feed document contains entries, but none could be parsed');
     }
     return items;
 }

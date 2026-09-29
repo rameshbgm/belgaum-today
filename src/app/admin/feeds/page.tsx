@@ -11,7 +11,6 @@ interface Feed {
     name: string;
     publisher_name: string | null;
     feed_url: string;
-    publisher_domain: string | null;
     fetch_interval_minutes: number;
     category: string;
     is_active: boolean;
@@ -55,7 +54,6 @@ export default function RSSFeedsPage() {
         name: '',
         publisher_name: '',
         feed_url: '',
-        publisher_domain: '',
         category: 'india',
         fetch_interval_minutes: 120,
         is_active: true
@@ -185,7 +183,6 @@ export default function RSSFeedsPage() {
             name: '',
             publisher_name: '',
             feed_url: '',
-            publisher_domain: '',
             category: 'india',
             fetch_interval_minutes: 120,
             is_active: true
@@ -199,7 +196,6 @@ export default function RSSFeedsPage() {
             name: feed.name,
             publisher_name: feed.publisher_name || feed.name.split(' - ')[0],
             feed_url: feed.feed_url,
-            publisher_domain: feed.publisher_domain || '',
             category: feed.category,
             fetch_interval_minutes: feed.fetch_interval_minutes,
             is_active: Boolean(feed.is_active),
@@ -765,7 +761,6 @@ export default function RSSFeedsPage() {
                                         <div>
                                             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{feed.name}</span>
                                             <p className="text-xs text-gray-400 truncate max-w-xs">{feed.feed_url}</p>
-                                            <p className="text-xs text-gray-400">{feed.publisher_domain ? `Publisher · ${feed.publisher_domain}` : 'Set a direct publisher domain to enable'}</p>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3">
@@ -893,20 +888,6 @@ export default function RSSFeedsPage() {
                                     placeholder="https://example.com/rss"
                                     required
                                 />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Indian publisher domain *
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={formData.publisher_domain}
-                                    onChange={(e) => setFormData({ ...formData, publisher_domain: e.target.value })}
-                                    placeholder="thehindu.com"
-                                    required
-                                />
-                                <p className="mt-1 text-xs text-gray-500">The feed and article links must be on this Indian publisher domain.</p>
                             </div>
 
                             <div>
