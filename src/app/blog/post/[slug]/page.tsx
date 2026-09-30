@@ -4,14 +4,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Calendar, Clock, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
-import { query, execute } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { Calendar, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
+import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { formatDate, formatNumber, stripHtml } from '@/lib/utils';
+import { formatDate, stripHtml } from '@/lib/utils';
 import { SITE_URL } from '@/lib/site-url';
 import { safeJsonLd } from '@/lib/seo';
-import { ShareButtons, NewsFallbackImage, ArticleViewCount } from '@/components/articles';
+import { ShareButtons, NewsFallbackImage, ArticleViewCount, ArticleViewTracker } from '@/components/articles';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,13 +76,7 @@ export default async function BlogPostPage({ params }: Props) {
     const blog = await getBlog(slug);
     if (!blog) notFound();
 
-    const user = await getCurrentUser();
-    const [related] = await Promise.all([
-        getRelatedBlogs(blog.category, blog.id),
-        user?.role === 'admin' || user?.role === 'editor'
-            ? Promise.resolve()
-            : execute('UPDATE articles SET view_count = view_count + 1 WHERE id = ?', [blog.id]).catch(() => {}),
-    ]);
+    const related = await getRelatedBlogs(blog.category, blog.id);
 
     const catMeta = CATEGORY_META[blog.category as Category];
 
@@ -145,10 +138,12 @@ export default async function BlogPostPage({ params }: Props) {
                         <Clock className="w-4 h-4" />
                         {blog.reading_time} min read
                     </span>
-                    <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {formatNumber(blog.view_count)} views
-                    </span>
+                    <ArticleViewTracker
+                        articleId={blog.id}
+                        category={blog.category}
+                        initialCount={blog.view_count}
+                        showCount
+                    />
                 </div>
 
                 {/* Featured image */}

@@ -13,7 +13,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         const body = await request.json().catch(() => ({}));
         const feedIds = Array.isArray(body.feedIds) ? body.feedIds.filter((id: unknown) => Number.isInteger(id)) : undefined;
         const categories = Array.isArray(body.categories) ? body.categories.filter((value: unknown) => typeof value === 'string') : undefined;
-        const result = await runRssFetch({ feedIds, categories, force: true, triggerType: 'manual', triggeredBy: 'admin' });
+        const result = await runRssFetch({ feedIds, categories, triggerType: 'manual', triggeredBy: user.email });
         return NextResponse.json({ success: true, ...result });
     } catch (error) {
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });

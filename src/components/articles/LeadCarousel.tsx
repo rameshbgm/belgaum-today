@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { PublisherLink } from './PublisherLink';
 import { TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORY_META } from '@/types';
-import { formatRelativeTime, stripHtml, truncate } from '@/lib/utils';
+import { stripHtml, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
+import { PublisherMetadata } from './PublisherMetadata';
 
 export interface LeadCarouselArticle {
     id: number;
@@ -30,30 +31,17 @@ interface LeadCarouselProps {
 
 export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps) {
     const [current, setCurrent] = useState(0);
-    const [paused, setPaused] = useState(false);
     const total = articles.length;
 
     const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
     const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
 
-    useEffect(() => {
-        if (paused || total <= 1) return;
-        const timer = setInterval(next, 3000);
-        return () => clearInterval(timer);
-    }, [paused, total, next]);
-
     if (total === 0) return null;
 
     const article = articles[current];
     const cat = CATEGORY_META[article.category as keyof typeof CATEGORY_META];
-    const timestamp = article.published_at ?? (article as { created_at?: string | Date }).created_at;
-
     return (
-        <article
-            className="group relative flex h-full flex-col overflow-hidden bg-background"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-        >
+        <article className="group relative flex h-full flex-col overflow-hidden bg-background">
             <div className="relative min-h-[280px] overflow-hidden sm:aspect-[16/9] lg:min-h-0 lg:flex-[3_1_0%] lg:aspect-auto">
                 <PublisherLink article={article} className="absolute inset-0 block">
                     {article.featured_image ? (
@@ -93,18 +81,15 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                         >
                             <ChevronRight className="h-5 w-5" />
                         </button>
-                        <div className="absolute bottom-5 right-5 flex gap-1.5 md:right-7">
+                        <div className="absolute bottom-1 right-2 flex md:bottom-2 md:right-4" aria-label="Choose lead story">
                             {articles.map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={(e) => { e.preventDefault(); setCurrent(i); }}
-                                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                                        i === current
-                                            ? 'w-6 bg-[#FDBA74]'
-                                            : 'w-1.5 bg-white/40 hover:bg-white/60'
-                                    }`}
+                                    className="flex h-11 w-8 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-white"
                                     aria-label={`Go to story ${i + 1}`}
-                                />
+                                    aria-current={i === current ? 'true' : undefined}
+                                ><span className={`h-2 rounded-full transition-[width] ${i === current ? 'w-6 bg-[#FDBA74]' : 'w-2 bg-white/60'}`} /></button>
                             ))}
                         </div>
                     </>
@@ -121,13 +106,7 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                     </p>
                 )}
                 <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-wider text-muted sm:text-xs">
-                    <span className="max-w-full truncate font-semibold text-ink">{article.source_name}</span>
-                    {timestamp && (
-                        <>
-                            <span className="h-1 w-1 rounded-full bg-muted/50" />
-                            <span>{formatRelativeTime(timestamp)}</span>
-                        </>
-                    )}
+                    <PublisherMetadata article={{ ...article, created_at: article.created_at }} className="font-semibold text-ink" />
                     <ArticleViewCount count={article.view_count} className="text-muted" />
                 </div>
             </PublisherLink>

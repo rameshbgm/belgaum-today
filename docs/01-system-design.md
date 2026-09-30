@@ -75,7 +75,7 @@ graph TD
 | **Auth** | `/api/auth/login`, `/api/auth/logout` | JWT-based admin authentication |
 | **Admin** | `/api/admin/stats`, `/api/admin/articles`, `/api/admin/feeds`, `/api/admin/logs`, `/api/admin/agent-logs`, `/api/admin/cron` | Dashboard, content management, AI operations |
 | **Tracking** | `/api/track/view`, `/api/track/source` | Analytics — article views, source clicks |
-| **Cron** | `/api/cron/fetch-rss` | Background RSS fetch + AI trending |
+| **Cron** | `/api/cron/fetch-rss`, `/api/cron/trending-analysis` | Independent RSS and AI schedules configured through environment variables |
 
 ### Layer 4 — Frontend (Next.js 16 SSR)
 

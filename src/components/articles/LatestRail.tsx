@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { Eye } from 'lucide-react';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { formatRelativeTime, formatNumber } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 import { PublisherLink } from './PublisherLink';
+import { PublisherMetadata } from './PublisherMetadata';
 
 interface CategorySection {
     category: Category;
@@ -49,7 +50,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                                                     {a.title}
                                                 </h3>
                                                 <span className="mt-0.5 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
-                                                    <span className="truncate">{a.source_name} · {formatRelativeTime(a.published_at || a.created_at)}</span>
+                                                    <PublisherMetadata article={a} className="text-[11px] text-muted" />
                                                     <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
                                                         <Eye className="w-3 h-3" />
                                                         {formatNumber(a.view_count ?? 0)}
@@ -77,7 +78,7 @@ export function LatestRail({ articles, categorySections }: LatestRailProps) {
                                     </h3>
                                 </div>
                                 <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
-                                    <span className="truncate">{a.source_name} · {formatRelativeTime(a.published_at || a.created_at)}</span>
+                                    <PublisherMetadata article={a} className="text-[11px] text-muted" />
                                     <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
                                         <Eye className="w-3 h-3" />
                                         {formatNumber(a.view_count ?? 0)}

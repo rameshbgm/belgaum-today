@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { PublisherLink } from './PublisherLink';
-import { Clock, Info, ExternalLink, Flame } from 'lucide-react';
-import { Badge, Tooltip } from '@/components/ui';
+import { Flame } from 'lucide-react';
+import { Badge } from '@/components/ui';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, stripHtml, truncate } from '@/lib/utils';
+import { stripHtml, truncate } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
+import { PublisherMetadata } from './PublisherMetadata';
 
 interface ArticleCardProps {
     article: Article;
@@ -85,33 +86,7 @@ export function ArticleCard({ article, priority = false, compact = false }: Arti
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                         {/* Source with Tooltip */}
-                        <Tooltip
-                            content={
-                                <div className="p-2 min-w-[200px]">
-                                    <p className="font-semibold mb-1">{article.source_name}</p>
-                                    <a
-                                        href={article.source_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-accent hover:underline"
-                                    >
-                                        Read Original <ExternalLink className="w-3 h-3" />
-                                    </a>
-                                </div>
-                            }
-                            position="bottom"
-                        >
-                            <span className="inline-flex max-w-full items-center gap-1 break-words cursor-pointer hover:text-accent transition-colors">
-                                {article.source_name}
-                                <Info className="w-3 h-3" />
-                            </span>
-                        </Tooltip>
-
-                        {/* Time */}
-                        <span className="flex items-center gap-0.5">
-                            <Clock className={compact ? "w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" : "w-3 h-3"} />
-                            <span>{formatRelativeTime(article.published_at || article.created_at)}</span>
-                        </span>
+                        <PublisherMetadata article={article} className="text-muted" />
                     </div>
 
                     {/* Views — rendered red for hot articles */}

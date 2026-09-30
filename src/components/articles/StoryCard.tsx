@@ -1,9 +1,10 @@
 import Image from 'next/image';
 import { PublisherLink } from './PublisherLink';
 import { Article, CATEGORY_META } from '@/types';
-import { formatRelativeTime, truncate, stripHtml } from '@/lib/utils';
+import { truncate, stripHtml } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
+import { PublisherMetadata } from './PublisherMetadata';
 
 /**
  * Editorial story card. Two shapes share one component:
@@ -24,9 +25,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                     <p className="mt-2 text-sm text-muted leading-relaxed line-clamp-2">
                         {truncate(stripHtml(article.excerpt || ''), 140)}
                     </p>
-                    <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
-                        {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
-                    </span>
+                    <PublisherMetadata article={article} className="mt-2 text-xs text-muted" />
                     <ArticleViewCount count={article.view_count} className="mt-2 text-xs text-muted" />
                 </PublisherLink>
             </article>
@@ -53,9 +52,7 @@ export function StoryCard({ article, variant = 'feature' }: { article: Article; 
                 <h3 className="mt-1 font-display text-xl font-semibold leading-snug text-ink group-hover:text-primary transition-colors">
                     {article.title}
                 </h3>
-                <span className="mt-2 block text-[11px] uppercase tracking-wider text-muted">
-                    {article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}
-                </span>
+                <PublisherMetadata article={article} className="mt-2 text-xs text-muted" />
                 <ArticleViewCount count={article.view_count} className="mt-2 text-xs text-muted" />
             </PublisherLink>
         </article>

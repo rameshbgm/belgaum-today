@@ -125,7 +125,6 @@ CREATE TABLE IF NOT EXISTS rss_feed_config (
     name VARCHAR(100) NOT NULL,
     feed_url VARCHAR(500) NOT NULL UNIQUE,
     category ENUM('india', 'business', 'technology', 'entertainment', 'sports', 'belgaum') NOT NULL,
-    fetch_interval_minutes INT DEFAULT 15,
     is_active BOOLEAN DEFAULT TRUE,
     last_fetched_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

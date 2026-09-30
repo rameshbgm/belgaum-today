@@ -11,7 +11,6 @@ interface Feed {
     name: string;
     publisher_name: string | null;
     feed_url: string;
-    fetch_interval_minutes: number;
     category: string;
     is_active: boolean;
     last_fetched_at: string | null;
@@ -55,7 +54,6 @@ export default function RSSFeedsPage() {
         publisher_name: '',
         feed_url: '',
         category: 'india',
-        fetch_interval_minutes: 120,
         is_active: true
     });
     const [formSubmitting, setFormSubmitting] = useState(false);
@@ -184,7 +182,6 @@ export default function RSSFeedsPage() {
             publisher_name: '',
             feed_url: '',
             category: 'india',
-            fetch_interval_minutes: 120,
             is_active: true
         });
         setShowFeedModal(true);
@@ -197,7 +194,6 @@ export default function RSSFeedsPage() {
             publisher_name: feed.publisher_name || feed.name.split(' - ')[0],
             feed_url: feed.feed_url,
             category: feed.category,
-            fetch_interval_minutes: feed.fetch_interval_minutes,
             is_active: Boolean(feed.is_active),
         });
         setShowFeedModal(true);
@@ -929,16 +925,6 @@ export default function RSSFeedsPage() {
                                 <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Active (fetch this feed automatically)
                                 </label>
-                            </div>
-
-                            <div>
-                                <label htmlFor="fetch-interval" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Fetch interval (minutes)
-                                </label>
-                                <Input id="fetch-interval" type="number" min={1} max={1440} step={1}
-                                    value={formData.fetch_interval_minutes}
-                                    onChange={e => setFormData({ ...formData, fetch_interval_minutes: Number(e.target.value) })}
-                                    required />
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

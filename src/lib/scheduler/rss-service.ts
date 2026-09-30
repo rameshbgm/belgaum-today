@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { query, execute, insert } from '@/lib/db';
-import { fetchAllFeeds, RssFeedConfig, dueForScheduledFetch } from '@/lib/rss';
+import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
 import { publisherUrl, assertSourcePolicyConfigured } from '@/lib/source-policy';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
@@ -50,7 +50,6 @@ async function saveFetchItems(runId: string, feed: RssFeedConfig, items: FetchIt
 export async function runRssFetch(options: {
     feedIds?: number[];
     categories?: string[];
-    force?: boolean;
     triggerType?: 'manual' | 'cron' | 'scheduled';
     triggeredBy?: string;
 } = {}): Promise<{ newArticles: number; skipped: number; errors: number; feedsProcessed: number }> {
@@ -60,21 +59,24 @@ export async function runRssFetch(options: {
     assertSourcePolicyConfigured();
     const configuredFeeds = await query<RssFeedConfig[]>(`SELECT * FROM rss_feed_config WHERE is_active = true`);
     const feeds = configuredFeeds.filter(feed =>
-        (options.force || dueForScheduledFetch(feed)) &&
         (!options.feedIds?.length || options.feedIds.includes(feed.id)) &&
         (!options.categories?.length || options.categories.includes(feed.category)));
-
-    if (feeds.length === 0) {
-        fileLogger.info('cron', 'No active feeds found');
-        return { newArticles: 0, skipped: 0, errors: 0, feedsProcessed: 0 };
-    }
 
     const runId = randomUUID();
     await insert(
         `INSERT INTO rss_fetch_runs (run_id, trigger_type, triggered_by, total_feeds, started_at)
          VALUES (?, ?, ?, ?, ?)`,
-        [runId, options.triggerType || (options.force ? 'manual' : 'scheduled'), options.triggeredBy || null, feeds.length, new Date(start)]
+        [runId, options.triggerType || 'manual', options.triggeredBy || null, feeds.length, new Date(start)]
     );
+
+    if (feeds.length === 0) {
+        fileLogger.info('cron', 'No active feeds found');
+        await execute(
+            `UPDATE rss_fetch_runs SET overall_status = 'success', duration_ms = ?, completed_at = NOW() WHERE run_id = ?`,
+            [Date.now() - start, runId]
+        );
+        return { newArticles: 0, skipped: 0, errors: 0, feedsProcessed: 0 };
+    }
 
     fileLogger.info('cron', `Fetching ${feeds.length} active feeds`);
 

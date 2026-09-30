@@ -1,5 +1,5 @@
 import { PublisherLink } from './PublisherLink';
-import { Eye } from 'lucide-react';
+import { ArrowUpRight, Eye } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
 
 interface MostReadArticle {
@@ -28,7 +28,7 @@ export function MostRead({ articles }: { articles: MostReadArticle[] }) {
                                 {a.title}
                             </h3>
                             <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
-                                <span className="truncate">{a.source_name}</span>
+                                <span className="min-w-0 break-words normal-case tracking-normal">Read at {a.source_name} <ArrowUpRight aria-hidden="true" className="inline h-3.5 w-3.5 align-text-bottom" /></span>
                                 <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
                                     <Eye className="w-3 h-3" />
                                     {formatNumber(a.view_count ?? 0)}

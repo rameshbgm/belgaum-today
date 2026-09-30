@@ -23,8 +23,8 @@ ALTER TABLE rss_feed_config MODIFY category ENUM('india','world','business','tec
 ALTER TABLE rss_fetch_logs MODIFY category ENUM('india','world','business','technology','entertainment','sports','belgaum','travel','science','health','lifestyle','food','education','environment','culture','finance') NOT NULL;
 ALTER TABLE trending_articles MODIFY category ENUM('india','world','business','technology','entertainment','sports','belgaum','travel','science','health','lifestyle','food','education','environment','culture','finance') NOT NULL;
 
-INSERT INTO rss_feed_config (name, feed_url, category, fetch_interval_minutes, is_active)
-SELECT 'The Hindu - Karnataka', 'https://www.thehindu.com/news/national/karnataka/feeder/default.rss', 'india', 120, 1
+INSERT INTO rss_feed_config (name, feed_url, category, is_active)
+SELECT 'The Hindu - Karnataka', 'https://www.thehindu.com/news/national/karnataka/feeder/default.rss', 'india', 1
 WHERE NOT EXISTS (
     SELECT 1 FROM rss_feed_config
     WHERE feed_url = 'https://www.thehindu.com/news/national/karnataka/feeder/default.rss'

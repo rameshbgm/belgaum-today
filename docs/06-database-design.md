@@ -221,7 +221,6 @@ Both FKs have `ON DELETE CASCADE`.
 | `name` | VARCHAR(100) | NOT NULL | Feed display name |
 | `feed_url` | VARCHAR(500) | NOT NULL, UNIQUE | RSS feed URL |
 | `category` | ENUM(6 values) | NOT NULL | Which category to assign articles |
-| `fetch_interval_minutes` | INT | DEFAULT 120 | Fetch frequency |
 | `is_active` | BOOLEAN | DEFAULT TRUE | Enable/disable |
 | `last_fetched_at` | TIMESTAMP | NULL | Last successful fetch |
 | `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | — |

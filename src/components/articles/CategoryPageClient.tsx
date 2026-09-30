@@ -1,264 +1,93 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Search, X, Briefcase, Cpu, Trophy, Film, Globe, MapPin } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronRight } from 'lucide-react';
 import { Article, Category, CATEGORY_META } from '@/types';
-import { ArticleGrid } from './ArticleGrid';
-import { Button } from '@/components/ui';
-import { SubCategory } from './CategorySearchHeader';
+import type { SubCategory } from './CategorySearchHeader';
 import { TrendingCarousel, TrendingArticle } from '@/components/TrendingCarousel';
 import { Sidebar } from '@/components/layout';
 import { TrackingProvider } from '@/components/TrackingProvider';
-
-// Icon mapping
-const ICON_MAP: Record<string, React.ElementType> = {
-    Briefcase,
-    Cpu,
-    Trophy,
-    Film,
-    Globe,
-    MapPin,
-};
+import { ArchiveResults } from './ArchiveResults';
+import { useArchiveSearch } from './useArchiveSearch';
+import { ArticleGrid } from './ArticleGrid';
 
 interface CategoryPageClientProps {
     category: Category;
     initialArticles: Article[];
     subCategories: SubCategory[];
     trendingArticles: TrendingArticle[];
-    theme: {
-        gradient: string;
-        iconName: string;
-        accentColor: string;
-        title: string;
-        tagline: string;
-    };
-    stats: {
-        articleCount: number;
-        sourceCount: number;
-        lastUpdated: string | null;
-    };
+    theme: { gradient: string; iconName: string; accentColor: string; title: string; tagline: string };
+    stats: { articleCount: number; sourceCount: number; lastUpdated: string | null };
 }
 
-export function CategoryPageClient({
-    category,
-    initialArticles,
-    subCategories,
-    trendingArticles,
-    theme,
-    stats,
-}: CategoryPageClientProps) {
-    const [articles, setArticles] = useState<Article[]>(initialArticles);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedSubCategory, setSelectedSubCategory] = useState('all');
-    const [loading, setLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(initialArticles.length >= 20);
-    const [showSearch, setShowSearch] = useState(false);
+function CategorySearch({ query, onSearch, name }: { query: string; onSearch: (query: string) => void; name: string }) {
+    const [draft, setDraft] = useState(query);
+    return <form onSubmit={event => { event.preventDefault(); onSearch(draft.trim()); }} className="mt-5">
+        <label htmlFor="category-query" className="mb-2 block text-sm font-medium">Search the full {name} archive</label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+            <input id="category-query" type="search" maxLength={200} value={draft} onChange={event => setDraft(event.target.value)}
+                placeholder="Search headlines, reports or publishers"
+                className="min-h-11 min-w-0 flex-1 rounded-md border border-white/40 bg-white px-3 py-2 text-base text-gray-900 placeholder:text-gray-600" />
+            <button type="submit" className="min-h-11 rounded-md border border-white/60 px-5 py-2 font-semibold hover:bg-white/10">Search</button>
+        </div>
+    </form>;
+}
 
-    const categoryMeta = CATEGORY_META[category];
-    const Icon = ICON_MAP[theme.iconName] || MapPin; // Fallback to MapPin if icon not found
-
-    // Client-side filtering
-    const filteredArticles = useMemo(() => {
-        let filtered = articles;
-
-        // Filter by subcategory
-        if (selectedSubCategory !== 'all') {
-            const searchTerm = selectedSubCategory.toLowerCase();
-            filtered = articles.filter(
-                (article) =>
-                    article.title.toLowerCase().includes(searchTerm) ||
-                    article.excerpt?.toLowerCase().includes(searchTerm) ||
-                    article.content.toLowerCase().includes(searchTerm)
-            );
+export function CategoryPageClient({ category, initialArticles, subCategories, trendingArticles, theme }: CategoryPageClientProps) {
+    const router = useRouter();
+    const search = useSearchParams();
+    const query = search.get('q') || '';
+    const selected = search.get('subcategory') || 'all';
+    const params = new URLSearchParams(search.toString());
+    params.set('category', category);
+    const result = useArchiveSearch(params.toString());
+    const name = CATEGORY_META[category].name;
+    const filtered = Boolean(query || selected !== 'all' || search.has('page'));
+    const href = (changes: Record<string, string | null>) => {
+        const next = new URLSearchParams(search.toString());
+        next.delete('category');
+        for (const [key, value] of Object.entries(changes)) {
+            if (value) next.set(key, value); else next.delete(key);
         }
-
-        // Filter by search query
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (article) =>
-                    article.title.toLowerCase().includes(query) ||
-                    article.excerpt?.toLowerCase().includes(query) ||
-                    article.source_name.toLowerCase().includes(query)
-            );
-        }
-
-        return filtered;
-    }, [articles, selectedSubCategory, searchQuery]);
-
-    const loadMore = async () => {
-        if (loading || !hasMore) return;
-
-        setLoading(true);
-        try {
-            const oldestArticle = articles[articles.length - 1];
-            // Use published_at if available, fallback to created_at
-            const dateToUse = oldestArticle.published_at || oldestArticle.created_at;
-            const beforeTimestamp = new Date(dateToUse).toISOString();
-
-            const params = new URLSearchParams({
-                before: beforeTimestamp,
-                limit: '20',
-                category: category,
-            });
-
-            const response = await fetch(`/api/articles?${params.toString()}`);
-            const data = await response.json();
-
-            if (data.success && data.data.items.length > 0) {
-                // Filter out articles we already have (by ID) to avoid duplicates
-                const existingIds = new Set(articles.map(a => a.id));
-                const newArticles = data.data.items.filter((a: Article) => !existingIds.has(a.id));
-                
-                if (newArticles.length > 0) {
-                    setArticles((prev) => [...prev, ...newArticles]);
-                    setHasMore(data.data.items.length >= 20);
-                } else {
-                    setHasMore(false);
-                }
-            } else {
-                setHasMore(false);
-            }
-        } catch (error) {
-            console.error('Error loading more articles:', error);
-            setHasMore(false);
-        } finally {
-            setLoading(false);
-        }
+        return `/${category}${next.size ? `?${next}` : ''}`;
     };
 
-    return (
-        <TrackingProvider category={category}>
-            {/* ── Themed Gradient Header with Filters ── */}
-            <section className={`relative bg-gradient-to-r ${theme.gradient} text-white overflow-hidden`}>
-                {/* Background decoration */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl" />
-                    <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-white rounded-full blur-3xl" />
-                </div>
-
-                <div className="container mx-auto px-4 py-4 md:py-6 relative z-10">
-                    {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm text-white/70 mb-3">
-                        <Link href="/" className="hover:text-white transition-colors">
-                            Home
-                        </Link>
-                        <ChevronRight className="w-4 h-4" />
-                        <span className="font-medium text-white">{categoryMeta.name}</span>
-                    </nav>
-
-                    {/* Title Row with Search */}
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-                            {categoryMeta.name}
-                        </h1>
-
-                        {/* Search Button */}
-                        <button
-                            onClick={() => setShowSearch(!showSearch)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-all border border-white/20"
-                        >
-                            {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
-                            <span className="hidden sm:inline">Search</span>
-                        </button>
-                    </div>
-
-                    {/* Expandable Search Input */}
-                    {showSearch && (
-                        <div className="mb-4">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={`Search in ${categoryMeta.name}...`}
-                                className="w-full px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
-                                autoFocus
-                            />
-                            {searchQuery && (
-                                <p className="mt-2 text-sm text-white/70">
-                                    Found {filteredArticles.length} {filteredArticles.length === 1 ? 'article' : 'articles'}
-                                </p>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Subcategory Filter Pills */}
-                    <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
-                        {subCategories.map((sub) => (
-                            <button
-                                key={sub.id}
-                                onClick={() => setSelectedSubCategory(sub.id)}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                                    selectedSubCategory === sub.id
-                                        ? 'bg-white text-gray-900 shadow-lg'
-                                        : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20'
-                                }`}
-                            >
-                                {sub.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            <div className="container mx-auto px-4 py-6">
-                {/* ── Trending Carousel ── */}
-                {trendingArticles.length > 0 && (
-                    <div className="mb-6">
-                        <TrendingCarousel articles={trendingArticles} accentColor={theme.accentColor} />
-                    </div>
-                )}
-
-                <div className="lg:grid lg:grid-cols-4 lg:gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-3">
-                        {/* Article Grid */}
-                        <ArticleGrid articles={filteredArticles} columns={2} />
-
-                        {/* No results message */}
-                        {filteredArticles.length === 0 && (
-                            <div className="text-center py-12 bg-surface rounded-lg border border-hairline">
-                                <div className="text-muted mb-2">
-                                    <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                </div>
-                                <p className="text-lg font-medium text-ink">
-                                    No articles found
-                                </p>
-                                <p className="text-sm text-muted mt-2">
-                                    {searchQuery
-                                        ? `No results for "${searchQuery}"`
-                                        : `No articles in ${selectedSubCategory !== 'all' ? subCategories.find(s => s.id === selectedSubCategory)?.label : categoryMeta.name}`}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Load More Button */}
-                        {!searchQuery && selectedSubCategory === 'all' && hasMore && filteredArticles.length > 0 && (
-                            <div className="mt-8 text-center">
-                                <Button
-                                    onClick={loadMore}
-                                    disabled={loading}
-                                    className="px-8 py-3 bg-primary text-white hover:bg-primary-hover"
-                                >
-                                    {loading ? 'Loading...' : 'Load More'}
-                                </Button>
-                            </div>
-                        )}
-
-                        {!searchQuery && selectedSubCategory === 'all' && !hasMore && articles.length > 0 && (
-                            <div className="mt-8 text-center text-muted text-sm">
-                                No more articles to load
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sidebar */}
-                    <aside className="lg:col-span-1 mt-8 lg:mt-0">
-                        <Sidebar showCategories={false} showRss={false} showAds={true} />
-                    </aside>
-                </div>
+    return <TrackingProvider category={category}>
+        <section className={`bg-gradient-to-r ${theme.gradient} text-white`}>
+            <div className="container mx-auto px-4 py-5 md:py-7">
+                <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 text-sm">
+                    <Link href="/" className="inline-flex min-h-11 items-center hover:underline">Home</Link>
+                    <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                    <span>{name}</span>
+                </nav>
+                <h1 className="font-display text-3xl font-bold md:text-4xl">{name}</h1>
+                <CategorySearch key={`${category}:${search.toString()}`} query={query} name={name}
+                    onSearch={value => router.push(href({ q: value, page: null }), { scroll: false })} />
+                <nav aria-label={`${name} topics`} className="mt-4 flex flex-wrap gap-2">
+                    {subCategories.map(sub => <Link key={sub.id} scroll={false}
+                        href={href({ subcategory: sub.id === 'all' ? null : sub.id, page: null })}
+                        aria-current={selected === sub.id ? 'true' : undefined}
+                        className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm font-medium ${selected === sub.id ? 'border-white bg-white text-gray-900' : 'border-white/40 hover:bg-white/10'}`}>
+                        {sub.label}
+                    </Link>)}
+                </nav>
+                {(query || selected !== 'all') && <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <p className="min-w-0 break-words">{query ? `Searching for “${query}”` : 'All reports'}{selected !== 'all' ? ` · ${subCategories.find(sub => sub.id === selected)?.label || selected}` : ''}</p>
+                    <Link href={`/${category}`} scroll={false} className="inline-flex min-h-11 items-center underline underline-offset-4">Clear filters</Link>
+                </div>}
             </div>
-        </TrackingProvider>
-    );
+        </section>
+        <div className="container mx-auto px-4 py-6">
+            {!filtered && trendingArticles.length > 0 && <div className="mb-6"><TrendingCarousel articles={trendingArticles} accentColor={theme.accentColor} /></div>}
+            <div className="grid min-w-0 gap-8 lg:grid-cols-4">
+                <section aria-label={`${name} search results`} className="min-w-0 lg:col-span-3">
+                    <ArchiveResults {...result} columns={2} pageHref={page => href({ page: page === 1 ? null : String(page) })} />
+                    {result.loading && !filtered && initialArticles.length > 0 && <ArticleGrid articles={initialArticles} columns={2} />}
+                </section>
+                <aside className="min-w-0"><Sidebar showCategories={false} showRss={false} showAds={true} /></aside>
+            </div>
+        </div>
+    </TrackingProvider>;
 }

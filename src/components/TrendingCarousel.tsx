@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { PublisherLink } from '@/components/articles/PublisherLink';
 import { Clock, ArrowRight, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
@@ -30,18 +30,10 @@ interface TrendingCarouselProps {
 
 export function TrendingCarousel({ articles, accentColor = 'saffron' }: TrendingCarouselProps) {
     const [current, setCurrent] = useState(0);
-    const [paused, setPaused] = useState(false);
     const total = articles.length;
 
     const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
     const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
-
-    // Auto-rotate every 5 seconds
-    useEffect(() => {
-        if (paused || total <= 1) return;
-        const timer = setInterval(next, 5000);
-        return () => clearInterval(timer);
-    }, [paused, total, next]);
 
     if (total === 0) return null;
 
@@ -94,11 +86,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
     };
 
     return (
-        <div
-            className="group relative overflow-hidden shadow-2xl"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-        >
+        <div className="group relative overflow-hidden shadow-2xl" role="region" aria-roledescription="carousel" aria-label="Trending publisher reports">
             {/* Carousel slide */}
             <PublisherLink article={article}
                 className="block relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[16/5]"
@@ -152,7 +140,7 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                         </span>
                         <ArticleViewCount count={article.view_count} className="text-white/85" />
                         <span className={`flex items-center gap-1.5 ${colors.btn} font-medium`}>
-                            Read Article
+                            Read at {article.source_name}
                             <ArrowRight className="w-4 h-4" />
                         </span>
                     </div>
@@ -164,14 +152,14 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
                 <>
                     <button
                         onClick={(e) => { e.preventDefault(); prev(); }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-white md:left-3 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Previous slide"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={(e) => { e.preventDefault(); next(); }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-white md:right-3 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Next slide"
                     >
                         <ChevronRight className="w-5 h-5" />
@@ -181,17 +169,15 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
 
             {/* Dot indicators */}
             {total > 1 && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2">
                     {articles.map((_, i) => (
                         <button
                             key={i}
                             onClick={(e) => { e.preventDefault(); setCurrent(i); }}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === current
-                                ? `${colors.dot} w-6`
-                                : 'bg-white/40 hover:bg-white/60'
-                                }`}
+                            className="flex h-11 w-8 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-white"
                             aria-label={`Go to slide ${i + 1}`}
-                        />
+                            aria-current={i === current ? 'true' : undefined}
+                        ><span className={`h-2 rounded-full ${i === current ? `${colors.dot} w-6` : 'w-2 bg-white/60'}`} /></button>
                     ))}
                 </div>
             )}

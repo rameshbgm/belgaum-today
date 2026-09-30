@@ -217,6 +217,8 @@ export default async function HomePage() {
         </aside>
       </section>
 
+      <TopicPreferences />
+
       <section className="grid grid-cols-1 gap-x-6 gap-y-9 border-b-2 border-ink/85 py-10 sm:grid-cols-2 xl:grid-cols-4" aria-label="News by category">
         {FRONT_PAGE_CATEGORIES.map(section => (
           <SectionNewsCarousel
@@ -245,7 +247,6 @@ export default async function HomePage() {
               <p className="text-sm text-muted">Nothing trending yet.</p>
             )}
 
-            <TopicPreferences articles={articles} />
             {digestConfigured() && <DailyDigestSignup />}
 
             {/* RSS pull-quote block */}

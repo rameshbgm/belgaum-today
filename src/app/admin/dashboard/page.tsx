@@ -7,7 +7,7 @@ import {
     Activity, Zap, Users
 } from 'lucide-react';
 import { Card, CardContent, Badge, Button, useToast } from '@/components/ui';
-import { DashboardStats } from '@/types';
+import { DashboardStats, SchedulerHealth } from '@/types';
 import { formatNumber } from '@/lib/utils';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -27,10 +27,58 @@ interface CronResult {
     errors?: string[];
 }
 
+function SchedulerCard({
+    title,
+    interval,
+    health,
+    action,
+}: {
+    title: string;
+    interval: string;
+    health?: SchedulerHealth;
+    action?: React.ReactNode;
+}) {
+    const stale = health?.isStale ?? true;
+    return (
+        <Card className={`border-2 ${stale ? 'border-red-300 dark:border-red-800' : 'border-green-200 dark:border-green-800'}`}>
+            <CardContent className="p-4 sm:p-6">
+                <div className="flex h-full flex-col justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+                            <Activity className={`h-6 w-6 ${stale ? 'text-red-600' : 'text-green-600'}`} />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-base font-semibold text-gray-900 dark:text-white sm:text-lg">{title}</h3>
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${stale
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                    : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'}`}>
+                                    <span className={`h-1.5 w-1.5 rounded-full ${stale ? 'bg-red-500' : 'bg-green-500'}`} />
+                                    {health?.lastStatus === 'never' ? 'Never ran' : stale ? 'Needs attention' : health?.lastStatus === 'running' ? 'Running' : 'On schedule'}
+                                </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
+                                {interval} · {health?.lastStartedAt
+                                    ? `last run ${health.ageMinutes === 0 ? 'just now' : `${health.ageMinutes} min ago`}`
+                                    : 'no heartbeat yet'}
+                            </p>
+                            {health?.lastError && (
+                                <p className="mt-1 line-clamp-2 text-xs text-red-600">{health.lastError}</p>
+                            )}
+                        </div>
+                    </div>
+                    {action}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function AdminDashboardPage() {
     const { showToast } = useToast();
     const [stats, setStats] = useState<(DashboardStats & { totalClicks?: number; feedStatus?: unknown[]; topArticlesByDate?: Array<{ date: string; articles: Array<{ id: number; title: string; slug: string; views: number; rank: number }> }> }) | null>(null);
     const sched = stats?.scheduler;
+    const aiSched = stats?.aiScheduler;
     const [isLoading, setIsLoading] = useState(true);
     const [cronRunning, setCronRunning] = useState(false);
     const [cronResult, setCronResult] = useState<CronResult | null>(null);
@@ -212,43 +260,24 @@ export default function AdminDashboardPage() {
                 </Card>
             </div>
 
-            {/* Scheduler Health — GREEN when alive, RED when the in-process timer has died */}
-            <Card className={`mb-8 border-2 ${sched?.isStale ? 'border-red-300 dark:border-red-800' : 'border-green-200 dark:border-green-800'}`}>
-                <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-xl flex items-center justify-center ${sched?.isStale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
-                                <Activity className={`w-6 h-6 ${sched?.isStale ? 'text-red-600' : 'text-green-600'}`} />
-                            </div>
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">RSS Scheduler</h3>
-                                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                        sched?.isStale
-                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                                            : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                                    }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${sched?.isStale ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
-                                        {sched?.lastStatus === 'never' ? 'Never ran' : sched?.isStale ? 'Stale / Dead' : 'Alive'}
-                                    </span>
-                                </div>
-                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                                    {sched?.lastStartedAt
-                                        ? `Last tick ${sched.ageMinutes === 0 ? 'just now' : `${sched.ageMinutes} min ago`} · ${formatNumber(sched.tickCount)} ticks total`
-                                        : 'No heartbeat recorded yet'}
-                                </p>
-                                {sched?.isStale && sched.lastError && (
-                                    <p className="text-xs text-red-600 mt-1 truncate max-w-full sm:max-w-md">⚠ {sched.lastError}</p>
-                                )}
-                            </div>
-                        </div>
-                        <Button onClick={handleRunCron} disabled={cronRunning} className="shrink-0 w-full md:w-auto">
-                            <Zap className="w-4 h-4 mr-1" />
-                            {cronRunning ? 'Running…' : 'Run now'}
+            <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <SchedulerCard
+                    title="RSS Scheduler"
+                    interval={`Every ${stats?.schedulerIntervals.rssMinutes ?? 120} minutes from .env`}
+                    health={sched}
+                    action={(
+                        <Button onClick={handleRunCron} disabled={cronRunning} className="w-full self-start sm:w-auto">
+                            <Zap className="mr-1 h-4 w-4" />
+                            {cronRunning ? 'Running…' : 'Run RSS now'}
                         </Button>
-                    </div>
-                </CardContent>
-            </Card>
+                    )}
+                />
+                <SchedulerCard
+                    title="AI Analysis Scheduler"
+                    interval={`Every ${stats?.schedulerIntervals.aiHours ?? 4} hours from .env`}
+                    health={aiSched}
+                />
+            </div>
 
             {/* Cron Result Panel */}
             {showCronResult && cronResult && (

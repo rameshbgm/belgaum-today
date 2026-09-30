@@ -133,7 +133,7 @@ NEXT_PUBLIC_BING_SITE_VERIFICATION=xxxxxxxxxxxxxxxxxx
 ### RSS Feed Fetcher
 
 ```
-Command: curl -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
+Command: curl "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
 Schedule: */30 * * * * (Every 30 minutes)
 Name: RSS Feed Fetcher
 ```
@@ -148,14 +148,14 @@ Name: RSS Feed Fetcher
 ### Trending Analysis
 
 ```
-Command: curl -X POST "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
-Schedule: 0 */6 * * * (Every 6 hours)
+Command: curl "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
+Schedule: 0 */4 * * * (Every 4 hours)
 Name: Trending Analysis
 ```
 
 **Breakdown:**
 - Minute: `0` (at minute 0)
-- Hour: `*/6` (every 6 hours)
+- Hour: `*/4` (every 4 hours)
 - Day: `*`
 - Month: `*`
 - Weekday: `*`

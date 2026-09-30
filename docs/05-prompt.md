@@ -29,7 +29,7 @@ Build a production-ready, AI-powered news aggregation platform called **Belgaum 
 6. **article_views** — id, article_id (FK), user_agent, referrer, ip_address, created_at
 7. **source_clicks** — id, source_name, article_id (FK, SET NULL on delete), created_at
 8. **newsletter_subscriptions** — id, email (unique), subscribed_at, unsubscribed_at
-9. **rss_feed_config** — id, name, feed_url (unique), category (ENUM), fetch_interval_minutes (default 120), is_active, last_fetched_at
+9. **rss_feed_config** — id, name, feed_url (unique), category (ENUM), is_active, last_fetched_at
 10. **trending_articles** — id, article_id (FK), category, rank_position, ai_score, ai_reasoning, batch_id, expires_at. Unique key: (category, rank_position)
 11. **ai_providers** — id, name (unique), display_name, base_url, api_format (openai/anthropic/gemini/custom), is_active, is_default. Seed: OpenAI, Anthropic, DeepSeek, Google Gemini, SarvamAI
 12. **ai_models** — id, provider_id (FK), model_id, display_name, is_active, is_default, max_tokens, temperature. Seed: gpt-4o-mini, claude-3.5-sonnet, deepseek-chat, gemini-2.0-flash, sarvam-m, plus alternates
@@ -100,7 +100,8 @@ Badge, Button (variants: primary/secondary/outline/ghost/danger + sizes + loadin
 | `/api/auth/logout` | POST | Clear auth cookie |
 | `/api/track/view` | POST | Track article view |
 | `/api/track/source` | POST | Track source click |
-| `/api/cron/fetch-rss` | GET | Cron: fetch RSS + AI trending |
+| `/api/cron/fetch-rss` | GET | Cron: fetch RSS on the global environment interval |
+| `/api/cron/trending-analysis` | GET | Cron: AI trending on its independent environment interval |
 | `/api/admin/stats` | GET | Dashboard stats |
 | `/api/admin/articles` | GET, PATCH, DELETE | Admin article management |
 | `/api/admin/feeds` | GET, PATCH | RSS feed config |

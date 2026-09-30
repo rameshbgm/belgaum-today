@@ -4,12 +4,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChevronRight, Clock, Eye, Calendar, ExternalLink, Sparkles } from 'lucide-react';
+import { ChevronRight, Clock, Calendar, ExternalLink } from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
 import { Badge } from '@/components/ui';
 import { ShareButtons, ArticleCard, ArticleViewTracker, NewsFallbackImage } from '@/components/articles';
-import { formatDate, formatRelativeTime, formatNumber, sanitizeArticleContent, stripHtml } from '@/lib/utils';
+import { formatDate, sanitizeArticleContent, stripHtml } from '@/lib/utils';
 import { SITE_URL } from '@/lib/site-url';
 
 type Props = {
@@ -84,9 +84,6 @@ export default async function ArticlePage({ params }: Props) {
 
     return (
         <>
-            {/* Client-side view tracking */}
-            <ArticleViewTracker articleId={article.id} category={article.category} />
-
             <article className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-muted mb-6">
@@ -121,6 +118,15 @@ export default async function ArticlePage({ params }: Props) {
                         {article.title}
                     </h1>
 
+                    <p className="mb-4 text-sm text-muted">
+                        Publisher report from{' '}
+                        <a href={article.source_url} target="_blank" rel="noopener noreferrer"
+                            className="font-semibold text-accent underline decoration-hairline underline-offset-4 hover:decoration-accent">
+                            {article.source_name} <ExternalLink aria-hidden="true" className="inline h-3.5 w-3.5 align-text-bottom" />
+                            <span className="sr-only"> (opens publisher in a new tab)</span>
+                        </a>
+                    </p>
+
                     {/* Meta */}
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted mb-6">
                         <span className="flex items-center gap-1.5">
@@ -131,10 +137,13 @@ export default async function ArticlePage({ params }: Props) {
                             <Clock className="w-4 h-4" />
                             {article.reading_time} min read
                         </span>
-                        <span className="flex items-center gap-1.5">
-                            <Eye className="w-4 h-4" />
-                            {formatNumber(article.view_count)} views
-                        </span>
+                        <ArticleViewTracker
+                            articleId={article.id}
+                            category={article.category}
+                            initialCount={article.view_count}
+                            showCount
+                            className="gap-1.5"
+                        />
                     </div>
 
                     {/* Share Buttons */}
@@ -191,7 +200,7 @@ export default async function ArticlePage({ params }: Props) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium rounded-lg hover:bg-teal-800 transition-colors"
                     >
-                        Read Original Article
+                        Read at {article.source_name}
                         <ExternalLink className="w-4 h-4" />
                     </a>
                 </div>

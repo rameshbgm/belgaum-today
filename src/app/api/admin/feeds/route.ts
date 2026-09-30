@@ -129,7 +129,7 @@ export const POST = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { name, publisher_name, feed_url, category, is_active = true, fetch_interval_minutes = 120 } = body;
+        const { name, publisher_name, feed_url, category, is_active = true } = body;
 
         // Validation
         if (!name || !publisher_name || !feed_url || !category) {
@@ -155,10 +155,6 @@ export const POST = withLogging(async (request: NextRequest) => {
                 { status: 400 }
             );
         }
-        if (!Number.isInteger(fetch_interval_minutes) || fetch_interval_minutes < 1 || fetch_interval_minutes > 1440) {
-            return NextResponse.json({ success: false, error: 'Fetch interval must be 1 to 1440 minutes' }, { status: 400 });
-        }
-
         // Validate that the URL is a reachable RSS feed with at least one item
         let feedItems: Awaited<ReturnType<typeof parseRssFeed>>;
         try {
@@ -194,9 +190,9 @@ export const POST = withLogging(async (request: NextRequest) => {
 
         // Insert new feed
         await execute(
-            `INSERT INTO rss_feed_config (name, publisher_name, feed_url, publisher_domain, category, is_active, fetch_interval_minutes)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [name, publisher_name, feed_url, domain, category.toLowerCase(), is_active, fetch_interval_minutes]
+            `INSERT INTO rss_feed_config (name, publisher_name, feed_url, publisher_domain, category, is_active)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [name, publisher_name, feed_url, domain, category.toLowerCase(), is_active]
         );
 
         return NextResponse.json({ 
@@ -214,7 +210,7 @@ export const POST = withLogging(async (request: NextRequest) => {
 
 /**
  * PUT /api/admin/feeds — Update RSS feed
- * Body: { id: number, name: string, feed_url: string, category: string, fetch_interval_minutes?: number, is_active?: boolean }
+ * Body: { id: number, name: string, feed_url: string, category: string, is_active?: boolean }
  */
 export const PUT = withLogging(async (request: NextRequest) => {
     try {
@@ -224,7 +220,7 @@ export const PUT = withLogging(async (request: NextRequest) => {
         }
 
         const body = await request.json();
-        const { id, name, publisher_name, feed_url, category, is_active, fetch_interval_minutes = 120 } = body;
+        const { id, name, publisher_name, feed_url, category, is_active } = body;
 
         // Validation
         if (!id || !name || !publisher_name || !feed_url || !category) {
@@ -250,10 +246,6 @@ export const PUT = withLogging(async (request: NextRequest) => {
                 { status: 400 }
             );
         }
-        if (!Number.isInteger(fetch_interval_minutes) || fetch_interval_minutes < 1 || fetch_interval_minutes > 1440) {
-            return NextResponse.json({ success: false, error: 'Fetch interval must be 1 to 1440 minutes' }, { status: 400 });
-        }
-
         // Check if feed exists
         const existing = await query<Array<{ id: number }>>(
             'SELECT id FROM rss_feed_config WHERE id = ?',
@@ -287,9 +279,9 @@ export const PUT = withLogging(async (request: NextRequest) => {
         if (!domain) return NextResponse.json({ success: false, error: 'Could not determine publisher attribution from this feed' }, { status: 422 });
         await execute(
             `UPDATE rss_feed_config
-             SET name = ?, publisher_name = ?, feed_url = ?, publisher_domain = ?, category = ?, is_active = ?, fetch_interval_minutes = ?
+             SET name = ?, publisher_name = ?, feed_url = ?, publisher_domain = ?, category = ?, is_active = ?
              WHERE id = ?`,
-            [name, publisher_name, feed_url, domain, category.toLowerCase(), is_active ?? true, fetch_interval_minutes, id]
+            [name, publisher_name, feed_url, domain, category.toLowerCase(), is_active ?? true, id]
         );
 
         return NextResponse.json({ 

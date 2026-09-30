@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Article } from '@/types';
-import { formatRelativeTime, stripHtml, truncate } from '@/lib/utils';
+import { stripHtml, truncate } from '@/lib/utils';
 import { PublisherLink } from './PublisherLink';
 import { ArticleViewCount } from './ArticleViewCount';
+import { PublisherMetadata } from './PublisherMetadata';
 
 interface SectionNewsCarouselProps {
     title: string;
@@ -18,7 +19,6 @@ export function SectionNewsCarousel({ title, articles, empty, compact = false }:
     const track = useRef<HTMLDivElement>(null);
     const [current, setCurrent] = useState(0);
     const [visibleCount, setVisibleCount] = useState(1);
-    const [paused, setPaused] = useState(false);
     const [reducedMotion, setReducedMotion] = useState(false);
 
     const measure = useCallback(() => {
@@ -57,12 +57,6 @@ export function SectionNewsCarousel({ title, articles, empty, compact = false }:
         return () => window.removeEventListener('resize', measure);
     }, [measure, articles.length]);
 
-    useEffect(() => {
-        if (paused || reducedMotion || articles.length <= visibleCount) return;
-        const timer = window.setInterval(() => scrollToIndex(current + 1), 5200);
-        return () => window.clearInterval(timer);
-    }, [articles.length, current, paused, reducedMotion, scrollToIndex, visibleCount]);
-
     const pageCount = Math.max(1, Math.ceil(articles.length / visibleCount));
     const page = Math.min(pageCount - 1, Math.floor(current / visibleCount));
 
@@ -80,12 +74,6 @@ export function SectionNewsCarousel({ title, articles, empty, compact = false }:
                     role="region"
                     aria-roledescription="carousel"
                     aria-label={title + ' stories'}
-                    onMouseEnter={() => setPaused(true)}
-                    onMouseLeave={() => setPaused(false)}
-                    onFocusCapture={() => setPaused(true)}
-                    onBlurCapture={event => {
-                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
-                    }}
                 >
                     <div
                         ref={track}
@@ -109,7 +97,7 @@ export function SectionNewsCarousel({ title, articles, empty, compact = false }:
                                         {truncate(stripHtml(article.excerpt || ''), 135)}
                                     </p>
                                     <span className="mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-3 text-[10px] uppercase tracking-wide text-muted sm:text-[11px]">
-                                        <span className="min-w-0 truncate">{article.source_name} · {formatRelativeTime(article.published_at || article.created_at)}</span>
+                                        <PublisherMetadata article={article} className="text-[11px] text-muted" />
                                         <ArticleViewCount count={article.view_count} className="shrink-0 normal-case tracking-normal" />
                                     </span>
                                 </PublisherLink>

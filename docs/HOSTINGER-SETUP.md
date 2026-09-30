@@ -520,7 +520,7 @@ npm run start
 - **Type:** Custom
 - **Command:**
   ```bash
-  curl -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
+  curl "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
   ```
   Replace `YOUR_CRON_SECRET` with the secret you set in environment variables
 
@@ -539,18 +539,18 @@ Click **Create**
 
 ### 3. Trending Analysis Cron
 
-**Analyzes trending topics every 6 hours:**
+**Analyzes trending topics every 4 hours by default (`TRENDING_ANALYSIS_INTERVAL_HOURS`):**
 
 **Configuration:**
 - **Type:** Custom
 - **Command:**
   ```bash
-  curl -X POST "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
+  curl "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
   ```
 
 **Schedule:**
 - Minute: `0`
-- Hour: `*/6`
+- Hour: `*/4`
 - Day: `*`
 - Month: `*`
 - Weekday: `*`
@@ -566,10 +566,10 @@ Click **Create**
 **Via command line:**
 ```bash
 # Test RSS fetcher
-curl -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
+curl "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
 
 # Test trending analysis
-curl -X POST "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
+curl "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
 ```
 
 Expected response:

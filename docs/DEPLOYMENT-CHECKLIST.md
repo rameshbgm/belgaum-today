@@ -109,7 +109,7 @@ Quick reference checklist for deploying Belgaum Today to Hostinger.
 
 ### Trending Analysis
 - [ ] Cron job created
-- [ ] Schedule: Every 6 hours (`0 */6 * * *`)
+- [ ] Schedule: Every 4 hours (`0 */4 * * *`, matching `TRENDING_ANALYSIS_INTERVAL_HOURS=4`)
 - [ ] URL: `https://belgaum.today/api/cron/trending-analysis?secret=YOUR_SECRET`
 - [ ] Secret matches environment variable
 - [ ] Test run successful

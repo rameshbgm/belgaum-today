@@ -5,9 +5,10 @@ import Image from 'next/image';
 import { PublisherLink } from './PublisherLink';
 import { Eye } from 'lucide-react';
 import { Article, CATEGORY_META } from '@/types';
-import { stripHtml, formatRelativeTime, formatNumber } from '@/lib/utils';
+import { stripHtml, formatNumber } from '@/lib/utils';
 import { NewsFallbackImage } from './NewsFallbackImage';
 import { SectionHeading } from './SectionHeading';
+import { PublisherMetadata } from './PublisherMetadata';
 
 interface HomepageMoreStoriesProps {
     initialArticles: Article[];
@@ -52,7 +53,6 @@ function groupByDay(articles: Article[]): Array<{ key: string; date: Date; artic
 function ArticleRow({ article }: { article: Article }) {
     const cat = CATEGORY_META[article.category];
     const excerpt = stripHtml(article.excerpt || '');
-    const timestamp = article.published_at || article.created_at;
     const [imgFailed, setImgFailed] = useState(false);
     const showImg = article.featured_image && !imgFailed;
 
@@ -92,8 +92,8 @@ function ArticleRow({ article }: { article: Article }) {
                             {excerpt}
                         </p>
                     )}
-                    <span className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted">
-                        <span className="truncate">{article.source_name} · {formatRelativeTime(timestamp)}</span>
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+                        <PublisherMetadata article={article} className="text-[11px] text-muted" />
                         <span className="flex items-center gap-0.5 normal-case tracking-normal shrink-0">
                             <Eye className="w-3 h-3" />
                             {formatNumber(article.view_count ?? 0)}

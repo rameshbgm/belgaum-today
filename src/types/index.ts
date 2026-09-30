@@ -142,6 +142,11 @@ export interface DashboardStats {
   viewTrackingStale: boolean; // true when no view events recorded recently
   // Scheduler liveness (from scheduler_heartbeat)
   scheduler: SchedulerHealth;
+  aiScheduler: SchedulerHealth;
+  schedulerIntervals: {
+    rssMinutes: number;
+    aiHours: number;
+  };
 }
 
 export interface SchedulerHealth {

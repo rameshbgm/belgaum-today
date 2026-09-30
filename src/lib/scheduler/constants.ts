@@ -1,11 +1,20 @@
-// Shared scheduler timing constants — kept in one place so the timer, the
-// staleness/recovery check, and the dashboard health badge all agree.
+function positiveNumber(value: string | undefined, fallback: number): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
-export const RSS_INTERVAL_MS = 6 * 60 * 1000; // 6 minutes — matches instrumentation.node.ts
+export const RSS_JOB = 'rss-scheduler';
+export const AI_JOB = 'ai-trending-scheduler';
+export const RSS_INTERVAL_MS = positiveNumber(process.env.RSS_FETCH_INTERVAL_MINUTES, 120) * 60 * 1000;
+export const AI_INTERVAL_MS = positiveNumber(process.env.TRENDING_ANALYSIS_INTERVAL_HOURS, 4) * 60 * 60 * 1000;
+export const SCHEDULER_CHECK_INTERVAL_MS = Math.max(
+    60_000,
+    Math.min(5 * 60_000, Math.floor(Math.min(RSS_INTERVAL_MS, AI_INTERVAL_MS) / 4)),
+);
+export const STARTUP_DELAY_MS = 10_000;
 
-// A single tick can run long (dozens of feeds + an AI call), so we tolerate a
-// few missed intervals before declaring the scheduler dead. ~3 missed ticks.
-export const SCHEDULER_STALE_AFTER_MS = 20 * 60 * 1000; // 20 minutes
+export function schedulerStaleAfterMs(intervalMs: number): number {
+    return intervalMs + (SCHEDULER_CHECK_INTERVAL_MS * 2);
+}
 
-// View tracking is considered stalled if no view events landed in this window.
-export const VIEW_TRACKING_STALE_AFTER_MS = 60 * 60 * 1000; // 1 hour
+export const VIEW_TRACKING_STALE_AFTER_MS = 60 * 60 * 1000;

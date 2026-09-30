@@ -161,7 +161,9 @@ NEXT_PUBLIC_SITE_NAME=Belgaum Today
 
 # ─── RSS Feed Configuration ───
 RSS_FETCH_INTERVAL_MINUTES=120        # Default: fetch every 2 hours
+TRENDING_ANALYSIS_INTERVAL_HOURS=4    # Default: analyze every 4 hours
 CRON_SECRET=belgaum-today-cron-secret-2026
+TRENDING_CRON_SECRET=belgaum-today-ai-cron-secret-2026
 # Used to authenticate cron job calls: /api/cron/fetch-rss?secret=<CRON_SECRET>
 
 # ─── OpenAI Configuration (gpt-4o-mini) ───
@@ -186,7 +188,9 @@ OPENAI_REQUEST_TIMEOUT_MS=45000       # Request timeout in milliseconds
 | `NEXT_PUBLIC_SITE_URL` | Yes | — | Full site URL (client-side, exposed to browser) |
 | `NEXT_PUBLIC_SITE_NAME` | No | — | Site name for meta tags |
 | `RSS_FETCH_INTERVAL_MINUTES` | No | `120` | Cron fetch interval |
+| `TRENDING_ANALYSIS_INTERVAL_HOURS` | No | `4` | Independent AI analysis interval |
 | `CRON_SECRET` | Yes | — | Secret to authenticate cron endpoints |
+| `TRENDING_CRON_SECRET` | Yes | — | Secret to authenticate the AI cron endpoint |
 | `OPENAI_API_KEY` | Yes | — | OpenAI API key from https://platform.openai.com/api-keys |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` | GPT model name |
 | `OPENAI_TEMPERATURE` | No | `0.3` | Temperature for AI responses (0-2) |

@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
-import { query, queryOne } from '@/lib/db';
+import { query } from '@/lib/db';
 import { DashboardStats, SchedulerHealth } from '@/types';
 import { getCurrentUser } from '@/lib/auth';
 import { withLogging } from '@/lib/withLogging';
-import { SCHEDULER_STALE_AFTER_MS, VIEW_TRACKING_STALE_AFTER_MS } from '@/lib/scheduler/constants';
+import {
+    AI_INTERVAL_MS,
+    AI_JOB,
+    RSS_INTERVAL_MS,
+    RSS_JOB,
+    schedulerStaleAfterMs,
+    VIEW_TRACKING_STALE_AFTER_MS,
+} from '@/lib/scheduler/constants';
 
 // GET /api/admin/stats - Get dashboard statistics (real data only)
 export const GET = withLogging(async () => {
@@ -170,29 +177,35 @@ export const GET = withLogging(async () => {
             || (Date.now() - new Date(lastViewAt).getTime()) > VIEW_TRACKING_STALE_AFTER_MS;
 
         // Scheduler liveness from the heartbeat table.
-        const beat = await queryOne<{
+        const beats = await query<Array<{
+            job_name: string;
             last_started_at: string | null;
             last_success_at: string | null;
             last_status: 'running' | 'success' | 'error';
             last_error: string | null;
             tick_count: number;
-        }>(
-            `SELECT last_started_at, last_success_at, last_status, last_error, tick_count
-             FROM scheduler_heartbeat WHERE job_name = 'rss-scheduler'`
+        }>>(
+            `SELECT job_name, last_started_at, last_success_at, last_status, last_error, tick_count
+             FROM scheduler_heartbeat WHERE job_name IN (?, ?)`,
+            [RSS_JOB, AI_JOB],
         );
-
-        const ageMs = beat?.last_started_at
-            ? Date.now() - new Date(beat.last_started_at).getTime()
-            : null;
-        const scheduler: SchedulerHealth = {
-            lastStartedAt: beat?.last_started_at ?? null,
-            lastSuccessAt: beat?.last_success_at ?? null,
-            lastStatus: beat?.last_status ?? 'never',
-            lastError: beat?.last_error ?? null,
-            tickCount: beat?.tick_count ?? 0,
-            ageMinutes: ageMs === null ? null : Math.floor(ageMs / 60000),
-            isStale: ageMs === null || ageMs > SCHEDULER_STALE_AFTER_MS,
+        const healthFor = (job: string, intervalMs: number): SchedulerHealth => {
+            const beat = beats.find(item => item.job_name === job);
+            const ageMs = beat?.last_started_at
+                ? Date.now() - new Date(beat.last_started_at).getTime()
+                : null;
+            return {
+                lastStartedAt: beat?.last_started_at ?? null,
+                lastSuccessAt: beat?.last_success_at ?? null,
+                lastStatus: beat?.last_status ?? 'never',
+                lastError: beat?.last_error ?? null,
+                tickCount: beat?.tick_count ?? 0,
+                ageMinutes: ageMs === null ? null : Math.floor(ageMs / 60000),
+                isStale: ageMs === null || ageMs > schedulerStaleAfterMs(intervalMs),
+            };
         };
+        const scheduler = healthFor(RSS_JOB, RSS_INTERVAL_MS);
+        const aiScheduler = healthFor(AI_JOB, AI_INTERVAL_MS);
 
         // RSS feed status
         const feedStatus = await query<Array<{
@@ -229,6 +242,11 @@ export const GET = withLogging(async () => {
             lastViewAt,
             viewTrackingStale,
             scheduler,
+            aiScheduler,
+            schedulerIntervals: {
+                rssMinutes: RSS_INTERVAL_MS / 60_000,
+                aiHours: AI_INTERVAL_MS / 3_600_000,
+            },
         };
 
         return NextResponse.json({

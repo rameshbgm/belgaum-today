@@ -456,7 +456,7 @@ node -e "console.log('TRENDING_CRON_SECRET=' + require('crypto').randomBytes(32)
 - **Type:** Custom
 - **Command:**
   ```bash
-  curl -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
+  curl "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
   ```
 - **Schedule:** 
   - Minute: `*/30` (every 30 minutes)
@@ -473,16 +473,16 @@ wget -q -O- "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
 
 ### 3. Trending Analysis Cron
 
-**Runs every 6 hours to analyze trending topics:**
+**Runs every 4 hours by default (`TRENDING_ANALYSIS_INTERVAL_HOURS`):**
 
 - **Type:** Custom
 - **Command:**
   ```bash
-  curl -X POST "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
+  curl "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
   ```
 - **Schedule:**
   - Minute: `0`
-  - Hour: `*/6` (every 6 hours)
+  - Hour: `*/4` (every 4 hours)
   - Day: `*`
   - Month: `*`
   - Weekday: `*`
@@ -494,10 +494,10 @@ Test cron endpoints manually:
 
 ```bash
 # Test RSS fetcher
-curl -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
+curl "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_CRON_SECRET"
 
 # Test trending analysis
-curl -X POST "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
+curl "https://belgaum.today/api/cron/trending-analysis?secret=YOUR_TRENDING_CRON_SECRET"
 ```
 
 Expected response:
@@ -658,7 +658,7 @@ npm run lint
 
 ```bash
 # Test manually
-curl -v -X POST "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_SECRET"
+curl -v "https://belgaum.today/api/cron/fetch-rss?secret=YOUR_SECRET"
 ```
 
 ### Issue: SSL Certificate Issues

@@ -8,7 +8,7 @@
 
 **Endpoint:** `GET /api/cron/fetch-rss?secret=<CRON_SECRET>`
 
-**Schedule:** Every 2 hours (configurable via `RSS_FETCH_INTERVAL_MINUTES`)
+**Schedule:** Global interval from `RSS_FETCH_INTERVAL_MINUTES` (default: 2 hours). Feed rows do not define schedules.
 
 **Authentication:** Query parameter `secret` must match `CRON_SECRET` environment variable
 
@@ -28,10 +28,8 @@ graph TD
     J -->|Yes| K[Skip]
     J -->|No| L[INSERT into articles table]
     L --> M[Update last_fetched_at on feed config]
-    M --> N[Per category: fetch recent articles]
-    N --> O[Send to AI agent for trending analysis]
-    O --> P[UPSERT trending_articles table]
-    P --> Q[Return summary JSON]
+    M --> N[Persist run and feed logs]
+    N --> O[Return summary JSON]
 ```
 
 **Step-by-step logging (all to `cron-*.log`):**
@@ -41,7 +39,6 @@ graph TD
 | Start | `▶ Cron started: fetch-rss` |
 | Feed count | `├ fetch-rss: Found N active feeds` |
 | Per feed | `├ fetch-rss: [category] source: N new, M skipped` |
-| Trending | `├ fetch-rss: Trending updated for [category]` |
 | Complete | `✓ Cron completed: fetch-rss (Xms)` with `{ feedsProcessed, newArticles, skipped }` |
 | Error | `✕ Cron failed: fetch-rss` with stack trace |
 
@@ -53,12 +50,17 @@ graph TD
     "feedsProcessed": 34,
     "newArticles": 12,
     "skipped": 180,
-    "trending": { "india": 5, "business": 5, "technology": 5 },
     "durationMs": 8432
 }
 ```
 
-### 1.2 Manual Cron Trigger (`/api/admin/cron`)
+### 1.2 AI Trending Analysis (`/api/cron/trending-analysis`)
+
+**Schedule:** Independent global interval from `TRENDING_ANALYSIS_INTERVAL_HOURS` (default: 4 hours).
+
+The scheduler writes one heartbeat for RSS and one for AI. Every category-level AI call is saved in `ai_agent_logs`; RSS runs are saved in `rss_fetch_runs`, `rss_fetch_logs`, and `rss_fetch_items`. Both are visible in the admin panel.
+
+### 1.3 Manual Cron Trigger (`/api/admin/cron`)
 
 **Endpoint:** `POST /api/admin/cron`
 
@@ -66,7 +68,7 @@ graph TD
 
 **Purpose:** Allows admins to manually trigger the RSS fetch from the admin panel without waiting for the scheduled interval.
 
-**Implementation:** Internally calls the `fetch-rss` endpoint with the CRON_SECRET.
+**Implementation:** Runs the selected active feeds directly and records a manual run without changing the scheduled heartbeat cadence.
 
 ---
 

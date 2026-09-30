@@ -77,7 +77,7 @@ mysql -h srv873.hstgr.io -P 3306 \
 | `admin@belgaum.today` | `admin` | Default password — **change in production** |
 
 ### RSS Feed Sources (36)
-Feeds from Hindustan Times and The Hindu covering all 6 categories, each with a 120-minute fetch interval. Managed from **Admin → Feeds**.
+Feeds from Hindustan Times and The Hindu covering all 6 categories. All active feeds use the global `RSS_FETCH_INTERVAL_MINUTES` schedule and are managed from **Admin → Feeds**.
 
 ### AI Providers (5)
 | Provider | Model | Active |

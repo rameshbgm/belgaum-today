@@ -59,8 +59,8 @@ Generate secrets: `openssl rand -base64 32`
 
 ### Content Pipeline
 
-1. **RSS fetching** — `GET /api/cron/fetch-rss?secret=<CRON_SECRET>` reads active feeds from `rss_feed_config` table (respects `fetch_interval_minutes`), parses XML via `src/lib/rss.ts`, deduplicates by `source_url`, stores to `articles` table.
-2. **Trending analysis** — Separate AI cron (`/api/cron/trending-analysis` or `/api/ai/trending-analysis`) uses LangChain with OpenAI/Google Gemini to analyze article titles and generate trending topics.
+1. **RSS fetching** — `GET /api/cron/fetch-rss?secret=<CRON_SECRET>` reads all active feeds from `rss_feed_config`, parses XML via `src/lib/rss.ts`, deduplicates by `source_url`, and stores articles. The global cadence comes only from `RSS_FETCH_INTERVAL_MINUTES`.
+2. **Trending analysis** — The independent `/api/cron/trending-analysis` schedule uses `TRENDING_ANALYSIS_INTERVAL_HOURS`; database heartbeat claims prevent early or overlapping runs.
 3. **Categories:** `india`, `business`, `technology`, `entertainment`, `sports`, `belgaum`. Defined in `src/types/index.ts` → `CATEGORY_META`.
 
 ### API Route Layout

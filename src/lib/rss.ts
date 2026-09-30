@@ -21,7 +21,6 @@ export interface RssFeedConfig {
     category: string;
     is_active: boolean;
     last_fetched_at: Date | null;
-    fetch_interval_minutes: number;
     publisher_domain: string | null;
     publisher_name: string | null;
 }
@@ -36,13 +35,6 @@ export interface FeedFetchResult {
 // the newest bounded batch on each run so shared-hosting jobs finish reliably;
 // subsequent runs deduplicate those entries before saving anything.
 const MAX_ITEMS_PER_FEED_RUN = 50;
-
-export function dueForScheduledFetch(feed: RssFeedConfig, now = Date.now()): boolean {
-    if (!feed.last_fetched_at) return true;
-    const last = new Date(feed.last_fetched_at).getTime();
-    if (!Number.isFinite(last)) return true;
-    return now - last >= Math.max(1, feed.fetch_interval_minutes || 15) * 60_000;
-}
 
 /**
  * Strip HTML tags and CDATA wrappers from a string

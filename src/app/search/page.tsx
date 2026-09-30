@@ -1,373 +1,111 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, X, History } from 'lucide-react';
-import { Button, Input, Badge } from '@/components/ui';
-import { ArticleGrid } from '@/components/articles';
-import { Article, CATEGORY_META, Category, TOP_LEVEL_CATEGORIES } from '@/types';
+import { CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
+import { ArchiveResults } from '@/components/articles/ArchiveResults';
+import { useArchiveSearch } from '@/components/articles/useArchiveSearch';
 
-const categories = TOP_LEVEL_CATEGORIES;
+const fieldClass = 'min-h-11 w-full min-w-0 rounded-md border border-hairline bg-surface px-3 py-2 text-base text-ink';
 
-function SearchContent() {
+function SearchForm({ params }: { params: string }) {
     const router = useRouter();
-    const searchParams = useSearchParams();
-
-    const [query, setQuery] = useState(searchParams.get('q') || '');
-    const [category, setCategory] = useState<Category | ''>(searchParams.get('category') as Category || '');
-    const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
-    const [endDate, setEndDate] = useState(searchParams.get('endDate') || '');
-    const [sortBy, setSortBy] = useState<'newest' | 'views' | 'relevant'>(
-        (searchParams.get('sortBy') as 'newest' | 'views' | 'relevant') || 'newest'
-    );
-
-    const [articles, setArticles] = useState<Article[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasSearched, setHasSearched] = useState(false);
-    const [searchHistory, setSearchHistory] = useState<string[]>([]);
-    const [validationError, setValidationError] = useState<string>('');
-
-    // Load search history from localStorage
+    const initial = new URLSearchParams(params);
+    const [error, setError] = useState('');
+    const [history, setHistory] = useState<string[]>([]);
     useEffect(() => {
-        const history = localStorage.getItem('searchHistory');
-        if (history) {
-            setSearchHistory(JSON.parse(history));
-        }
+        const timer = window.setTimeout(() => {
+            try {
+                const saved = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                if (Array.isArray(saved)) setHistory(saved.filter((value): value is string => typeof value === 'string').slice(0, 5));
+            } catch { /* Searching works without device storage. */ }
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, []);
-
-    // Save search to history
-    const saveToHistory = useCallback((searchQuery: string) => {
-        if (!searchQuery.trim()) return;
-
-        const newHistory = [
-            searchQuery,
-            ...searchHistory.filter(h => h !== searchQuery),
-        ].slice(0, 5);
-
-        setSearchHistory(newHistory);
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    }, [searchHistory]);
-
-    // Validate required fields
-    const validateSearch = useCallback(() => {
-        if (!query.trim()) {
-            setValidationError('Search text is required');
-            return false;
-        }
-        if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-            setValidationError('From date must be before To date');
-            return false;
-        }
-        setValidationError('');
-        return true;
-    }, [query, startDate, endDate]);
-
-    // Perform search
-    const performSearch = useCallback(async () => {
-        if (!validateSearch()) {
-            return;
-        }
-
-        setIsLoading(true);
-        setHasSearched(true);
-
-        // Update URL params
-        const params = new URLSearchParams();
-        if (query) params.set('q', query);
-        if (category) params.set('category', category);
-        if (startDate) params.set('startDate', startDate);
-        if (endDate) params.set('endDate', endDate);
-        if (sortBy !== 'newest') params.set('sortBy', sortBy);
-
-        router.replace(`/search?${params.toString()}`, { scroll: false });
-
-        try {
-            const response = await fetch(`/api/search?${params.toString()}`);
-            const data = await response.json();
-
-            if (data.success) {
-                setArticles(data.data);
-                if (query) saveToHistory(query);
-            } else {
-                setArticles([]);
+    return <>
+        <form className="mb-6 rounded-lg border border-hairline bg-surface p-4 sm:p-5" onSubmit={event => {
+            event.preventDefault();
+            const fields = new FormData(event.currentTarget);
+            const next = new URLSearchParams();
+            for (const name of ['q', 'category', 'startDate', 'endDate', 'sortBy']) {
+                const value = String(fields.get(name) || '').trim();
+                if (value && !(name === 'sortBy' && value === 'newest')) next.set(name, value);
             }
-        } catch (error) {
-            console.error('Search error:', error);
-            setArticles([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [query, category, startDate, endDate, sortBy, router, saveToHistory, validateSearch]);
-
-    // Handle Enter key press
-    const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
-    }, [performSearch]);
-
-    // Clear all filters
-    const clearFilters = () => {
-        setQuery('');
-        setCategory('');
-        setStartDate('');
-        setEndDate('');
-        setSortBy('newest');
-    };
-
-    // Use history item
-    const selectHistoryItem = (item: string) => {
-        setQuery(item);
-    };
-
-    // Clear history
-    const clearHistory = () => {
-        setSearchHistory([]);
-        localStorage.removeItem('searchHistory');
-    };
-
-    const hasFilters = category || startDate || endDate || sortBy !== 'newest';
-
-    return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-ink mb-6">
-                Advanced Search
-            </h1>
-
-            {/* Search Bar */}
-            <div className="bg-surface rounded-xl border border-hairline p-4 mb-6">
-                <div className="flex gap-3">
-                    <div className="flex-1 relative">
-                        <Input
-                            type="text"
-                            placeholder="Search articles..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            icon={<Search className="w-5 h-5" />}
-                            className="pr-10"
-                        />
-                        {query && (
-                            <button
-                                onClick={() => setQuery('')}
-                                aria-label="Clear search"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                    <Button
-                        onClick={performSearch}
-                        disabled={isLoading}
-                        className="flex items-center gap-2 min-w-[120px]"
-                    >
-                        <Search className="w-4 h-4" />
-                        {isLoading ? 'Searching...' : 'Search'}
-                    </Button>
-                </div>
-
-                {/* Validation Error */}
-                {validationError && (
-                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                        <p className="text-sm text-red-600 dark:text-red-400">{validationError}</p>
-                    </div>
-                )}
-
-                {/* Filters Panel - Always Visible */}
-                <div className="mt-4 pt-4 border-t border-hairline grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Category */}
-                    <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-ink mb-1.5">
-                            Category <span className="text-red-500">*</span>
-                        </label>
-                            <select
-                                id="category"
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value as Category | '')}
-                                className="w-full px-3 py-2 rounded-lg border border-hairline bg-surface text-ink focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map((cat) => (
-                                    <option key={cat} value={cat}>
-                                        {CATEGORY_META[cat].name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                    {/* Start Date */}
-                    <div>
-                        <label htmlFor="startDate" className="block text-sm font-medium text-ink mb-1.5">
-                            From Date <span className="text-red-500">*</span>
-                        </label>
-                            <Input
-                                id="startDate"
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-
-                    {/* End Date */}
-                    <div>
-                        <label htmlFor="endDate" className="block text-sm font-medium text-ink mb-1.5">
-                            To Date <span className="text-red-500">*</span>
-                        </label>
-                            <Input
-                                id="endDate"
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
-
-                    {/* Sort By */}
-                    <div>
-                        <label htmlFor="sortBy" className="block text-sm font-medium text-ink mb-1.5">
-                            Sort By
-                        </label>
-                        <select
-                            id="sortBy"
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as 'newest' | 'views' | 'relevant')}
-                            className="w-full px-3 py-2 rounded-lg border border-hairline bg-surface text-ink focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="newest">Newest First</option>
-                            <option value="views">Most Viewed</option>
-                            <option value="relevant">Most Relevant</option>
-                        </select>
-                    </div>
-                </div>
-
-                {/* Clear Filters */}
-                {hasFilters && (
-                    <div className="mt-4 flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-500">Active filters:</span>
-                        {category && (
-                            <Badge variant="info" size="sm" className="flex items-center gap-1">
-                                {CATEGORY_META[category].name}
-                                <button onClick={() => setCategory('')} aria-label={`Remove ${CATEGORY_META[category].name} filter`}>
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </Badge>
-                        )}
-                        {startDate && (
-                            <Badge variant="info" size="sm" className="flex items-center gap-1">
-                                From: {startDate}
-                                <button onClick={() => setStartDate('')} aria-label="Remove start date filter">
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </Badge>
-                        )}
-                        {endDate && (
-                            <Badge variant="info" size="sm" className="flex items-center gap-1">
-                                To: {endDate}
-                                <button onClick={() => setEndDate('')} aria-label="Remove end date filter">
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </Badge>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={clearFilters}>
-                            Clear All
-                        </Button>
-                    </div>
-                )}
+            if (next.get('startDate') && next.get('endDate') && next.get('startDate')! > next.get('endDate')!) {
+                setError('From date must be on or before To date.');
+                return;
+            }
+            setError('');
+            const term = next.get('q');
+            if (term) {
+                const recent = [term, ...history.filter(value => value !== term)].slice(0, 5);
+                setHistory(recent);
+                try { localStorage.setItem('searchHistory', JSON.stringify(recent)); } catch { /* Optional. */ }
+            }
+            // An empty search intentionally browses all reports.
+            if (!next.size) next.set('page', '1');
+            router.push(`/search?${next}`, { scroll: false });
+        }}>
+            <label htmlFor="news-query" className="mb-2 block font-medium text-ink">Search the news archive</label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+                <input id="news-query" name="q" type="search" maxLength={200} defaultValue={initial.get('q') || ''}
+                    placeholder="Headlines, reports or publishers" className={`${fieldClass} flex-1`} />
+                <button type="submit" className="min-h-11 rounded-md bg-primary-hover px-6 py-2 font-semibold text-white hover:opacity-90">Search</button>
             </div>
-
-            {/* Search History */}
-            {!query && searchHistory.length > 0 && (
-                <div className="bg-surface rounded-lg border border-hairline p-4 mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="flex items-center gap-2 text-sm font-medium text-ink">
-                            <History className="w-4 h-4" />
-                            Recent Searches
-                        </h3>
-                        <button
-                            onClick={clearHistory}
-                            className="text-sm text-muted hover:text-ink"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {searchHistory.map((item, index) => (
-                            <button
-                                key={index}
-                                onClick={() => selectHistoryItem(item)}
-                                className="px-3 py-1.5 text-sm bg-[#F3EEE4] dark:bg-[#2A251E] text-ink rounded-full hover:bg-primary/10 transition-colors"
-                            >
-                                {item}
-                            </button>
-                        ))}
-                    </div>
+            <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="min-w-0"><label htmlFor="search-category" className="mb-1.5 block text-sm font-medium">Category</label>
+                    <select id="search-category" name="category" defaultValue={initial.get('category') || ''} className={fieldClass}>
+                        <option value="">All categories</option>
+                        {TOP_LEVEL_CATEGORIES.map(category => <option key={category} value={category}>{CATEGORY_META[category].name}</option>)}
+                    </select>
                 </div>
-            )}
-
-            {/* Results */}
-            <div className="mb-4">
-                {!hasSearched ? (
-                    <div className="text-center py-16">
-                        <Search className="w-16 h-16 mx-auto text-muted/50 mb-4" />
-                        <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                            Search for Articles
-                        </h3>
-                        <p className="text-muted">
-                            Fill in the search criteria and click Search to find articles
-                        </p>
-                    </div>
-                ) : isLoading ? (
-                    <div className="text-center py-12">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-r-transparent" />
-                        <p className="mt-4 text-muted">Searching...</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className="mb-4">
-                            <p className="text-muted">
-                                {articles.length} {articles.length === 1 ? 'result' : 'results'} found{query && <> for &quot;{query}&quot;</>}
-                            </p>
-                        </div>
-                        {articles.length > 0 ? (
-                            <ArticleGrid articles={articles} />
-                        ) : (
-                            <div className="text-center py-16">
-                                <X className="w-16 h-16 mx-auto text-muted/50 mb-4" />
-                                <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                                    No Results Found
-                                </h3>
-                                <p className="text-muted">
-                                    Try adjusting your search criteria
-                                </p>
-                            </div>
-                        )}
-                    </>
-                )}
+                <div className="min-w-0"><label htmlFor="search-start" className="mb-1.5 block text-sm font-medium">From date</label>
+                    <input id="search-start" name="startDate" type="date" defaultValue={initial.get('startDate') || ''} className={fieldClass} />
+                </div>
+                <div className="min-w-0"><label htmlFor="search-end" className="mb-1.5 block text-sm font-medium">To date</label>
+                    <input id="search-end" name="endDate" type="date" defaultValue={initial.get('endDate') || ''} className={fieldClass} />
+                </div>
+                <div className="min-w-0"><label htmlFor="search-sort" className="mb-1.5 block text-sm font-medium">Sort by</label>
+                    <select id="search-sort" name="sortBy" defaultValue={initial.get('sortBy') || 'newest'} className={fieldClass}>
+                        <option value="newest">Newest first</option><option value="views">Most viewed</option><option value="relevant">Headline matches first</option>
+                    </select>
+                </div>
             </div>
-        </div>
-    );
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <p className="text-muted">All filters are optional. Select Search to apply changes.</p>
+                <Link href="/search" scroll={false} className="inline-flex min-h-11 items-center font-semibold text-accent underline underline-offset-4">Clear search and filters</Link>
+            </div>
+            {error && <p role="alert" className="mt-2 text-red-700 dark:text-red-300">{error}</p>}
+        </form>
+        {!initial.get('q') && history.length > 0 && <section aria-label="Recent searches" className="mb-6">
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="font-semibold text-ink">Recent searches</h2>
+                <button type="button" className="min-h-11 px-3 text-sm text-accent" onClick={() => {
+                    setHistory([]); try { localStorage.removeItem('searchHistory'); } catch { /* Optional. */ }
+                }}>Clear history</button>
+            </div>
+            <div className="flex flex-wrap gap-2">{history.map(term => <Link key={term} href={`/search?q=${encodeURIComponent(term)}`} scroll={false}
+                className="inline-flex min-h-11 max-w-full items-center break-words rounded-full border border-hairline px-4 text-sm text-ink">{term}</Link>)}</div>
+        </section>}
+    </>;
 }
 
-function SearchLoading() {
-    return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="animate-pulse">
-                <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6" />
-                <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded mb-6" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+function SearchContent() {
+    const search = useSearchParams();
+    const params = search.toString();
+    const enabled = ['q', 'category', 'startDate', 'endDate', 'sortBy', 'page'].some(key => search.has(key));
+    const result = useArchiveSearch(params, enabled);
+    return <div className="container mx-auto min-w-0 px-4 py-6 sm:py-8">
+        <h1 className="mb-6 font-display text-3xl font-bold text-ink md:text-4xl">Search news</h1>
+        <SearchForm key={params} params={params} />
+        {enabled ? <section aria-label="Search results">
+            {search.get('q') && <h2 className="mb-4 break-words font-display text-xl text-ink">Results for “{search.get('q')}”</h2>}
+            <ArchiveResults {...result} pageHref={page => { const next = new URLSearchParams(params); next.set('page', String(page)); return `/search?${next}`; }} />
+        </section> : <p className="py-8 text-muted">Search by a headline, topic or publisher. You can also browse by category or date.</p>}
+    </div>;
 }
 
 export default function SearchPage() {
-    return (
-        <Suspense fallback={<SearchLoading />}>
-            <SearchContent />
-        </Suspense>
-    );
+    return <Suspense fallback={<p role="status" className="container mx-auto px-4 py-8">Loading search…</p>}><SearchContent /></Suspense>;
 }
