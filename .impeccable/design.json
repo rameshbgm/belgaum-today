@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T17:25:35.727808Z",
+  "title": "Design System: Belgaum Today",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Broadcast Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.23982 267.94)",
+          "oklch(26% 0.23982 267.94)",
+          "oklch(38% 0.23982 267.94)",
+          "oklch(49% 0.23982 267.94)",
+          "oklch(61% 0.23982 267.94)",
+          "oklch(72% 0.23982 267.94)",
+          "oklch(84% 0.23982 267.94)",
+          "oklch(95% 0.23982 267.94)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Deep Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.21287 267.98)",
+          "oklch(26% 0.21287 267.98)",
+          "oklch(38% 0.21287 267.98)",
+          "oklch(49% 0.21287 267.98)",
+          "oklch(61% 0.21287 267.98)",
+          "oklch(72% 0.21287 267.98)",
+          "oklch(84% 0.21287 267.98)",
+          "oklch(95% 0.21287 267.98)"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Cool White",
+        "tonalRamp": [
+          "oklch(15% 0.00699 268.55)",
+          "oklch(26% 0.00699 268.55)",
+          "oklch(38% 0.00699 268.55)",
+          "oklch(49% 0.00699 268.55)",
+          "oklch(61% 0.00699 268.55)",
+          "oklch(72% 0.00699 268.55)",
+          "oklch(84% 0.00699 268.55)",
+          "oklch(95% 0.00699 268.55)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "White",
+        "tonalRamp": [
+          "oklch(15% 0.00000 0.00)",
+          "oklch(26% 0.00000 0.00)",
+          "oklch(38% 0.00000 0.00)",
+          "oklch(49% 0.00000 0.00)",
+          "oklch(61% 0.00000 0.00)",
+          "oklch(72% 0.00000 0.00)",
+          "oklch(84% 0.00000 0.00)",
+          "oklch(95% 0.00000 0.00)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Reading Navy",
+        "tonalRamp": [
+          "oklch(15% 0.05225 263.12)",
+          "oklch(26% 0.05225 263.12)",
+          "oklch(38% 0.05225 263.12)",
+          "oklch(49% 0.05225 263.12)",
+          "oklch(61% 0.05225 263.12)",
+          "oklch(72% 0.05225 263.12)",
+          "oklch(84% 0.05225 263.12)",
+          "oklch(95% 0.05225 263.12)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Slate",
+        "tonalRamp": [
+          "oklch(15% 0.04203 259.74)",
+          "oklch(26% 0.04203 259.74)",
+          "oklch(38% 0.04203 259.74)",
+          "oklch(49% 0.04203 259.74)",
+          "oklch(61% 0.04203 259.74)",
+          "oklch(72% 0.04203 259.74)",
+          "oklch(84% 0.04203 259.74)",
+          "oklch(95% 0.04203 259.74)"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Quiet Hairline",
+        "tonalRamp": [
+          "oklch(15% 0.01675 259.42)",
+          "oklch(26% 0.01675 259.42)",
+          "oklch(38% 0.01675 259.42)",
+          "oklch(49% 0.01675 259.42)",
+          "oklch(61% 0.01675 259.42)",
+          "oklch(72% 0.01675 259.42)",
+          "oklch(84% 0.01675 259.42)",
+          "oklch(95% 0.01675 259.42)"
+        ]
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Pale Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.02350 272.82)",
+          "oklch(26% 0.02350 272.82)",
+          "oklch(38% 0.02350 272.82)",
+          "oklch(49% 0.02350 272.82)",
+          "oklch(61% 0.02350 272.82)",
+          "oklch(72% 0.02350 272.82)",
+          "oklch(84% 0.02350 272.82)",
+          "oklch(95% 0.02350 272.82)"
+        ]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "tonalRamp": [
+          "oklch(15% 0.04452 260.98)",
+          "oklch(26% 0.04452 260.98)",
+          "oklch(38% 0.04452 260.98)",
+          "oklch(49% 0.04452 260.98)",
+          "oklch(61% 0.04452 260.98)",
+          "oklch(72% 0.04452 260.98)",
+          "oklch(84% 0.04452 260.98)",
+          "oklch(95% 0.04452 260.98)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface",
+        "tonalRamp": [
+          "oklch(15% 0.04922 259.47)",
+          "oklch(26% 0.04922 259.47)",
+          "oklch(38% 0.04922 259.47)",
+          "oklch(49% 0.04922 259.47)",
+          "oklch(61% 0.04922 259.47)",
+          "oklch(72% 0.04922 259.47)",
+          "oklch(84% 0.04922 259.47)",
+          "oklch(95% 0.04922 259.47)"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "Night Reading White",
+        "tonalRamp": [
+          "oklch(15% 0.01695 267.79)",
+          "oklch(26% 0.01695 267.79)",
+          "oklch(38% 0.01695 267.79)",
+          "oklch(49% 0.01695 267.79)",
+          "oklch(61% 0.01695 267.79)",
+          "oklch(72% 0.01695 267.79)",
+          "oklch(84% 0.01695 267.79)",
+          "oklch(95% 0.01695 267.79)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Night Slate",
+        "tonalRamp": [
+          "oklch(15% 0.03844 258.37)",
+          "oklch(26% 0.03844 258.37)",
+          "oklch(38% 0.03844 258.37)",
+          "oklch(49% 0.03844 258.37)",
+          "oklch(61% 0.03844 258.37)",
+          "oklch(72% 0.03844 258.37)",
+          "oklch(84% 0.03844 258.37)",
+          "oklch(95% 0.03844 258.37)"
+        ]
+      },
+      "dark-primary": {
+        "role": "primary",
+        "displayName": "Light Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.11678 273.17)",
+          "oklch(26% 0.11678 273.17)",
+          "oklch(38% 0.11678 273.17)",
+          "oklch(49% 0.11678 273.17)",
+          "oklch(61% 0.11678 273.17)",
+          "oklch(72% 0.11678 273.17)",
+          "oklch(84% 0.11678 273.17)",
+          "oklch(95% 0.11678 273.17)"
+        ]
+      },
+      "dark-primary-hover": {
+        "role": "primary",
+        "displayName": "Pale Light Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.07697 274.11)",
+          "oklch(26% 0.07697 274.11)",
+          "oklch(38% 0.07697 274.11)",
+          "oklch(49% 0.07697 274.11)",
+          "oklch(61% 0.07697 274.11)",
+          "oklch(72% 0.07697 274.11)",
+          "oklch(84% 0.07697 274.11)",
+          "oklch(95% 0.07697 274.11)"
+        ]
+      },
+      "dark-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline",
+        "tonalRamp": [
+          "oklch(15% 0.05321 260.12)",
+          "oklch(26% 0.05321 260.12)",
+          "oklch(38% 0.05321 260.12)",
+          "oklch(49% 0.05321 260.12)",
+          "oklch(61% 0.05321 260.12)",
+          "oklch(72% 0.05321 260.12)",
+          "oklch(84% 0.05321 260.12)",
+          "oklch(95% 0.05321 260.12)"
+        ]
+      },
+      "dark-soft": {
+        "role": "neutral",
+        "displayName": "Night Soft",
+        "tonalRamp": [
+          "oklch(15% 0.06030 260.75)",
+          "oklch(26% 0.06030 260.75)",
+          "oklch(38% 0.06030 260.75)",
+          "oklch(49% 0.06030 260.75)",
+          "oklch(61% 0.06030 260.75)",
+          "oklch(72% 0.06030 260.75)",
+          "oklch(84% 0.06030 260.75)",
+          "oklch(95% 0.06030 260.75)"
+        ]
+      },
+      "dark-masthead": {
+        "role": "primary",
+        "displayName": "Night Cobalt",
+        "tonalRamp": [
+          "oklch(15% 0.21485 267.38)",
+          "oklch(26% 0.21485 267.38)",
+          "oklch(38% 0.21485 267.38)",
+          "oklch(49% 0.21485 267.38)",
+          "oklch(61% 0.21485 267.38)",
+          "oklch(72% 0.21485 267.38)",
+          "oklch(84% 0.21485 267.38)",
+          "oklch(95% 0.21485 267.38)"
+        ]
+      },
+      "field-focus": {
+        "role": "semantic",
+        "displayName": "Field Focus Blue",
+        "tonalRamp": [
+          "oklch(15% 0.21400 259.81)",
+          "oklch(26% 0.21400 259.81)",
+          "oklch(38% 0.21400 259.81)",
+          "oklch(49% 0.21400 259.81)",
+          "oklch(61% 0.21400 259.81)",
+          "oklch(72% 0.21400 259.81)",
+          "oklch(84% 0.21400 259.81)",
+          "oklch(95% 0.21400 259.81)"
+        ]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Destructive Rose",
+        "tonalRamp": [
+          "oklch(15% 0.25300 17.59)",
+          "oklch(26% 0.25300 17.59)",
+          "oklch(38% 0.25300 17.59)",
+          "oklch(49% 0.25300 17.59)",
+          "oklch(61% 0.25300 17.59)",
+          "oklch(72% 0.25300 17.59)",
+          "oklch(84% 0.25300 17.59)",
+          "oklch(95% 0.25300 17.59)"
+        ]
+      },
+      "danger-hover": {
+        "role": "semantic",
+        "displayName": "Deep Destructive Rose",
+        "tonalRamp": [
+          "oklch(15% 0.22200 16.93)",
+          "oklch(26% 0.22200 16.93)",
+          "oklch(38% 0.22200 16.93)",
+          "oklch(49% 0.22200 16.93)",
+          "oklch(61% 0.22200 16.93)",
+          "oklch(72% 0.22200 16.93)",
+          "oklch(84% 0.22200 16.93)",
+          "oklch(95% 0.22200 16.93)"
+        ]
+      },
+      "home-mist": {
+        "role": "neutral",
+        "displayName": "Home Mist",
+        "tonalRamp": [
+          "oklch(15% 0.03536 261.94)",
+          "oklch(26% 0.03536 261.94)",
+          "oklch(38% 0.03536 261.94)",
+          "oklch(49% 0.03536 261.94)",
+          "oklch(61% 0.03536 261.94)",
+          "oklch(72% 0.03536 261.94)",
+          "oklch(84% 0.03536 261.94)",
+          "oklch(95% 0.03536 261.94)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Desktop briefing lead headline; the Home cover has a separate surface scale."
+      },
+      "display-mobile": {
+        "displayName": "Display Mobile",
+        "purpose": "Phone briefing lead headline."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Article reading title."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section headings."
+      },
+      "story-title": {
+        "displayName": "Story Title",
+        "purpose": "Compact news stream headline."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default reading and UI text."
+      },
+      "body-mobile": {
+        "displayName": "Body Mobile",
+        "purpose": "Phone body text."
+      },
+      "prose": {
+        "displayName": "Prose",
+        "purpose": "Long-form reading."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase category labels."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Publisher names and timestamps."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Shared medium button labels."
+      },
+      "home-section": {
+        "displayName": "Home Section",
+        "purpose": "Recurring Home introduction and local headings; phone sizes adapt by section."
+      },
+      "home-action": {
+        "displayName": "Home Action",
+        "purpose": "Larger repeated white reading actions on the Home cover and closing band."
+      }
+    },
+    "shadows": [
+      {
+        "name": "site-menu",
+        "value": "0 14px 32px -12px rgb(23 36 62 / 24%)",
+        "purpose": "Transient public menu."
+      },
+      {
+        "name": "detail-panel",
+        "value": "-14px 0 40px -22px rgb(23 36 62 / 30%)",
+        "purpose": "Editorial detail dialog."
+      }
+    ],
+    "motion": [
+      {
+        "name": "briefing-enter",
+        "value": "400ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "One-time lead entrance from opacity .8, translateY(6px), blur(1px) to settled."
+      },
+      {
+        "name": "button-state",
+        "value": "150ms",
+        "purpose": "Shared button color transitions."
+      },
+      {
+        "name": "icon-state",
+        "value": "180ms",
+        "purpose": "Header icon background transitions."
+      },
+      {
+        "name": "input-state",
+        "value": "200ms",
+        "purpose": "Shared input focus transitions."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition-duration: .01ms; scroll-behavior: auto",
+        "purpose": "Reduced-motion override removes animation and smooth scrolling."
+      },
+      {
+        "name": "home-ease",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Home entrance and directional action transitions."
+      },
+      {
+        "name": "home-cover-open",
+        "value": "700ms; delays 0ms, 80ms, 160ms",
+        "purpose": "One headline entrance from opacity .6, translateY(16px), blur(2px) to visible settled type; no repeated reveal."
+      },
+      {
+        "name": "home-scroll-morph",
+        "value": "progress = clamp(0, scrollY / (coverHeight * .75), 1); copy: -24px * progress; photo: -7px * progress",
+        "purpose": "The rising curved heritage-photo clip unfolds into a complete window. Passive scroll/resize listeners and requestAnimationFrame only schedule on changes."
+      },
+      {
+        "name": "home-page-progress",
+        "value": "3px; #B9C7FF; scaleX(scrollY / scrollableRange)",
+        "purpose": "Thin fixed page-progress line, pointer-events none and hidden from assistive technology; still tracks under reduced motion."
+      },
+      {
+        "name": "home-action-state",
+        "value": "180ms background-color; 250ms gap; 300ms category-arrow transform",
+        "purpose": "Reading action gaps grow to 32px; category arrows move 4px right and 4px up."
+      },
+      {
+        "name": "home-reduced-motion",
+        "value": "animation: none; copy/photo transform: none; clip progress: 0; control transitions: none",
+        "purpose": "Static visible opening frame and content, with no entrance or copy/photo movement; JavaScript is not required to reveal content."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "360px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Shared medium primary button; minimum 44px target.",
+      "html": "<button class=\"ds-button-primary\" type=\"button\">Fetch feeds</button>",
+      "css": ".ds-button-primary{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;background:#2F4BEB;color:#FFFFFF;border:0;}.ds-button-primary:hover:not(:disabled){background:#243AC4;}.ds-button-primary:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:3px;}.ds-button-primary:disabled{opacity:.45;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Shared medium outline button; minimum 44px target.",
+      "html": "<button class=\"ds-button-outline\" type=\"button\">Refresh overview</button>",
+      "css": ".ds-button-outline{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;background:var(--surface,#FFFFFF);color:var(--ink,#17243E);border:1px solid var(--hairline,#DEE5F0);}.ds-button-outline:hover:not(:disabled){background:var(--soft,#E9EEFF);}.ds-button-outline:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:3px;}.ds-button-outline:disabled{opacity:.45;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-button-outline{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Shared medium ghost button; minimum 44px target.",
+      "html": "<button class=\"ds-button-ghost\" type=\"button\">Cancel</button>",
+      "css": ".ds-button-ghost{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;background:transparent;color:var(--ink,#17243E);border:0;}.ds-button-ghost:hover:not(:disabled){background:var(--soft,#E9EEFF);}.ds-button-ghost:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:3px;}.ds-button-ghost:disabled{opacity:.45;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-button-ghost{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Shared medium danger button; minimum 44px target.",
+      "html": "<button class=\"ds-button-danger\" type=\"button\">Delete article</button>",
+      "css": ".ds-button-danger{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;transition:background-color .15s,color .15s,border-color .15s;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;background:oklch(58.6% 0.253 17.585);color:#FFFFFF;border:0;}.ds-button-danger:hover:not(:disabled){background:oklch(51.4% 0.222 16.935);}.ds-button-danger:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:3px;}.ds-button-danger:disabled{opacity:.45;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-button-danger{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Labeled Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Shared labeled field with visible focus and linked validation state.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-search\">Search news</label><input id=\"ds-search\" class=\"ds-input\" type=\"search\" placeholder=\"Search headlines\" /></div>",
+      "css": ".ds-field{width:min(360px,100%);font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;color:var(--ink,#17243E);}.ds-field label{display:block;font-size:14px;font-weight:500;margin-bottom:6px;color:var(--color-gray-700,#334763);}.ds-input{display:block;width:100%;min-height:44px;padding:10px 16px;border:1px solid var(--color-gray-300,#C5CFDF);border-radius:8px;background:var(--surface,#FFFFFF);color:var(--ink,#17243E);font-size:16px;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;transition:all .2s;}.ds-input::placeholder{color:var(--muted,#5E6D85);}.ds-input:hover{border-color:var(--muted,#5E6D85);}.ds-input:focus{outline:none;box-shadow:0 0 0 2px var(--color-blue-500,oklch(62.3% 0.214 259.815));border-color:transparent;}.ds-input[aria-invalid=\"true\"]{border-color:var(--color-red-500,oklch(63.7% 0.237 25.331));}.ds-input[aria-invalid=\"true\"]:focus{box-shadow:0 0 0 2px var(--color-red-500,oklch(63.7% 0.237 25.331));}.ds-input:disabled{opacity:.48;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-input{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Category Navigation",
+      "kind": "nav",
+      "refersTo": "category-nav",
+      "description": "Home-first, horizontally scrolling navigation followed by the six ordered categories, with a current-page underline.",
+      "html": "<nav class=\"ds-category-nav\" aria-label=\"News categories\"><a href=\"/\" aria-current=\"page\">Home</a><a href=\"/india\">India</a><a href=\"/business\">Business</a><a href=\"/technology\">Technology</a><a href=\"/sports\">Sports</a><a href=\"/entertainment\">Entertainment</a><a href=\"/belgaum\">Belgaum</a></nav>",
+      "css": ".ds-category-nav{display:flex;gap:28px;overflow-x:auto;padding:0 24px;border-bottom:1px solid var(--hairline,#DEE5F0);background:var(--surface,#FFFFFF);font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;}.ds-category-nav a{position:relative;display:inline-flex;align-items:center;min-height:48px;flex-shrink:0;color:var(--ink,#17243E);font-size:16px;text-decoration:none;}.ds-category-nav a:hover,.ds-category-nav a[aria-current]{color:var(--primary,#2F4BEB);}.ds-category-nav a[aria-current]{font-weight:700;}.ds-category-nav a[aria-current]::after{content:\"\";position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--primary,#2F4BEB);}.ds-category-nav a:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:4px;}@media(max-width:1023px){.ds-category-nav{gap:26px;padding-inline:16px;}.ds-category-nav a{min-height:44px;}}"
+    },
+    {
+      "name": "Follow Topic",
+      "kind": "chip",
+      "refersTo": "follow-topic",
+      "description": "Saved topic choice shown in its selected state; not an archive subcategory tag.",
+      "html": "<button type=\"button\" class=\"ds-topic\" aria-pressed=\"true\">India</button>",
+      "css": ".ds-topic{min-height:44px;padding:8px 16px;border:1px solid var(--hairline,#DEE5F0);border-radius:9999px;color:var(--ink,#17243E);background:transparent;font-size:14px;font-weight:600;line-height:20px;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;cursor:pointer;transition:background-color .15s,border-color .15s;}.ds-topic:hover{border-color:var(--primary,#2F4BEB);}.ds-topic[aria-pressed=\"true\"]{background:var(--primary-hover,#243AC4);border-color:var(--primary-hover,#243AC4);color:#FFFFFF;}.ds-topic:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:4px;}.ds-topic:disabled{opacity:.6;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-topic{transition-duration:.01ms;}}"
+    },
+    {
+      "name": "Article Card",
+      "kind": "card",
+      "description": "Responsive news card using the existing empty-image state as its self-contained media sample.",
+      "html": "<article class=\"ds-news-card\"><a class=\"ds-card-photo\" href=\"#report\" aria-label=\"Open original report\"><svg viewBox=\"0 0 24 24\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9a1 1 0 0 1 1-1h3\"/><path d=\"M18 14h-8M18 18h-8M10 6h8v4h-8z\"/></svg><span>Belgaum Today</span></a><div class=\"ds-card-copy\"><span class=\"ds-card-category\">India</span><h3><a href=\"#report\">Headline from the original report</a></h3><p class=\"ds-card-excerpt\">The publisher\u2019s excerpt appears here.</p><div class=\"ds-card-meta\"><span>Read at Publisher <svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></span><span><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg> 0 views</span></div></div></article>",
+      "css": ".ds-news-card{max-width:400px;color:var(--ink,#17243E);font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;}.ds-card-photo{display:flex;aspect-ratio:16/9;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:8px;overflow:hidden;margin-bottom:15px;background:var(--soft,#E9EEFF);color:var(--muted,#5E6D85);font-size:13px;text-decoration:none;}.ds-card-category{color:var(--primary,#2F4BEB);font-size:12px;font-weight:700;letter-spacing:.035em;text-transform:uppercase;}.ds-news-card h3{font-family:var(--font-sora,\"Sora\"),sans-serif;font-size:20px;font-weight:650;line-height:1.35;letter-spacing:-.035em;margin:6px 0 9px;}.ds-news-card a{color:inherit;text-decoration:none;}.ds-news-card h3 a:hover{color:var(--primary,#2F4BEB);}.ds-news-card a:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:4px;}.ds-card-excerpt{font-size:16px;line-height:1.5;color:var(--muted,#5E6D85);margin:0 0 12px;}.ds-card-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;color:var(--muted,#5E6D85);font-size:13px;line-height:1.45;}.ds-card-meta span{display:inline-flex;align-items:center;gap:4px;}@media(max-width:639px){.ds-news-card{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:16px;padding:19px 0;border-bottom:1px solid var(--hairline,#DEE5F0);}.ds-card-photo{grid-column:2;grid-row:1;aspect-ratio:auto;height:84px;margin:0;}.ds-card-photo span{display:none;}.ds-card-copy{grid-column:1;grid-row:1;min-width:0;}.ds-news-card h3{font-size:18px;margin:5px 0 7px;}.ds-card-category{font-size:11px;}.ds-card-excerpt{font-size:14px;margin-bottom:8px;}.ds-card-meta{font-size:12px;margin-top:9px;}}"
+    },
+    {
+      "name": "Story Row",
+      "kind": "custom",
+      "refersTo": "story-row",
+      "description": "Compact text-first story stream, with a trailing photo region and wrapped publisher/count metadata.",
+      "html": "<article class=\"ds-story-row\"><div><span class=\"ds-row-category\">Technology</span><h3><a href=\"#report\">Headline from the original report</a></h3><p>The publisher\u2019s short excerpt appears here.</p><div class=\"ds-row-meta\"><span>Read at Publisher <svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></span><span><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg> 0 views</span></div></div><a href=\"#report\" class=\"ds-row-photo\" aria-label=\"Open original report\"><svg viewBox=\"0 0 24 24\" width=\"30\" height=\"30\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9a1 1 0 0 1 1-1h3\"/><path d=\"M18 14h-8M18 18h-8M10 6h8v4h-8z\"/></svg></a></article>",
+      "css": ".ds-story-row{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:16px;padding:20px 0;border-bottom:1px solid var(--hairline,#DEE5F0);color:var(--ink,#17243E);font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;max-width:580px;}.ds-row-category{color:var(--primary,#2F4BEB);font-size:12px;font-weight:700;letter-spacing:.035em;text-transform:uppercase;}.ds-story-row h3{font-family:var(--font-sora,\"Sora\"),sans-serif;font-size:18px;font-weight:650;line-height:1.35;letter-spacing:-.035em;margin:5px 0 8px;}.ds-story-row a{color:inherit;text-decoration:none;}.ds-story-row h3 a:hover{color:var(--primary,#2F4BEB);}.ds-story-row a:focus-visible{outline:3px solid var(--primary,#2F4BEB);outline-offset:4px;}.ds-story-row p{font-size:15px;line-height:1.45;color:var(--muted,#5E6D85);margin:6px 0 8px;}.ds-row-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;line-height:1.45;color:var(--muted,#5E6D85);}.ds-row-meta span{display:inline-flex;align-items:center;gap:4px;}.ds-row-photo{display:flex;align-items:center;justify-content:center;height:88px;border-radius:8px;overflow:hidden;background:var(--soft,#E9EEFF);color:var(--muted,#5E6D85);}@media(max-width:639px){.ds-story-row{grid-template-columns:minmax(0,1fr) 90px;}.ds-row-photo{height:84px;}.ds-row-category{font-size:11px;}.ds-row-meta{font-size:12px;gap:5px 12px;}}"
+    },
+    {
+      "name": "Home Cover Actions",
+      "kind": "custom",
+      "refersTo": "home-action-white",
+      "description": "Repeated white reading action and native category anchor on the fixed cobalt Home cover; the full cover also includes the attributed curved heritage photograph.",
+      "html": "<div class=\"ds-home-cover-actions\"><p>The national picture. The local perspective. Your next good read.</p><a class=\"ds-home-white-action\" href=\"/briefing\">Read the briefing <svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></a><a class=\"ds-home-explore-action\" href=\"#explore\">Explore categories <svg viewBox=\"0 0 24 24\" width=\"19\" height=\"19\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12l7 7 7-7\"/></svg></a></div>",
+      "css": ".ds-home-cover-actions{background:#2F4BEB;color:white;padding:24px;font-family:var(--font-source,\"Source Sans 3\"),Arial,sans-serif;}.ds-home-cover-actions>p{max-width:31ch;margin:0 0 26px;color:#E8EDFF;font-size:22px;line-height:1.5;}.ds-home-white-action{display:inline-flex;align-items:center;justify-content:space-between;gap:26px;min-height:50px;padding:12px 20px;border-radius:8px;background:white;color:#17243E;font-size:18px;font-weight:650;line-height:1.5;text-decoration:none;transition:background-color .18s,gap .25s cubic-bezier(.16,1,.3,1);}.ds-home-white-action:hover{background:#E9EEFF;gap:32px;}.ds-home-explore-action{display:flex;width:fit-content;align-items:center;gap:8px;min-height:44px;margin-top:8px;color:white;font-size:16px;font-weight:600;text-decoration:none;}.ds-home-explore-action:hover{text-decoration:underline;}.ds-home-cover-actions a:focus-visible{outline:3px solid white;outline-offset:4px;}@media(max-width:639px){.ds-home-cover-actions>p{max-width:34ch;margin-bottom:12px;font-size:17px;line-height:1.4;}.ds-home-white-action{min-height:48px;padding:11px 17px;gap:20px;font-size:17px;}.ds-home-explore-action{margin-top:4px;font-size:15px;}}@media(prefers-reduced-motion:reduce){.ds-home-white-action{transition:none;}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Broadcast Briefing",
+    "overview": "Broadcast Briefing uses a committed cobalt masthead, cool-white reading ground, navy text, bold geometric headings, and compact publisher-linked story streams. The character is direct and readable: photography carries the reporting while typography establishes a clear scan order.\n\nThe Home at `/` adds a persuasive, spacious expression of this identity: a full cobalt cover, oversized white display type, and an authentic Belagavi photograph. The reading feed lives at `/briefing`; its compact scan hierarchy remains the Read expression. The editorial workspace remains the denser Operate expression. The same palette, rounded controls, quiet borders, and sans-serif hierarchy connect these surfaces. Light and dark themes preserve these relationships. Real publisher content and images remain the material of news presentations; the built empty-image state uses a newspaper icon and the site name.",
+    "keyCharacteristics": [
+      "Cobalt identity with cool neutrals and a navy dark theme.",
+      "Sora headings paired with Source Sans 3 reading text, with a distinct Home cover scale.",
+      "A spacious Home opening into compact, responsive streams with visible publisher metadata.",
+      "Quiet hairlines, rounded photos and controls, and visible focus."
+    ],
+    "rules": [
+      {
+        "name": "The Publisher Rule",
+        "body": "Keep the publisher visible beside a story and preserve its source-linked action. Use real publisher imagery; never present mockup reporting as news.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cover Scale Rule",
+        "body": "Keep the oversized Home display on the Persuade cover; preserve the compact Read hierarchy and denser Operate scale elsewhere.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Surface Rule",
+        "body": "Reading surfaces stay flat. Reserve cast shadows for transient menus, dialogs, and feedback.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the shared semantic color variables so light and dark themes stay coherent.",
+      "Do preserve readable mobile type, visible keyboard focus, and 44px primary touch controls.",
+      "Do keep source names, timestamps, and stored view counts legible, including zero counts.",
+      "Do use the approved sans-serif pairing and real publisher photography.",
+      "Do preserve the Home photo\u2019s visible source/license credit and bounded, reduced-motion-aware cover behavior."
+    ],
+    "donts": [
+      "Don't restore the old warm orange/cream palette, broadsheet masthead, or serif display typography.",
+      "Don't restore the removed headline strip, category search forms, or subcategory tags, or make the lead story a scrollable carousel.",
+      "Don't fabricate readership activity or replace publisher reporting with mock content.",
+      "Don't remove focus outlines without an equally visible replacement."
+    ]
+  }
+}

@@ -1,14 +1,13 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
+import { NewsPhoto } from '@/components/articles/NewsPhoto';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ChevronRight, Clock, Calendar, ExternalLink } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META } from '@/types';
-import { Badge } from '@/components/ui';
-import { ShareButtons, ArticleCard, ArticleViewTracker, NewsFallbackImage } from '@/components/articles';
+import { ShareButtons, ArticleCard, ArticleViewTracker } from '@/components/articles';
 import { formatDate, sanitizeArticleContent, stripHtml } from '@/lib/utils';
 import { SITE_URL } from '@/lib/site-url';
 
@@ -82,143 +81,14 @@ export default async function ArticlePage({ params }: Props) {
     const categoryMeta = CATEGORY_META[article.category];
     const articleUrl = `${SITE_URL}/article/${article.slug}`;
 
-    return (
-        <>
-            <article className="container mx-auto px-4 py-8 max-w-4xl">
-                {/* Breadcrumb */}
-                <nav className="flex items-center gap-2 text-sm text-muted mb-6">
-                    <Link href="/" className="hover:text-primary transition-colors">
-                        Home
-                    </Link>
-                    <ChevronRight className="w-4 h-4" />
-                    <Link
-                        href={`/${article.category}`}
-                        className="hover:text-primary transition-colors"
-                    >
-                        {categoryMeta.name}
-                    </Link>
-                    <ChevronRight className="w-4 h-4" />
-                    <span className="line-clamp-1">{article.title}</span>
-                </nav>
-
-                {/* Article Header */}
-                <header className="mb-8">
-                    {/* Category & AI Badge */}
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link href={`/${article.category}`}>
-                            <Badge variant="custom" color={categoryMeta.color} size="md">
-                                {categoryMeta.name}
-                            </Badge>
-                        </Link>
-
-                    </div>
-
-                    {/* Title */}
-                    <h1 className="font-display text-3xl md:text-5xl font-bold text-ink mb-4 leading-tight">
-                        {article.title}
-                    </h1>
-
-                    <p className="mb-4 text-sm text-muted">
-                        Publisher report from{' '}
-                        <a href={article.source_url} target="_blank" rel="noopener noreferrer"
-                            className="font-semibold text-accent underline decoration-hairline underline-offset-4 hover:decoration-accent">
-                            {article.source_name} <ExternalLink aria-hidden="true" className="inline h-3.5 w-3.5 align-text-bottom" />
-                            <span className="sr-only"> (opens publisher in a new tab)</span>
-                        </a>
-                    </p>
-
-                    {/* Meta */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted mb-6">
-                        <span className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(article.published_at || article.created_at)}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4" />
-                            {article.reading_time} min read
-                        </span>
-                        <ArticleViewTracker
-                            articleId={article.id}
-                            category={article.category}
-                            initialCount={article.view_count}
-                            showCount
-                            className="gap-1.5"
-                        />
-                    </div>
-
-                    {/* Share Buttons */}
-                    <ShareButtons url={articleUrl} title={article.title} />
-                </header>
-
-                {/* Featured Image */}
-                <div className="relative aspect-video rounded-xl overflow-hidden mb-8">
-                    {article.featured_image ? (
-                        <Image
-                            src={article.featured_image}
-                            alt={article.title}
-                            fill
-                            className="object-cover"
-                            priority
-                            sizes="(max-width: 768px) 100vw, 800px"
-                        />
-                    ) : (
-                        <NewsFallbackImage seed={article.id} />
-                    )}
-                </div>
-
-                {/* Article Content */}
-                {(() => {
-                    const cleanContent = sanitizeArticleContent(article.content, article.title);
-                    if (cleanContent) {
-                        return (
-                            <div className="prose dark:prose-invert max-w-none mb-8">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {cleanContent}
-                                </ReactMarkdown>
-                            </div>
-                        );
-                    }
-                    // Fallback: show excerpt when content is empty/just a title repeat
-                    return article.excerpt ? (
-                        <div className="prose dark:prose-invert max-w-none mb-8">
-                            <p>{stripHtml(article.excerpt)}</p>
-                        </div>
-                    ) : null;
-                })()}
-
-                {/* Source Attribution Box */}
-                <div className="bg-[#F4FBFA] dark:bg-teal-900/15 rounded-xl p-6 mb-8 border border-teal-200/60 dark:border-teal-800/60">
-                    <h3 className="font-display text-lg font-semibold text-ink mb-2">
-                        Original Source
-                    </h3>
-                    <p className="text-muted mb-4">
-                        This article was originally published by <strong>{article.source_name}</strong>.
-                    </p>
-                    <a
-                        href={article.source_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white font-medium rounded-lg hover:bg-teal-800 transition-colors"
-                    >
-                        Read at {article.source_name}
-                        <ExternalLink className="w-4 h-4" />
-                    </a>
-                </div>
-
-                {/* Related Articles */}
-                {relatedArticles.length > 0 && (
-                    <section className="mt-12">
-                        <h2 className="font-display text-2xl md:text-3xl font-bold text-ink mb-6">
-                            Related Articles
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {relatedArticles.map((related) => (
-                                <ArticleCard key={related.id} article={related} />
-                            ))}
-                        </div>
-                    </section>
-                )}
-            </article>
-        </>
-    );
+    const content = sanitizeArticleContent(article.content, article.title);
+    return <div className="container reading-page mx-auto max-w-4xl px-4 sm:px-6">
+        <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-2 text-sm text-muted"><Link href="/briefing" className="inline-flex min-h-11 items-center hover:text-primary">The briefing</Link><ChevronRight size={14} aria-hidden="true" /><Link className="inline-flex min-h-11 items-center hover:text-primary" href={`/${article.category}`}>{categoryMeta?.name || 'News'}</Link></nav>
+        <article><header className="mb-7"><h1 className="font-semibold">{article.title}</h1><div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted"><span>{article.source_name}</span><span>{formatDate(article.published_at || article.created_at)}</span>{article.reading_time > 0 && <span>{article.reading_time} min read</span>}<ArticleViewTracker articleId={article.id} category={article.category} initialCount={article.view_count} showCount /></div><div className="mt-5"><ShareButtons url={articleUrl} title={article.title} /></div></header>
+            <div className="mb-9 aspect-video overflow-hidden rounded-lg"><NewsPhoto src={article.featured_image} priority /></div>
+            <div className="prose mb-9">{content ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown> : article.excerpt ? <p>{stripHtml(article.excerpt)}</p> : null}</div>
+            <aside className="rounded-xl bg-soft p-5 sm:p-7"><h2 className="text-xl font-semibold">Read the original report</h2><p className="mt-3 text-muted">Published by {article.source_name}. Visit the publisher for the full story and context.</p><a className="primary-action mt-5" href={article.source_url} target="_blank" rel="noopener noreferrer">Read at {article.source_name}<ExternalLink size={16} /></a></aside>
+            {relatedArticles.length > 0 && <section className="channel-section"><h2 className="mb-5 text-2xl font-semibold">More on {categoryMeta?.name || 'this topic'}</h2><div className="archive-grid two-columns">{relatedArticles.map(related => <ArticleCard key={related.id} article={related} />)}</div></section>}
+        </article>
+    </div>;
 }

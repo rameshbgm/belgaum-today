@@ -22,7 +22,7 @@ export function BreakingNewsTicker({ articles, maxArticles = 10 }: BreakingNewsT
     const tickerArticles = articles.slice(0, maxArticles);
 
     return (
-        <section className="bg-[#1A1712] border-y border-[#322C24] overflow-hidden">
+        <section className="bg-[#101C31] border-y border-[#322C24] overflow-hidden">
             <div className="flex items-center">
                 {/* Breaking Label */}
                 <span className="flex-shrink-0 bg-primary text-white text-xs font-bold px-4 py-2.5 flex items-center gap-1.5 uppercase tracking-wider">

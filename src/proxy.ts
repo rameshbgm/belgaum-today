@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { previewRequestAction } from './lib/preview';
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -32,6 +33,13 @@ export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const startTime = Date.now();
     const method = request.method;
+    const previewAction = previewRequestAction(pathname, method);
+    if (previewAction === 'tracking') {
+        return NextResponse.json({ success: true, counted: false });
+    }
+    if (previewAction === 'block') {
+        return NextResponse.json({ success: false, error: 'Changes are unavailable in this read-only preview.', code: 403 }, { status: 403 });
+    }
 
     // Skip logging for static assets
     const isStatic = pathname.startsWith('/_next/') || pathname.endsWith('.ico') || pathname.endsWith('.css') || pathname.endsWith('.js') || pathname.endsWith('.png') || pathname.endsWith('.jpg') || pathname.endsWith('.svg') || pathname.endsWith('.woff2');

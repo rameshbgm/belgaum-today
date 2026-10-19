@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 import { ArticleViewCount } from './ArticleViewCount';
 
 interface ArticleViewTrackerProps {
@@ -22,12 +23,13 @@ export function ArticleViewTracker({
     showCount = false,
     className = '',
 }: ArticleViewTrackerProps) {
-    const hasTracked = useRef(false);
-    const [count, setCount] = useState(initialCount);
+    const preview = useReadOnlyPreview();
+    const trackedArticles = useRef(new Set<number>());
+    const [liveCounts, setLiveCounts] = useState<Record<number, number>>({});
 
     useEffect(() => {
-        if (hasTracked.current) return;
-        hasTracked.current = true;
+        if (preview || trackedArticles.current.has(articleId)) return;
+        trackedArticles.current.add(articleId);
 
         // Track article view
         fetch('/api/track/view', {
@@ -38,10 +40,11 @@ export function ArticleViewTracker({
         })
             .then(async response => response.ok ? response.json() : null)
             .then(data => {
-                if (typeof data?.viewCount === 'number') setCount(data.viewCount);
+                if (typeof data?.viewCount === 'number') setLiveCounts(counts => ({ ...counts, [articleId]: data.viewCount }));
             })
             .catch(() => undefined);
-    }, [articleId, category]);
+    }, [articleId, category, preview]);
 
+    const count = !preview ? liveCounts[articleId] ?? initialCount : initialCount;
     return showCount ? <ArticleViewCount count={count} className={className} /> : null;
 }

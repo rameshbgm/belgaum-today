@@ -94,7 +94,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
                 onClick={copyToClipboard}
                 className={`p-2 rounded-lg transition-all duration-200 ${copied
                         ? 'bg-green-500 text-white'
-                        : 'bg-[#F3EEE4] dark:bg-[#2A251E] hover:bg-primary/10 text-muted'
+                        : 'bg-[#EDF1F8] dark:bg-[#223453] hover:bg-primary/10 text-muted'
                     }`}
                 aria-label="Copy link"
             >
@@ -104,7 +104,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
             {canShare && (
                 <button
                     onClick={handleShare}
-                    className="p-2 rounded-lg bg-[#F3EEE4] dark:bg-[#2A251E] hover:bg-primary/10 text-muted transition-all duration-200"
+                    className="p-2 rounded-lg bg-[#EDF1F8] dark:bg-[#223453] hover:bg-primary/10 text-muted transition-all duration-200"
                     aria-label="Share"
                 >
                     <Share2 className="w-4 h-4" />

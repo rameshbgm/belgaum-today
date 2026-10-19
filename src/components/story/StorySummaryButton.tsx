@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 import { AlertCircle, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 
 export type StorySummary = {
@@ -12,6 +13,7 @@ export type StorySummary = {
 };
 
 export function StorySummaryButton({ storyId, initialSummary = null }: { storyId: number; initialSummary?: StorySummary | null }) {
+    const preview = useReadOnlyPreview();
     const panelId = useId();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -20,6 +22,7 @@ export function StorySummaryButton({ storyId, initialSummary = null }: { storyId
 
     async function revealSummary() {
         if (summary) { setOpen(value => !value); return; }
+        if (preview) return;
         setOpen(true);
         setLoading(true);
         setError(null);
@@ -39,10 +42,12 @@ export function StorySummaryButton({ storyId, initialSummary = null }: { storyId
         <div className="mt-4">
             <button
                 type="button"
+                disabled={preview && !summary}
+                title={preview && !summary ? 'Generating summaries is unavailable in read-only preview' : undefined}
                 aria-expanded={open}
                 aria-controls={panelId}
                 onClick={revealSummary}
-                className="inline-flex min-h-10 items-center gap-2 border border-accent/35 px-3 py-2 text-xs font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-hairline px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
                 <Sparkles aria-hidden="true" className="h-4 w-4" />
                 {summary ? (open ? 'Hide AI summary' : 'Show AI summary') : 'AI summary'}

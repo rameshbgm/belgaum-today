@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { CATEGORY_META, TOP_LEVEL_CATEGORIES, type Category } from '@/types';
 import { PublisherLink } from './PublisherLink';
 import { PublisherMetadata } from './PublisherMetadata';
+import { ArticleViewCount } from './ArticleViewCount';
 import { useArchiveSearch } from './useArchiveSearch';
 
 const STORAGE_KEY = 'belgaum-today-followed-topics';
-const DEFAULT_TOPICS: Category[] = ['belgaum', 'india'];
+const DEFAULT_TOPICS: Category[] = ['india', 'business'];
 
 function TopicStories({ category }: { category: Category }) {
     const { data, loading, error, retry } = useArchiveSearch(`category=${category}&limit=3`);
@@ -23,7 +24,7 @@ function TopicStories({ category }: { category: Category }) {
                 {data.items.map(article => <li key={article.id}>
                     <PublisherLink article={article} className="block py-4 text-ink hover:text-primary">
                         <h4 className="break-words font-display text-lg font-semibold leading-snug">{article.title}</h4>
-                        <PublisherMetadata article={article} className="mt-2 text-muted" />
+                        <div className="story-metadata mt-2"><PublisherMetadata article={article} /><ArticleViewCount count={article.view_count} /></div>
                     </PublisherLink>
                 </li>)}
             </ul> : <p className="py-3 text-sm text-muted">No stories available for {name} yet. Your topic is still followed.</p>}

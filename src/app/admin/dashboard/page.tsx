@@ -1,489 +1,60 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import {
-    FileText, Eye, Edit3, Clock, TrendingUp, MousePointer,
-    BarChart3, PieChart, CheckCircle2, XCircle, AlertTriangle,
-    Activity, Zap, Users
-} from 'lucide-react';
-import { Card, CardContent, Badge, Button, useToast } from '@/components/ui';
-import { DashboardStats, SchedulerHealth } from '@/types';
+"use client";
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { ArrowRight, RefreshCw, Rss, Activity, AlertCircle } from 'lucide-react';
+import { Button, useToast } from '@/components/ui';
+import { DashboardStats, CATEGORY_META, TOP_LEVEL_CATEGORIES, type SchedulerHealth } from '@/types';
 import { formatNumber } from '@/lib/utils';
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    PieChart as RePieChart, Pie, Cell,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#14b8a6'];
-
-interface CronResult {
-    success: boolean;
-    message: string;
-    feedsProcessed: number;
-    newArticles: number;
-    skipped: number;
-    trendingUpdated?: string[];
-    feeds?: Array<{ name: string; fetched: number; new: number; skipped: number }>;
-    errors?: string[];
+type Stats = DashboardStats & { totalClicks?: number; topArticlesByDate?: Array<{ date: string; articles: Array<{ id: number; title: string; views: number; rank: number }> }> };
+function ScheduleRow({ name, interval, health }: { name: string; interval: string; health: SchedulerHealth }) {
+    return <tr><td className="px-5 py-4 font-semibold">{name}<span className="mt-1 block text-sm font-normal text-muted">{interval}</span></td><td className="px-5 py-4"><span className={`inline-flex items-center gap-2 text-sm ${health.isStale ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'}`}><Activity size={14} />{health.lastStatus === 'never' ? 'No runs yet' : health.isStale ? 'Needs attention' : health.lastStatus === 'running' ? 'Running' : 'On schedule'}</span></td><td className="px-5 py-4 text-right text-sm text-muted">{health.lastStartedAt ? new Date(health.lastStartedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}{health.lastError && <span className="mt-1 block max-w-sm text-xs text-red-700 dark:text-red-300">{health.lastError}</span>}</td></tr>;
 }
-
-function SchedulerCard({
-    title,
-    interval,
-    health,
-    action,
-}: {
-    title: string;
-    interval: string;
-    health?: SchedulerHealth;
-    action?: React.ReactNode;
-}) {
-    const stale = health?.isStale ?? true;
-    return (
-        <Card className={`border-2 ${stale ? 'border-red-300 dark:border-red-800' : 'border-green-200 dark:border-green-800'}`}>
-            <CardContent className="p-4 sm:p-6">
-                <div className="flex h-full flex-col justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${stale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
-                            <Activity className={`h-6 w-6 ${stale ? 'text-red-600' : 'text-green-600'}`} />
-                        </div>
-                        <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-base font-semibold text-gray-900 dark:text-white sm:text-lg">{title}</h3>
-                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${stale
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                                    : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'}`}>
-                                    <span className={`h-1.5 w-1.5 rounded-full ${stale ? 'bg-red-500' : 'bg-green-500'}`} />
-                                    {health?.lastStatus === 'never' ? 'Never ran' : stale ? 'Needs attention' : health?.lastStatus === 'running' ? 'Running' : 'On schedule'}
-                                </span>
-                            </div>
-                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-                                {interval} · {health?.lastStartedAt
-                                    ? `last run ${health.ageMinutes === 0 ? 'just now' : `${health.ageMinutes} min ago`}`
-                                    : 'no heartbeat yet'}
-                            </p>
-                            {health?.lastError && (
-                                <p className="mt-1 line-clamp-2 text-xs text-red-600">{health.lastError}</p>
-                            )}
-                        </div>
-                    </div>
-                    {action}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-export default function AdminDashboardPage() {
+export default function DashboardPage() {
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [running, setRunning] = useState(false);
+    const [runMessage, setRunMessage] = useState('');
     const { showToast } = useToast();
-    const [stats, setStats] = useState<(DashboardStats & { totalClicks?: number; feedStatus?: unknown[]; topArticlesByDate?: Array<{ date: string; articles: Array<{ id: number; title: string; slug: string; views: number; rank: number }> }> }) | null>(null);
-    const sched = stats?.scheduler;
-    const aiSched = stats?.aiScheduler;
-    const [isLoading, setIsLoading] = useState(true);
-    const [cronRunning, setCronRunning] = useState(false);
-    const [cronResult, setCronResult] = useState<CronResult | null>(null);
-    const [showCronResult, setShowCronResult] = useState(false);
-
-    useEffect(() => {
-        fetchStats();
+    const refresh = useCallback(async () => {
+        setError('');
+        try {
+            const response = await fetch('/api/admin/stats'); const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.error || 'Could not load the overview.');
+            setStats(result.data);
+        } catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not load the overview.'); }
+        finally { setLoading(false); }
     }, []);
-
-    const fetchStats = async () => {
+    useEffect(() => { void refresh(); }, [refresh]);
+    const runFeeds = async () => {
+        setRunning(true); setRunMessage('');
         try {
-            const response = await fetch('/api/admin/stats');
-            const data = await response.json();
-            if (data.success) {
-                setStats(data.data);
-            }
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-        } finally {
-            setIsLoading(false);
-        }
+            const response = await fetch('/api/admin/cron', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.error || 'Could not fetch feeds.');
+            setRunMessage(`${result.feedsProcessed ?? 0} feeds processed · ${result.newArticles ?? 0} new articles · ${result.skipped ?? 0} skipped.`);
+            showToast('Feed fetch completed', 'success'); void refresh();
+        } catch (failure) { setRunMessage(failure instanceof Error ? failure.message : 'Could not fetch feeds.'); }
+        finally { setRunning(false); }
     };
-
-
-    const handleRunCron = async () => {
-        setCronRunning(true);
-        setCronResult(null);
-        setShowCronResult(true);
-        try {
-            const response = await fetch('/api/admin/cron', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({}),
-            });
-            const data = await response.json();
-            setCronResult(data);
-
-            if (data.success) {
-                showToast(`Cron completed: ${data.newArticles} new articles`, 'success');
-                fetchStats();
-            } else {
-                showToast('Cron failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-        } catch (error) {
-            showToast('Failed to run cron', 'error');
-            setCronResult({ success: false, message: String(error), feedsProcessed: 0, newArticles: 0, skipped: 0 });
-        } finally {
-            setCronRunning(false);
-        }
-    };
-
-
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-r-transparent" />
+    const metric = (value?: number) => loading ? '—' : formatNumber(value || 0);
+    return <div className="space-y-7">
+        <div className="flex flex-wrap items-start justify-between gap-5"><div><h1>The editorial overview</h1><p className="mt-2 text-muted">Your stories, readership, and publisher activity in one place.</p></div><div className="flex gap-2"><Button variant="outline" onClick={refresh} aria-label="Refresh overview"><RefreshCw size={16} /></Button><Button mutation loading={running} onClick={runFeeds}><Rss size={16} />Fetch feeds</Button></div></div>
+        {error && <div role="alert" className="flex items-center gap-3 rounded-lg border border-hairline bg-surface p-4"><AlertCircle size={18} className="text-primary" /><p className="flex-1">{error}</p><button className="text-action" onClick={refresh}>Try again</button></div>}
+        {runMessage && <p role="status" className="rounded-lg bg-soft p-4 text-sm">{runMessage}</p>}
+        <section aria-label="Newsroom statistics" className="dashboard-stat-strip">
+            {[['Total articles', metric(stats?.totalArticles), `${metric(stats?.draftCount)} drafts`], ['Published today', metric(stats?.publishedToday), 'Across all topics'], ['Article views', metric(stats?.totalViews), `${metric(stats?.viewsToday)} today`], ['Publisher opens', metric(stats?.totalClicks), 'Readers opening original reports']].map(([label, value, detail]) => <div key={label} className="dashboard-stat"><span>{label}</span><strong>{value}</strong><span>{detail}</span></div>)}
+        </section>
+        {stats && <>
+            <section className="overflow-hidden rounded-xl border border-hairline bg-surface"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4"><h2 className="font-semibold">Publishing activity</h2><span className="text-sm text-muted">Last 30 days</span></div><div className="h-64 px-2 pb-3 pt-6 sm:px-5"><ResponsiveContainer width="100%" height="100%"><BarChart data={stats.articlesPerDay}><CartesianGrid vertical={false} stroke="var(--hairline)" /><XAxis dataKey="date" tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={35} tickFormatter={date => new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} /><YAxis width={40} tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false} /><Tooltip contentStyle={{ background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--hairline)', borderRadius: 8 }} /><Bar dataKey="count" name="Published" fill="#2F4BEB" radius={[3,3,0,0]} /></BarChart></ResponsiveContainer></div></section>
+            <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+                <section className="overflow-hidden rounded-xl border border-hairline bg-surface"><div className="section-heading border-b border-hairline px-5 py-4 !mb-0"><h2 className="!text-xl">Feed health</h2><Link href="/admin/feeds">Manage feeds<ArrowRight size={15} /></Link></div><div className="overflow-x-auto"><table className="w-full"><thead className="bg-background text-left text-muted"><tr><th className="px-5 py-3">Schedule</th><th className="px-5 py-3">Status</th><th className="px-5 py-3 text-right">Last run</th></tr></thead><tbody className="divide-y divide-hairline"><ScheduleRow name="Publisher feeds" interval={`Every ${stats.schedulerIntervals.rssMinutes} minutes`} health={stats.scheduler} /><ScheduleRow name="AI story ranking" interval={`Every ${stats.schedulerIntervals.aiHours} hours`} health={stats.aiScheduler} /></tbody></table></div></section>
+                <section className="rounded-xl border border-hairline bg-surface p-5"><h2 className="font-semibold">Reader signals</h2><dl className="mt-5 space-y-4 text-sm"><div className="flex justify-between gap-3"><dt className="text-muted">Returning local readers · 7 days</dt><dd className="font-semibold">{formatNumber(stats.weeklyReturningLocalReaders)}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted">Local publisher opens · 7 days</dt><dd className="font-semibold">{formatNumber(stats.localPublisherClicks7d)}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted">Recorded view events</dt><dd className="font-semibold">{formatNumber(stats.viewEventsTotal)}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted">Latest view event</dt><dd>{stats.lastViewAt ? new Date(stats.lastViewAt).toLocaleDateString('en-IN') : 'None yet'}</dd></div></dl></section>
             </div>
-        );
-    }
-
-    return (
-        <div className="space-y-8">
-            {/* Page Title */}
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
-                <p className="text-gray-600 dark:text-gray-400">Welcome back! Here&apos;s your overview.</p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Returning local readers</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.weeklyReturningLocalReaders || 0)}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    7 days · {formatNumber(stats?.localPublisherClicks7d || 0)} local publisher opens
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                                <Users className="w-6 h-6 text-teal-700 dark:text-teal-300" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Articles</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.totalArticles || 0)}
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-blue-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Published Today</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.publishedToday || 0)}
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <Clock className="w-6 h-6 text-green-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Views</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.totalViews || 0)}
-                                </p>
-                                {/* Live view tracking signal — turns red when no views are being recorded */}
-                                {stats?.viewTrackingStale ? (
-                                    <p className="mt-1 flex items-center gap-1 text-xs font-medium text-red-600">
-                                        <AlertTriangle className="w-3 h-3" />
-                                        Tracking stalled
-                                    </p>
-                                ) : (
-                                    <p className="mt-1 text-xs font-medium text-green-600">
-                                        +{formatNumber(stats?.viewsToday || 0)} today
-                                    </p>
-                                )}
-                            </div>
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stats?.viewTrackingStale ? 'bg-red-100 dark:bg-red-900/30' : 'bg-purple-100 dark:bg-purple-900/30'}`}>
-                                <Eye className={`w-6 h-6 ${stats?.viewTrackingStale ? 'text-red-600' : 'text-purple-600'}`} />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total Clicks</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.totalClicks || 0)}
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                                <MousePointer className="w-6 h-6 text-orange-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card gradient>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Drafts</p>
-                                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-                                    {formatNumber(stats?.draftCount || 0)}
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                <Edit3 className="w-6 h-6 text-yellow-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <SchedulerCard
-                    title="RSS Scheduler"
-                    interval={`Every ${stats?.schedulerIntervals.rssMinutes ?? 120} minutes from .env`}
-                    health={sched}
-                    action={(
-                        <Button onClick={handleRunCron} disabled={cronRunning} className="w-full self-start sm:w-auto">
-                            <Zap className="mr-1 h-4 w-4" />
-                            {cronRunning ? 'Running…' : 'Run RSS now'}
-                        </Button>
-                    )}
-                />
-                <SchedulerCard
-                    title="AI Analysis Scheduler"
-                    interval={`Every ${stats?.schedulerIntervals.aiHours ?? 4} hours from .env`}
-                    health={aiSched}
-                />
-            </div>
-
-            {/* Cron Result Panel */}
-            {showCronResult && cronResult && (
-                <Card className="mb-8 border-2 border-blue-200 dark:border-blue-800">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-                                {cronResult.success ? (
-                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                ) : (
-                                    <XCircle className="w-5 h-5 text-red-500" />
-                                )}
-                                Cron Job Result
-                            </h3>
-                            <button onClick={() => setShowCronResult(false)} className="text-gray-400 hover:text-gray-600">
-                                ✕
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
-                                <p className="text-2xl font-bold text-blue-600">{cronResult.feedsProcessed}</p>
-                                <p className="text-xs text-gray-500">Feeds Processed</p>
-                            </div>
-                            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
-                                <p className="text-2xl font-bold text-green-600">{cronResult.newArticles}</p>
-                                <p className="text-xs text-gray-500">New Articles</p>
-                            </div>
-                            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 text-center">
-                                <p className="text-2xl font-bold text-yellow-600">{cronResult.skipped}</p>
-                                <p className="text-xs text-gray-500">Skipped</p>
-                            </div>
-                            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
-                                <p className="text-2xl font-bold text-purple-600">{cronResult.trendingUpdated?.length || 0}</p>
-                                <p className="text-xs text-gray-500">Trending Updated</p>
-                            </div>
-                        </div>
-                        {cronResult.feeds && cronResult.feeds.length > 0 && (
-                            <div className="space-y-2">
-                                {cronResult.feeds.map((feed, i) => (
-                                    <div key={i} className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                                        <span className="text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">{feed.name}</span>
-                                        <div className="flex items-center gap-3 text-xs">
-                                            <span className="text-green-600">{feed.new} new</span>
-                                            <span className="text-gray-400">{feed.skipped} skipped</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {cronResult.errors && cronResult.errors.length > 0 && (
-                            <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                <p className="text-sm font-medium text-red-600 mb-1 flex items-center gap-1">
-                                    <AlertTriangle className="w-4 h-4" /> Errors
-                                </p>
-                                {cronResult.errors.map((err, i) => (
-                                    <p key={i} className="text-xs text-red-500 truncate">{err}</p>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
-
-
-
-            {/* Articles Per Day Chart - Full Width */}
-            <Card className="mb-8">
-                <CardContent className="p-6">
-                    <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        <BarChart3 className="w-5 h-5 text-blue-500" />
-                        Articles Published (Last 30 Days)
-                    </h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats?.articlesPerDay || []}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
-                                <XAxis
-                                    dataKey="date"
-                                    tick={{ fill: '#9ca3af', fontSize: 12 }}
-                                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                />
-                                <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#1f2937',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        color: '#fff'
-                                    }}
-                                />
-                                <Bar dataKey="count" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                                <defs>
-                                    <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#3b82f6" />
-                                        <stop offset="100%" stopColor="#8b5cf6" />
-                                    </linearGradient>
-                                </defs>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* By Category and Top Articles Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Category Distribution */}
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            <PieChart className="w-5 h-5 text-purple-500" />
-                            By Category
-                        </h3>
-                        <div className="h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RePieChart>
-                                    <Pie
-                                        data={stats?.categoryStats || []}
-                                        dataKey="count"
-                                        nameKey="category"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={70}
-                                        label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                        labelLine={false}
-                                    >
-                                        {(stats?.categoryStats || []).map((entry, index) => (
-                                            <Cell key={entry.category} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </RePieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        {/* Legend */}
-                        <div className="mt-2 space-y-1">
-                            {(stats?.categoryStats || []).map((entry, index) => (
-                                <div key={entry.category} className="flex items-center justify-between text-xs">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                                        <span className="text-gray-600 dark:text-gray-400 capitalize">{entry.category}</span>
-                                    </div>
-                                    <span className="font-medium text-gray-900 dark:text-white">{entry.count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Top Articles with Date-wise Views */}
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            <TrendingUp className="w-5 h-5 text-green-500" />
-                            Top 10 Articles by Views (Each Day)
-                        </h3>
-                        <div className="space-y-6 max-h-[600px] overflow-y-auto">
-                            {!stats?.topArticlesByDate || stats.topArticlesByDate.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                                    No article views recorded in the last 7 days.
-                                </p>
-                            ) : (
-                                stats.topArticlesByDate.map((dayData: { date: string; articles: Array<{ id: number; title: string; slug: string; views: number; rank: number }> }, dayIndex: number) => (
-                                    <div key={`day-${dayIndex}-${dayData.date}`} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                {new Date(dayData.date).toLocaleDateString('en-IN', { 
-                                                    weekday: 'short',
-                                                    day: '2-digit', 
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
-                                            </h4>
-                                            <Badge variant="default" size="sm">
-                                                {dayData.articles.length} articles
-                                            </Badge>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {dayData.articles.map((article) => (
-                                                <a
-                                                    key={article.id}
-                                                    href={`/admin/articles/${article.id}/preview`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition cursor-pointer group"
-                                                >
-                                                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs flex items-center justify-center font-medium flex-shrink-0 mt-0.5">
-                                                        {article.rank}
-                                                    </span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                                            {article.title}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            {formatNumber(article.views)} views
-                                                        </p>
-                                                    </div>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+            <div className="grid gap-6 lg:grid-cols-2"><section className="rounded-xl border border-hairline bg-surface p-5"><h2 className="mb-5 font-semibold">Coverage by topic</h2><dl className="divide-y divide-hairline">{TOP_LEVEL_CATEGORIES.map(category => <div key={category} className="flex justify-between py-3 text-sm"><dt>{CATEGORY_META[category].name}</dt><dd className="font-semibold tabular-nums">{formatNumber(stats.categoryStats.find(item => item.category === category)?.count || 0)}</dd></div>)}</dl></section><section className="rounded-xl border border-hairline bg-surface p-5"><h2 className="mb-5 font-semibold">Leading publishers</h2><dl className="divide-y divide-hairline">{stats.sourceStats.map(source => <div key={source.source} className="flex justify-between gap-4 py-3 text-sm"><dt>{source.source}</dt><dd className="font-semibold tabular-nums">{formatNumber(source.count)}</dd></div>)}</dl></section></div>
+            <section className="rounded-xl border border-hairline bg-surface p-5"><div className="section-heading"><h2 className="!text-xl">Most read each day</h2><Link href="/admin/articles">All articles<ArrowRight size={15} /></Link></div>{stats.topArticlesByDate?.length ? stats.topArticlesByDate.map((day, index) => <details key={day.date} open={index === 0} className="border-t border-hairline py-3"><summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">{new Date(day.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</summary><ol className="divide-y divide-hairline">{day.articles.map(article => <li key={article.id}><Link href={`/admin/articles/${article.id}/preview`} className="flex items-start justify-between gap-6 py-3 text-sm hover:text-primary"><span>{article.rank}. {article.title}</span><span className="shrink-0 text-muted">{formatNumber(article.views)} views</span></Link></li>)}</ol></details>) : <p className="py-5 text-sm text-muted">No views were recorded in the last seven days.</p>}</section>
+        </>}
+    </div>;
 }

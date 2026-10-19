@@ -1,0 +1,25 @@
+[
+  {
+    "control": "Search news",
+    "keyboardFocus": true,
+    "outline": "rgb(255, 255, 255) none 3px",
+    "wrapperOutline": "rgb(255, 255, 255) solid 2px"
+  },
+  {
+    "control": "Use dark theme",
+    "keyboardFocus": true,
+    "outline": "rgb(255, 255, 255) solid 3px",
+    "wrapperOutline": "rgb(255, 255, 255) none 3px"
+  },
+  {
+    "control": "Open menu",
+    "keyboardFocus": true,
+    "outline": "rgb(255, 255, 255) solid 3px",
+    "wrapperOutline": "rgb(255, 255, 255) none 3px"
+  },
+  {
+    "background": "rgb(35, 61, 200)",
+    "theme": "dark",
+    "wrapperOutline": "rgb(255, 255, 255) solid 2px"
+  }
+]

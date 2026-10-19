@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
         <div className="container mx-auto px-4 py-10 max-w-4xl">
             {/* Header */}
             <div className="mb-10 text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 mb-4">
+                <div className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-primary mb-4">
                     <Shield className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Privacy Policy</h1>

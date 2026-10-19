@@ -1,5 +1,4 @@
-import { CATEGORY_META, type Article, type Category } from '@/types';
-import { getSubCategories } from '@/lib/category-filters';
+import { CATEGORY_META, type Article } from '@/types';
 
 export interface ArchivePage {
     items: Article[];
@@ -13,7 +12,6 @@ export class InvalidSearch extends Error {}
 export function buildArchiveQuery(search: URLSearchParams) {
     const q = (search.get('q') || '').trim();
     const category = search.get('category') || '';
-    const subcategory = search.get('subcategory') || 'all';
     const sort = search.get('sortBy') || 'newest';
     const page = Number(search.get('page') || 1);
     const limit = Number(search.get('limit') || 20);
@@ -24,9 +22,6 @@ export function buildArchiveQuery(search: URLSearchParams) {
     if (q.length > 200) throw new InvalidSearch('Use 200 characters or fewer in your search.');
     if (category && !Object.hasOwn(CATEGORY_META, category)) throw new InvalidSearch('Choose a valid category.');
     if (!['newest', 'views', 'relevant'].includes(sort)) throw new InvalidSearch('Choose a valid sort order.');
-    if (subcategory !== 'all' && (!category || !getSubCategories(category as Category).some(sub => sub.id === subcategory))) {
-        throw new InvalidSearch('Choose a valid topic within this category.');
-    }
     let sql = `SELECT * FROM public_articles WHERE status = 'published'
         AND source_url NOT LIKE 'https://news.google.com/%'`;
     const params: unknown[] = [];
@@ -34,7 +29,6 @@ export function buildArchiveQuery(search: URLSearchParams) {
     const match = `(LOCATE(LOWER(?), LOWER(CONCAT_WS(' ', title, excerpt, content, source_name))) > 0)`;
     if (q) { sql += ` AND ${match}`; params.push(q); }
     if (category) { sql += ' AND category = ?'; params.push(category); }
-    if (subcategory !== 'all') { sql += ` AND ${match}`; params.push(subcategory); }
     const start = search.get('startDate');
     const end = search.get('endDate');
     for (const date of [start, end]) {

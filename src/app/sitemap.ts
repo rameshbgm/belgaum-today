@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [
         { url: SITE_URL },
+        { url: `${SITE_URL}/briefing` },
         ...(AI_NEWS_ENABLED ? [{ url: `${SITE_URL}/ai-news` }] : []),
         { url: `${SITE_URL}/blog` },
         { url: `${SITE_URL}/about` },

@@ -9,11 +9,12 @@ import { StorySinceVisit } from '@/components/story/StorySinceVisit';
 import { stripHtml } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { AI_NEWS_ENABLED } from '@/lib/features';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 export const dynamic = 'force-dynamic';
 
 type Event = { id: number; title: string; category: string; first_seen_at: Date; last_updated_at: Date };
-type Update = { id: number; change_text: string | null; created_at: Date; title: string; excerpt: string | null; featured_image: string | null; source_name: string; source_url: string; published_at: Date | null };
+type Update = { id: number; change_text: string | null; created_at: Date; title: string; excerpt: string | null; featured_image: string | null; source_name: string; source_url: string; published_at: Date | null; view_count: number };
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     if (!AI_NEWS_ENABLED) return { title: 'Story not found', robots: { index: false } };
@@ -50,7 +51,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
     if (!event) notFound();
     const [updates, cachedSummaries] = await Promise.all([query<Update[]>(`
         SELECT u.id, u.change_text, u.created_at, a.title, a.excerpt, a.featured_image,
-               a.source_name, a.source_url, a.published_at
+               a.source_name, a.source_url, a.published_at, a.view_count
         FROM story_event_updates u JOIN public_articles a ON a.id = u.article_id
         WHERE u.story_event_id = ?
         ORDER BY COALESCE(a.published_at, u.created_at) ASC, u.id ASC`, [id]),
@@ -92,6 +93,7 @@ export default async function StoryPage({ params }: { params: Promise<{ id: stri
                             <time className="text-xs font-semibold uppercase tracking-wider text-muted">{new Date(update.published_at || update.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</time>
                             <h3 className="mt-2 font-display text-xl font-semibold leading-snug text-ink">{index === 0 ? 'First report' : update.change_text || update.title}</h3>
                             <a href={update.source_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-start gap-1 text-sm leading-6 text-accent underline decoration-hairline underline-offset-2 hover:decoration-accent">{update.source_name}: {update.title} <ArrowUpRight aria-hidden="true" className="mt-1 h-3.5 w-3.5 shrink-0" /></a>
+                            <ArticleViewCount count={update.view_count} className="mt-2 text-xs text-muted" />
                         </li>)}
                     </ol>
                 </section>

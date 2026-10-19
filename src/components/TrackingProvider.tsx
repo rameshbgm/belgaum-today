@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 
 /**
  * TrackingProvider — client component that handles:
@@ -16,10 +17,12 @@ export function TrackingProvider({
     children: React.ReactNode;
     category: string;
 }) {
+    const preview = useReadOnlyPreview();
     const trackedViews = useRef(new Set<string>());
 
     // Track page-level view
     useEffect(() => {
+        if (preview) return;
         const pageKey = `${category}-${window.location.pathname}`;
         if (trackedViews.current.has(pageKey)) return;
         trackedViews.current.add(pageKey);
@@ -29,7 +32,7 @@ export function TrackingProvider({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ section: category }),
         }).catch(() => { });
-    }, [category]);
+    }, [category, preview]);
 
     return <>{children}</>;
 }

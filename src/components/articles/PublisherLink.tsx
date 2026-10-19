@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 
 type PublisherStory = { id: number; source_name: string; source_url: string };
 
@@ -20,6 +21,7 @@ export function PublisherLink({ article, children, className, ariaLabel }: {
     className?: string;
     ariaLabel?: string;
 }) {
+    const preview = useReadOnlyPreview();
     const href = usablePublisherUrl(article.source_url);
     if (!href) return <span className={className} title="Publisher link unavailable">{children}</span>;
 
@@ -33,6 +35,7 @@ export function PublisherLink({ article, children, className, ariaLabel }: {
     };
 
     const trackClick = () => {
+        if (preview) return;
         sendTrackingEvent('/api/track/source', { sourceName: article.source_name, articleId: article.id });
         sendTrackingEvent('/api/track/view', { articleId: article.id, category: 'publisher-click' });
     };

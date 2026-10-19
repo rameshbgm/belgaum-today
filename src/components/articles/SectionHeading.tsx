@@ -1,16 +1,6 @@
-import { ReactNode } from 'react';
-
-/**
- * Editorial section heading: small-caps serif label with a flanking rule.
- * Used to break the broadsheet into named sections.
- */
-export function SectionHeading({ children, accent = false }: { children: ReactNode; accent?: boolean }) {
-    return (
-        <div className="flex items-center gap-4 mb-6">
-            <h2 className={`font-display text-xl md:text-2xl font-bold uppercase tracking-[0.08em] ${accent ? 'text-primary' : 'text-ink'} whitespace-nowrap`}>
-                {children}
-            </h2>
-            <span className="flex-1 h-px bg-ink/15" />
-        </div>
-    );
+import type { ReactNode } from 'react';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+export function SectionHeading({ children, href, linkText = 'View all', accent: _accent }: { children: ReactNode; href?: string; linkText?: string; accent?: boolean }) {
+    return <div className="section-heading"><h2>{children}</h2>{href && <Link href={href}>{linkText}<ArrowRight size={16} aria-hidden="true" /></Link>}</div>;
 }

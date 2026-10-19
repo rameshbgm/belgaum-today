@@ -11,7 +11,7 @@ let registered = false;
 export async function register() {
     // Local development can read the configured database without launching
     // background ingestion jobs against it.
-    if (process.env.NODE_ENV !== 'production' || process.env.DISABLE_BACKGROUND_SCHEDULER === '1') return;
+    if (process.env.NODE_ENV !== 'production' || process.env.DISABLE_BACKGROUND_SCHEDULER === '1' || process.env.READ_ONLY_PREVIEW === '1') return;
     if (registered) return;
     registered = true;
     const { runDueSchedulers } = await import('@/lib/scheduler/runner');

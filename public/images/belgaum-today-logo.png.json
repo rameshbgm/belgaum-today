@@ -1,0 +1,15 @@
+{
+  "origin": "user-provided",
+  "source": "codex-clipboard-0NjXKJ.png",
+  "sourceSha256": "ae2af309f66c1ed42833cae1047267c1e11b4a037e7c6beb9c02614ac104fa1b",
+  "approval": "The user explicitly requested restoration of this exact supplied Belgaum Today logo.",
+  "strategy": "Direct copy with provenance embedded in a PNG tEXt chunk; all source pixels preserved.",
+  "width": 1086,
+  "height": 158,
+  "sourceBytes": 45869,
+  "outputBytes": 46229,
+  "decodedPixelSha256": "bba73e7014e02f602e21a3860246528c21aff48dd6b18f6a6ac8eb2eb896fee5",
+  "pixelsIdentical": true,
+  "generated": false,
+  "qaStatus": "accepted"
+}

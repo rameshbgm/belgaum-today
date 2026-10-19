@@ -1,17 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 import type { Category } from '@/types';
 import { CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
 
 export function DailyDigestSignup() {
+    const preview = useReadOnlyPreview();
     const [email, setEmail] = useState('');
-    const [topics, setTopics] = useState<Category[]>(['belgaum', 'india']);
+    const [topics, setTopics] = useState<Category[]>(['india', 'business']);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
 
     const submit = async (event: React.FormEvent) => {
         event.preventDefault();
+        if (preview) return;
         setBusy(true);
         setMessage('');
         try {
@@ -50,7 +53,7 @@ export function DailyDigestSignup() {
                     </label>)}
                 </div>
             </fieldset>
-            <button type="submit" disabled={busy || topics.length === 0}
+            <button type="submit" disabled={preview || busy || topics.length === 0}
                 className="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                 {busy ? 'Sending confirmation…' : 'Get the daily digest'}
             </button>

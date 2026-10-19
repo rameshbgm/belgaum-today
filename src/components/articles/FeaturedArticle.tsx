@@ -16,7 +16,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
     const categoryMeta = CATEGORY_META[article.category];
 
     return (
-        <article className="group relative bg-gradient-to-br from-[#1A1712] to-[#2A251E] rounded-2xl overflow-hidden">
+        <article className="group relative bg-gradient-to-br from-[#101C31] to-[#223453] rounded-2xl overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0">
                 {article.featured_image ? (
@@ -40,7 +40,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
             <div className="relative z-10 p-6 md:p-10 min-h-[400px] md:min-h-[500px] flex flex-col justify-end">
                 {/* Badges */}
                 <div className="flex items-center gap-2 mb-4">
-                    <Badge variant="custom" color="#E8590C" size="md">
+                    <Badge variant="custom" color="#2F4BEB" size="md">
                         Featured
                     </Badge>
                     <Badge variant="custom" color={categoryMeta.color} size="md">
@@ -55,7 +55,7 @@ export function FeaturedArticle({ article }: FeaturedArticleProps) {
 
                 {/* Title */}
                 <PublisherLink article={article}>
-                    <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-[#FDBA74] transition-colors">
+                    <h2 className="font-display text-2xl md:text-4xl font-bold text-white mb-4 leading-tight group-hover:text-[#D8E0FF] transition-colors">
                         {article.title}
                     </h2>
                 </PublisherLink>

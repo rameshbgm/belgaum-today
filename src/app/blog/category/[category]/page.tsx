@@ -1,13 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
+import { BlogCard } from '@/components/articles/BlogCard';
 import { notFound } from 'next/navigation';
-import { Calendar, Clock, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
-import { formatDate, truncate } from '@/lib/utils';
-import { NewsFallbackImage } from '@/components/articles';
-import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,77 +46,5 @@ export default async function BlogCategoryPage({ params }: Props) {
     const meta = CATEGORY_META[cat];
     const blogs = await getBlogs(cat);
 
-    return (
-        <div className="min-h-screen bg-white dark:bg-gray-950">
-            <section
-                className="border-b border-gray-200 dark:border-gray-800"
-                style={{ backgroundColor: `${meta.color}12` }}
-            >
-                <div className="container mx-auto px-4 py-10">
-                    <Link href="/blog" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors">
-                        <ChevronLeft className="w-4 h-4" /> All Blog Posts
-                    </Link>
-                    <div className="flex items-center gap-3 mb-2">
-                        <span
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: meta.color }}
-                        />
-                        <h1 className="font-display text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                            {meta.name}
-                        </h1>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400">{meta.description}</p>
-                </div>
-            </section>
-
-            <div className="container mx-auto px-4 py-10">
-                {blogs.length === 0 ? (
-                    <div className="text-center py-20 text-gray-500">
-                        <p className="text-lg">No posts in {meta.name} yet.</p>
-                        <Link href="/blog" className="text-primary hover:underline text-sm mt-2 inline-block">
-                            Browse all posts
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {blogs.map((blog) => (
-                            <Link key={blog.id} href={`/blog/post/${blog.slug}`} className="group flex flex-col">
-                                <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-3">
-                                    {blog.featured_image ? (
-                                        <Image
-                                            src={blog.featured_image}
-                                            alt={blog.title}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                        />
-                                    ) : (
-                                        <NewsFallbackImage seed={blog.id} />
-                                    )}
-                                </div>
-                                <h2 className="font-semibold text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-2 mb-1">
-                                    {blog.title}
-                                </h2>
-                                {blog.excerpt && (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
-                                        {truncate(blog.excerpt, 110)}
-                                    </p>
-                                )}
-                                <div className="flex items-center gap-3 text-xs text-gray-400 mt-auto">
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {blog.published_at ? formatDate(blog.published_at) : ''}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {blog.reading_time} min
-                                    </span>
-                                </div>
-                                <ArticleViewCount count={blog.view_count} className="mt-2 text-xs text-gray-500 dark:text-gray-400" />
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
+    return <div className="container mx-auto px-4 pb-14 sm:px-6"><header className="archive-header"><Link href="/blog" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-muted"><ChevronLeft size={16} />All blog posts</Link><h1>{meta.name}</h1><p>{meta.description}</p></header><section className="archive-content">{blogs.length ? <div className="archive-grid">{blogs.map(blog => <BlogCard key={blog.id} blog={blog} />)}</div> : <div className="py-10"><h2 className="text-2xl font-semibold">No {meta.name} posts yet.</h2><p className="mt-3 text-muted">You can explore stories from other topics.</p><Link href="/blog" className="text-action mt-5">Browse all posts</Link></div>}</section></div>;
 }

@@ -1,0 +1,70 @@
+{
+  "title": "Belgaum Today — the new Home page",
+  "question": "Choose the Home landing-page composition. All three keep Home-first navigation and accessible scroll effects. Photography in these comps is illustrative; the built site will use verified imagery.",
+  "options": [
+    {
+      "id": "window-to-india",
+      "label": "Window to India",
+      "kicker": "THE ROLL",
+      "thesis": "A cinematic photographic opening makes the breadth of the news feel immediate.",
+      "palette": [
+        "#2F4BEB",
+        "#F5F7FC",
+        "#17243E",
+        "#FFFFFF"
+      ],
+      "materials": [
+        "Sora headlines",
+        "Publisher photography",
+        "Cool-white reading surfaces"
+      ],
+      "viewport": "Compact Home-first navigation, a full-width photograph, a bold white headline, and a clear Read the briefing button.",
+      "risk": "Photography must stay quiet enough for the headline and action to remain clear.",
+      "comp": ".impeccable/mocks/decision/home-window.png"
+    },
+    {
+      "id": "india-to-home",
+      "label": "From India to home",
+      "thesis": "A spacious introduction moves from the national picture to Belgaum as the visitor scrolls.",
+      "palette": [
+        "#2F4BEB",
+        "#F5F7FC",
+        "#17243E",
+        "#FFFFFF"
+      ],
+      "materials": [
+        "Sora headlines",
+        "Large local photograph",
+        "Cobalt section transitions"
+      ],
+      "viewport": "A large navy headline on cool white, a cobalt action, then an expansive Belgaum image that leads into the next section.",
+      "risk": "The opening needs a strong photograph so generous spacing feels intentional.",
+      "comp": ".impeccable/mocks/decision/home-local.png"
+    },
+    {
+      "id": "readers-path",
+      "label": "Make sense of today",
+      "thesis": "A bold cobalt cover unfolds into a photographic, category-led reading journey.",
+      "palette": [
+        "#2F4BEB",
+        "#F5F7FC",
+        "#17243E",
+        "#FFFFFF"
+      ],
+      "materials": [
+        "Large Sora typography",
+        "Solid cobalt",
+        "Wide editorial photographs"
+      ],
+      "viewport": "A full cobalt opening with oversized white type, a white Read the briefing action, and a photographic reveal beneath.",
+      "risk": "The typography carries the first impression, so motion must support reading rather than delay it.",
+      "comp": ".impeccable/mocks/decision/home-cover.png"
+    }
+  ],
+  "reroll": true,
+  "steer": true,
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  }
+}

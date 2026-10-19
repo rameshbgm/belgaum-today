@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:review": "NODE_ENV=development READ_ONLY_PREVIEW=1 DISABLE_BACKGROUND_SCHEDULER=1 SITE_URL=http://localhost:3001 NEXT_PUBLIC_SITE_URL=http://localhost:3001 next dev --hostname 127.0.0.1 --port 3001",
     "build": "next build --webpack",
     "start": "next start",
+    "start:review": "READ_ONLY_PREVIEW=1 DISABLE_BACKGROUND_SCHEDULER=1 SITE_URL=http://localhost:3001 NEXT_PUBLIC_SITE_URL=http://localhost:3001 next start --hostname 127.0.0.1 --port 3001",
     "lint": "eslint",
+    "test:preview": "node --experimental-strip-types --test tests/preview.test.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy"

@@ -1,0 +1,20 @@
+{
+  "id": "broadcast-desktop-companion",
+  "file": "broadcast-desktop-companion.png",
+  "source_path": "/Users/laxmi/.codex/generated_images/01a15490-b7dd-7223-b229-1607c885ff1b/exec-ef20154a-b554-42cb-a8fb-ed378e15e3ea.png",
+  "approval": {
+    "status": "desktop_companion_reference",
+    "explicitly_approved_by_user": false,
+    "recorded_date": "2026-10-19",
+    "scope": "Desktop companion to the approved mobile Broadcast direction",
+    "evidence": "Supplied by the parent task as the desktop companion; no separate explicit desktop approval is asserted."
+  },
+  "usage": "design_reference_only",
+  "shipping_asset": false,
+  "news_imagery": "Illustrative mock imagery and copy must not ship; production articles, publisher photos, dates, and metadata come from the real Hostinger database.",
+  "dimensions": { "width": 1536, "height": 1024 },
+  "format": "png",
+  "transparency": false,
+  "sha256": "4d7263749b0a00de4c5a559781819de2624c252fed6d3c35c94426e83882a052",
+  "copy_integrity": "Byte-for-byte copy; source unchanged."
+}

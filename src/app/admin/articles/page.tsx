@@ -1,5 +1,6 @@
 'use client';
 
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,6 +15,7 @@ import { formatDate, formatNumber } from '@/lib/utils';
 type ArticleStatus = 'all' | 'draft' | 'published' | 'archived';
 
 export default function AdminArticlesPage() {
+    const preview = useReadOnlyPreview();
     const router = useRouter();
     const { showToast } = useToast();
 
@@ -192,13 +194,13 @@ export default function AdminArticlesPage() {
                             <span className="text-sm text-gray-600 dark:text-gray-400">
                                 {selectedIds.length} selected
                             </span>
-                            <Button size="sm" variant="outline" onClick={() => handleBulkAction('publish')}>
+                            <Button size="sm" variant="outline" mutation onClick={() => handleBulkAction('publish')}>
                                 Publish
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleBulkAction('archive')}>
+                            <Button size="sm" variant="outline" mutation onClick={() => handleBulkAction('archive')}>
                                 Archive
                             </Button>
-                            <Button size="sm" variant="danger" onClick={() => handleBulkAction('delete')}>
+                            <Button size="sm" variant="danger" mutation onClick={() => handleBulkAction('delete')}>
                                 Delete
                             </Button>
                         </div>
@@ -302,7 +304,7 @@ export default function AdminArticlesPage() {
                                                     </button>
                                                 </Link>
                                                 <button
-                                                    onClick={() => handleDelete(article.id)}
+                                                    disabled={preview} title="Unavailable in read-only preview" onClick={() => handleDelete(article.id)}
                                                     className="p-1.5 text-gray-500 hover:text-red-600 rounded"
                                                 >
                                                     <Trash2 className="w-4 h-4" />

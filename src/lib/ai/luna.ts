@@ -1,5 +1,6 @@
 import { config } from '@/lib/ai/config';
 import { fileLogger } from '@/lib/fileLogger';
+import { assertPreviewWritable } from '../preview';
 
 type JsonSchema = Record<string, unknown>;
 
@@ -11,6 +12,7 @@ export async function callLunaJson<T>(
     schema: JsonSchema,
     timeoutMs = config.requestTimeoutMs,
 ): Promise<T> {
+    assertPreviewWritable();
     if (!config.isValid) throw new Error('OPENAI_API_KEY is not configured');
     const started = Date.now();
     try {

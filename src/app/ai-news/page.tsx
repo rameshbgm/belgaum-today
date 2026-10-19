@@ -7,6 +7,7 @@ import { NewsFallbackImage } from '@/components/articles';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AI_NEWS_ENABLED } from '@/lib/features';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = AI_NEWS_ENABLED ? {
@@ -25,12 +26,14 @@ type StoryCard = {
     image: string | null;
     publisher_excerpt: string | null;
     publishers: string | null;
+    report_views: number;
 };
 
 async function getTrackedStories(): Promise<StoryCard[]> {
     return query<StoryCard[]>(`
         SELECT e.id, e.title, e.category,
                COUNT(DISTINCT a.id) AS report_count,
+               COALESCE(SUM(a.view_count), 0) AS report_views,
                COUNT(DISTINCT a.publisher_domain) AS publisher_count,
                GROUP_CONCAT(DISTINCT a.source_name ORDER BY a.source_name SEPARATOR ', ') AS publishers,
                chosen.excerpt AS publisher_excerpt,
@@ -73,6 +76,7 @@ export default async function AiNewsPage() {
                     <h2 id="lead-story" className="mt-4 break-words font-display text-[clamp(1.7rem,7vw,2.25rem)] font-bold leading-tight text-ink md:text-5xl"><Link href={`/story/${lead.id}`} className="hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent">{lead.title}</Link></h2>
                     {lead.publisher_excerpt && <p className="mt-5 max-w-prose text-base leading-7 text-muted">{truncate(stripHtml(lead.publisher_excerpt), 230)}</p>}
                     {lead.publishers && <p className="mt-5 text-xs leading-5 text-muted">Reported by {lead.publishers}</p>}
+                    <p className="mt-3 text-sm text-muted">Publisher reports: <ArticleViewCount count={lead.report_views} /></p>
                     <Link href={`/story/${lead.id}`} className="mt-7 inline-flex min-h-11 w-fit items-center gap-2 border-b border-primary text-sm font-bold text-primary hover:border-primary-hover hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent">Open story and timeline <ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link>
                 </div>
             </section>
@@ -89,6 +93,7 @@ export default async function AiNewsPage() {
                             <h3 className="mt-2 font-display text-2xl font-bold leading-snug text-ink group-hover:text-primary">{story.title}</h3>
                             {story.publisher_excerpt && <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{stripHtml(story.publisher_excerpt)}</p>}
                             {story.publishers && <p className="mt-4 line-clamp-1 text-xs text-muted">{story.publishers}</p>}
+                            <p className="mt-3 text-sm text-muted">Publisher reports: <ArticleViewCount count={story.report_views} /></p>
                             <span className="mt-5 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-primary">Open story <ArrowUpRight aria-hidden="true" className="h-4 w-4" /></span>
                         </article>
                     </Link>)}

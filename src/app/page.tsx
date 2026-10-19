@@ -1,270 +1,102 @@
 import Link from 'next/link';
-import { query } from '@/lib/db';
-import { Article } from '@/types';
-import { LeadCarousel, LatestRail, MostRead, HomepageMoreStories, SectionHeading, SectionNewsCarousel } from '@/components/articles';
-import type { LeadCarouselArticle } from '@/components/articles';
-import { TopicPreferences } from '@/components/articles/TopicPreferences';
-import { DailyDigestSignup } from '@/components/articles/DailyDigestSignup';
-import { digestConfigured } from '@/lib/digest';
-import { distinctStories } from '@/lib/story-clusters';
+import './home.css';
 import type { Metadata } from 'next';
-import { SITE_URL } from '@/lib/site-url';
-import { safeJsonLd } from '@/lib/seo';
+import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { HomeMotion } from '@/components/home/HomeMotion';
+import { ArticleCard } from '@/components/articles/ArticleCard';
+import { NewsPhoto } from '@/components/articles/NewsPhoto';
+import { PublisherLink } from '@/components/articles/PublisherLink';
+import { PublisherMetadata } from '@/components/articles/PublisherMetadata';
+import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
+import { TrackingProvider } from '@/components/TrackingProvider';
+import { query } from '@/lib/db';
+import { distinctStories } from '@/lib/story-clusters';
 import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
+import { Article, CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { alternates: { canonical: '/' } };
+export const metadata: Metadata = {
+    title: { absolute: 'Belgaum Today — Make sense of today' },
+    description: 'The national picture. The local perspective. Discover headlines across India and Belgaum, then read the original report at its publisher.',
+    alternates: { canonical: '/' },
+    openGraph: { title: 'Belgaum Today — Make sense of today', description: 'The national picture. The local perspective. Your next good read.', url: '/', images: [{ url: '/images/home/belagavi-heritage.webp', width: 2000, height: 1500, alt: 'Kamal Basadi inside Belagavi Fort' }] },
+};
 
-interface MostViewedArticle {
-  id: number;
-  title: string;
-  slug: string;
-  source_name: string;
-  source_url: string;
-  published_at: string;
-  view_count: number;
-}
+const descriptions: Record<string, string> = {
+    india: 'The national conversation.',
+    business: 'Markets, enterprise and the economy.',
+    technology: 'Ideas shaping what comes next.',
+    sports: 'The games. The people. The moments.',
+    entertainment: 'Cinema, culture and what’s on.',
+    belgaum: 'Stories from closer to home.',
+};
 
-interface TrendingRow {
-  id: number;
-  title: string;
-  slug: string;
-  excerpt: string;
-  featured_image: string | null;
-  category: string;
-  source_name: string;
-  source_url: string;
-  published_at: Date;
-  ai_score: number;
-  ai_reasoning: string;
-  rank_position: number;
-  view_count: number;
-}
-
-interface TrendingArticle {
-  id: number;
-  title: string;
-  slug: string;
-  excerpt: string;
-  featured_image: string | null;
-  category: string;
-  source_name: string;
-  source_url: string;
-  published_at: string;
-  rank_position: number;
-  view_count: number;
-}
-
-const LATEST_CATEGORIES = ['india', 'technology', 'sports', 'belgaum', 'business', 'entertainment'] as const;
-const FRONT_PAGE_CATEGORIES = [
-  { category: 'india', title: 'India', empty: 'India stories will appear here as feeds update.' },
-  { category: 'technology', title: 'Technology', empty: 'Technology stories will appear here as feeds update.' },
-  { category: 'sports', title: 'Sports', empty: 'Sports stories will appear here as feeds update.' },
-  { category: 'belgaum', title: 'Belagavi', empty: 'Belagavi stories will appear here as feeds update.' },
-] as const;
-
-async function getArticles(): Promise<{
-  articles: Article[];
-  trendingArticles: TrendingArticle[];
-  mostViewedArticles: MostViewedArticle[];
-  categorySections: Array<{ category: typeof LATEST_CATEGORIES[number]; articles: Article[] }>;
-}> {
-  try {
-    const articles = await query<Article[]>(
-      `SELECT * FROM public_articles WHERE status = 'published'
-       AND source_url NOT LIKE 'https://news.google.com/%'
-       ORDER BY COALESCE(published_at, created_at) DESC LIMIT 20`
-    );
-
-    // Get trending articles across all categories (top 10)
-    const trendingRows = await query<TrendingRow[]>(
-      `SELECT a.id, a.title, a.slug, a.excerpt, a.featured_image, a.category,
-              a.source_name, a.source_url, a.published_at, a.view_count,
-              ta.ai_score, ta.ai_reasoning, ta.rank_position
-       FROM trending_articles ta
-       JOIN public_articles a ON ta.article_id = a.id
-       WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
-       ORDER BY ta.rank_position ASC
-       LIMIT 10`
-    );
-
-    const trending: TrendingArticle[] = trendingRows.map(row => ({
-      id: row.id,
-      title: row.title,
-      slug: row.slug,
-      excerpt: row.excerpt,
-      featured_image: row.featured_image,
-      category: row.category,
-      source_name: row.source_name,
-      source_url: row.source_url,
-      published_at: new Date(row.published_at).toISOString(),
-      rank_position: row.rank_position,
-      view_count: row.view_count,
-    }));
-
-    // Rank by article-page views.
-    const mostViewed = await query<MostViewedArticle[]>(
-      `SELECT a.id, a.title, a.slug, a.source_name, a.source_url, a.published_at, a.view_count
-       FROM public_articles a
-       WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%'
-         AND a.view_count > 0
-       ORDER BY a.view_count DESC, COALESCE(a.published_at, a.created_at) DESC
-       LIMIT 15`
-    );
-
-    // Each front-page category scrolls independently; Latest uses its first three.
-    const categoryArticles = await Promise.all(
-      LATEST_CATEGORIES.map(async (cat) => {
-        const rows = await query<Article[]>(
-          `SELECT id, title, slug, excerpt, category, source_name, source_url, published_at, created_at, view_count, reading_time, featured_image, status, featured, ai_generated, ai_confidence, requires_review
-           FROM public_articles
-           WHERE status = 'published' AND category = ? AND source_url NOT LIKE 'https://news.google.com/%'
-           ORDER BY COALESCE(published_at, created_at) DESC LIMIT 8`,
-          [cat]
-        );
-        return { category: cat, articles: rows };
-      })
-    );
-
-    return {
-      articles: distinctStories(articles),
-      trendingArticles: trending,
-      mostViewedArticles: mostViewed.map(row => ({
-        ...row,
-        published_at: new Date(row.published_at).toISOString(),
-      })),
-      categorySections: categoryArticles.map(section => ({ ...section, articles: distinctStories(section.articles) })),
-    };
-  } catch (error) {
-    console.error('Homepage DB error:', error instanceof Error ? error.message : error);
-    return { articles: [], trendingArticles: [], mostViewedArticles: [], categorySections: [] };
-  }
+async function latestInCategory(category: string): Promise<Article[]> {
+    try {
+        return distinctStories(await query<Article[]>(
+            `SELECT id, title, slug, excerpt, featured_image, category, source_name, source_url,
+                    published_at, created_at, view_count, reading_time
+             FROM public_articles WHERE status = 'published' AND category = ?
+             AND source_url NOT LIKE 'https://news.google.com/%'
+             ORDER BY COALESCE(published_at, created_at) DESC LIMIT 3`, [category],
+        ));
+    } catch (error) {
+        console.error('Home headlines unavailable:', error instanceof Error ? error.message : error);
+        return [];
+    }
 }
 
 export default async function HomePage() {
-  // Shared hosting may reap the Node process and its interval. A homepage
-  // request safely revives RSS + analysis when the heartbeat has gone stale.
-  void reviveSchedulerIfStale();
-  const { articles, trendingArticles, mostViewedArticles, categorySections } = await getArticles();
+    void reviveSchedulerIfStale();
+    const sections = await Promise.all(TOP_LEVEL_CATEGORIES.map(latestInCategory));
+    const previews = sections.slice(0, 3).flatMap(articles => articles.slice(0, 1));
+    const localStory = sections[TOP_LEVEL_CATEGORIES.indexOf('belgaum')]?.[0];
 
-  // Build lead carousel: AI trending if available, else latest 10 as fallback
-  const isFallback = trendingArticles.length === 0;
-  const leadArticles: LeadCarouselArticle[] = isFallback
-    ? articles.slice(0, 10).map((a) => ({
-        id: a.id,
-        title: a.title,
-        slug: a.slug,
-        excerpt: a.excerpt,
-        featured_image: a.featured_image,
-        category: a.category,
-        source_name: a.source_name,
-        source_url: a.source_url,
-        view_count: a.view_count,
-        published_at: a.published_at ? new Date(a.published_at).toISOString() : null,
-        created_at: new Date(a.created_at).toISOString(),
-      }))
-    : trendingArticles.map((t) => ({
-        id: t.id,
-        title: t.title,
-        slug: t.slug,
-        excerpt: t.excerpt,
-        featured_image: t.featured_image,
-        category: t.category,
-        source_name: t.source_name,
-        source_url: t.source_url,
-        published_at: t.published_at,
-        rank_position: t.rank_position,
-        view_count: t.view_count,
-      }));
-
-  const indiaLead = leadArticles.findIndex(article => article.category === 'india');
-  if (indiaLead > 0) leadArticles.unshift(...leadArticles.splice(indiaLead, 1));
-
-  // Compose the broadsheet sections
-  const rest = articles.slice(0);
-  const latest = rest.slice(0, 6);                // fallback flat list
-  const moreStories = rest.slice(6);              // date-grouped feed
-
-  return (
-    <div className="container mx-auto px-4 py-8 md:py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'Belgaum Today',
-        alternateName: 'Belagavi Today',
-        url: SITE_URL,
-      }) }} />
-      {/* ── Front page: lead carousel + scrollable latest rail ── */}
-      <section className="grid grid-cols-1 gap-8 border-b-2 border-ink/85 pb-10 lg:h-[680px] lg:grid-cols-12 lg:items-stretch lg:gap-10 xl:h-[720px]">
-        {/* Lead carousel — AI trending or latest fallback */}
-        <div className="min-h-0 lg:col-span-8">
-          <LeadCarousel articles={leadArticles} isFallback={isFallback} />
-        </div>
-
-        {/* Latest rail — same height as lead, scrollable, 3 per category */}
-        <aside className="flex min-h-0 flex-col lg:col-span-4">
-          <SectionHeading accent>Latest</SectionHeading>
-          {/* overflow container: scrolls within the exact height of the lead image */}
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-sm border border-hairline p-3">
-            {categorySections.length > 0 ? (
-              <LatestRail articles={latest} categorySections={categorySections.map(section => ({ ...section, articles: section.articles.slice(0, 3) }))} />
-            ) : latest.length > 0 ? (
-              <LatestRail articles={latest} />
-            ) : (
-              <p className="text-sm text-muted">No stories yet.</p>
-            )}
-          </div>
-        </aside>
-      </section>
-
-      <TopicPreferences />
-
-      <section className="grid grid-cols-1 gap-x-6 gap-y-9 border-b-2 border-ink/85 py-10 sm:grid-cols-2 xl:grid-cols-4" aria-label="News by category">
-        {FRONT_PAGE_CATEGORIES.map(section => (
-          <SectionNewsCarousel
-            key={section.category}
-            title={section.title}
-            articles={categorySections.find(item => item.category === section.category)?.articles || []}
-            empty={section.empty}
-            compact
-          />
-        ))}
-      </section>
-
-      {/* ── News feed + Most Viewed ── */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
-        <HomepageMoreStories initialArticles={moreStories} />
-
-        {/* Most Viewed sidebar */}
-        <aside className="lg:col-span-4">
-          <div className="lg:sticky lg:top-20">
-            <SectionHeading accent>Most Viewed</SectionHeading>
-            {mostViewedArticles.length > 0 ? (
-              <MostRead articles={mostViewedArticles.slice(0, 15)} />
-            ) : trendingArticles.length > 0 ? (
-              <MostRead articles={trendingArticles.slice(0, 15)} />
-            ) : (
-              <p className="text-sm text-muted">Nothing trending yet.</p>
-            )}
-
-            {digestConfigured() && <DailyDigestSignup />}
-
-            {/* RSS pull-quote block */}
-            <div className="mt-10 border-t-2 border-ink/85 pt-6">
-              <p className="font-display text-lg leading-snug text-ink">
-                Belagavi&rsquo;s news, gathered from across the web and delivered every day.
-              </p>
-              <Link
-                href="/feed.xml"
-                className="mt-3 inline-block text-xs font-bold uppercase tracking-[0.18em] text-accent hover:text-primary transition-colors"
-              >
-                Subscribe via RSS →
-              </Link>
+    return <TrackingProvider category="home"><HomeMotion>
+        <section className="home-cover" data-home-cover aria-labelledby="home-title">
+            <div className="container home-cover-inner">
+                <div className="home-cover-copy">
+                    <h1 id="home-title"><span>Make </span><span>sense of </span><span>today.</span></h1>
+                    <div className="home-cover-intro">
+                        <p>The national picture. The local perspective. Your next good read.</p>
+                        <Link className="home-white-action" href="/briefing">Read the briefing <ArrowRight size={23} aria-hidden="true" /></Link>
+                        <a className="home-explore-action" href="#explore">Explore categories <ArrowDown size={19} aria-hidden="true" /></a>
+                    </div>
+                </div>
+                <figure className="home-hero-figure">
+                    <svg className="home-clip-definitions" width="0" height="0" aria-hidden="true"><defs><clipPath id="home-photo-clip" clipPathUnits="objectBoundingBox"><path data-photo-shape d="M0,.38 C0,.285 .025,.236 .08,.228 L.6,.122 C.66,.114 .66,.01 .74,0 L1,0 L1,.95 Q1,1 .96,1 L.04,1 Q0,1 0,.95 Z" /></clipPath></defs></svg>
+                    <div className="home-hero-image"><NewsPhoto src="/images/home/belagavi-heritage.webp" alt="Kamal Basadi’s stone pavilion surrounded by palms and a green lawn inside Belagavi Fort." priority /></div>
+                    <figcaption className="home-photo-credit"><a href="https://commons.wikimedia.org/wiki/File:Kamal_Basti_view,_Belgaum.jpg" target="_blank" rel="noopener noreferrer">Kamal Basadi — Shubham S. Sankannavar</a><span aria-hidden="true"> · </span><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a><span> · Resized and cropped.</span></figcaption>
+                </figure>
             </div>
-          </div>
-        </aside>
-      </section>
+        </section>
 
-    </div>
-  );
+        <section className="container home-introduction" aria-labelledby="home-perspective">
+            <h2 id="home-perspective">Across India.<br />Closer to home.</h2>
+            <p>Discover a headline, see its publisher, and read the original report.</p>
+        </section>
+
+        <section className="container home-latest" aria-labelledby="home-latest-heading">
+            <div className="home-section-heading"><h2 id="home-latest-heading">Today&rsquo;s briefing</h2><Link href="/briefing">View all <ArrowRight size={19} aria-hidden="true" /></Link></div>
+            {previews.length ? <div className="home-story-grid">{previews.map(article => <ArticleCard key={article.id} article={article} compact />)}</div> : <div className="home-empty"><p>The latest headlines are taking a moment to load.</p><Link href="/briefing">Open the briefing <ArrowRight size={18} aria-hidden="true" /></Link></div>}
+        </section>
+
+        <section id="explore" className="home-discover" aria-labelledby="home-discover-heading">
+            <div className="container home-discover-inner">
+                <div className="home-discover-copy"><h2 id="home-discover-heading">Follow your<br />curiosity.</h2><p>Big conversations. Fresh ideas. The stories you make time for.</p></div>
+                <nav className="home-category-index" aria-label="Explore news categories">{TOP_LEVEL_CATEGORIES.map(category => <Link key={category} href={`/${category}`}><div><span>{CATEGORY_META[category].name}</span><p>{descriptions[category]}</p></div><ArrowUpRight size={26} aria-hidden="true" /></Link>)}</nav>
+            </div>
+        </section>
+
+        <section className="container home-local" aria-labelledby="home-local-heading">
+            <div className="home-local-intro"><h2 id="home-local-heading">Belgaum.<br />Always in view.</h2><p>Keep a place for the stories closest to you. Explore local reports from publishers covering Belgaum and its community.</p><Link className="home-cobalt-action" href="/belgaum">Explore Belgaum <ArrowRight size={20} aria-hidden="true" /></Link></div>
+            {localStory ? <article className="home-local-story">
+                {localStory.featured_image && <PublisherLink article={localStory} className="home-local-photo" ariaLabel={localStory.title}><NewsPhoto src={localStory.featured_image} /></PublisherLink>}
+                <h3><PublisherLink article={localStory}>{localStory.title}</PublisherLink></h3>
+                <div className="story-metadata"><PublisherMetadata article={localStory} /><ArticleViewCount count={localStory.view_count} /></div>
+            </article> : <div className="home-local-note"><p>A local perspective, whenever you need it.</p><Link href="/belgaum">Browse Belgaum reports <ArrowUpRight size={20} aria-hidden="true" /></Link></div>}
+        </section>
+
+        <section className="home-close" aria-labelledby="home-close-heading"><div className="container home-close-inner"><h2 id="home-close-heading">Your next good read<br />starts here.</h2><Link className="home-white-action" href="/briefing">Open today&rsquo;s briefing <ArrowRight size={23} aria-hidden="true" /></Link></div></section>
+    </HomeMotion></TrackingProvider>;
 }

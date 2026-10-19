@@ -1,0 +1,42 @@
+{
+  "asset": "/images/home/belagavi-heritage.webp",
+  "title": "Kamal Basti view, Belgaum",
+  "subject": "Kamal Basadi (Neminath Digambara Jain temple), inside Belagavi Fort, Belagavi, Karnataka, India",
+  "sourcePage": "https://commons.wikimedia.org/wiki/File:Kamal_Basti_view,_Belgaum.jpg",
+  "sourcePageRevision": "https://commons.wikimedia.org/w/index.php?title=File:Kamal_Basti_view,_Belgaum.jpg&oldid=1264796199",
+  "originalFileUrl": "https://upload.wikimedia.org/wikipedia/commons/7/72/Kamal_Basti_view%2C_Belgaum.jpg",
+  "creator": "Shubham S. Sankannavar",
+  "creatorUrl": "https://commons.wikimedia.org/wiki/User:Shubham_S._Sankannavar",
+  "origin": "Own work, uploaded by the creator to Wikimedia Commons for Wiki Loves Monuments 2018",
+  "capturedAt": "2018-05-19T17:46:50",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "attribution": "Kamal Basti view, Belgaum — Shubham S. Sankannavar / Wikimedia Commons, CC BY-SA 4.0. Resized and compressed; display may be cropped.",
+  "derivativeLicense": "CC BY-SA 4.0",
+  "modifications": [
+    "Resized from 4032×3024 to 2000×1500",
+    "Converted from JPEG to WebP at quality 77",
+    "No retouching, generative fill, compositing or color grading; display may use a responsive crop"
+  ],
+  "originalDimensions": {
+    "width": 4032,
+    "height": 3024
+  },
+  "assetDimensions": {
+    "width": 2000,
+    "height": 1500
+  },
+  "bytes": 399850,
+  "originalSha256": "cbcbdc36d43a7989f04abdf1d4a969ffb66c67b87e95f21fd1463040bb8027b6",
+  "assetSha256": "7b337dd69d76817bb96da86ecc2959c13f1e9d1a0a0c4a35a9bd7f2bac2504b4",
+  "verifiedAt": "2026-10-20",
+  "verification": [
+    "Commons file description identifies Neminath Digambara Jain temple / Kamal Basadi and author own work",
+    "Commons category Kamal Basadi identifies the site in Belgaum Fort",
+    "Original EXIF lists iPhone SE and capture date; image visually inspected against source",
+    "Real source photograph; not AI generated and not a news event claim"
+  ],
+  "altText": "Kamal Basadi’s stone pavilion surrounded by palms and a green lawn inside Belagavi Fort.",
+  "cropGuidance": "Preserve the temple roof and lower stone pavilion. For a wide crop use object-position: 50% 62%; avoid very shallow panoramic frames. Suggested mobile ratio around 1.6:1. Keep color natural.",
+  "approvalContext": ".impeccable/mocks/decision/home-cover.json (approved concept photo is illustrative; this verified source replaces it)"
+}

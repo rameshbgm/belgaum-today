@@ -31,6 +31,7 @@ export function validUnsubscribeToken(id: number, email: string, token: string):
 }
 
 export async function sendDigestEmail(to: string, subject: string, html: string, idempotencyKey?: string): Promise<void> {
+    if (process.env.READ_ONLY_PREVIEW === '1') throw new Error('Email delivery is unavailable in read-only preview.');
     if (!digestConfigured()) throw new Error('Daily digest email is not configured');
     const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',

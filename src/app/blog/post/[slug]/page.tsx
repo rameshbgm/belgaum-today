@@ -81,7 +81,7 @@ export default async function BlogPostPage({ params }: Props) {
     const catMeta = CATEGORY_META[blog.category as Category];
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-950">
+        <div className="bg-background">
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
                 '@context': 'https://schema.org',
                 '@type': 'BlogPosting',
@@ -112,7 +112,7 @@ export default async function BlogPostPage({ params }: Props) {
                 </div>
             </div>
 
-            <article className="container mx-auto px-4 py-10 max-w-4xl">
+            <article className="container reading-page mx-auto px-4 max-w-4xl">
                 {/* Category pill */}
                 <Link
                     href={`/blog/category/${blog.category}`}
@@ -165,8 +165,7 @@ export default async function BlogPostPage({ params }: Props) {
 
                 {/* Excerpt */}
                 {blog.excerpt && (
-                    <p className="text-xl text-gray-600 dark:text-gray-300 font-light leading-relaxed mb-8 italic border-l-4 pl-4"
-                        style={{ borderColor: catMeta?.color ?? '#6B7280' }}>
+                    <p className="text-xl text-muted leading-relaxed mb-8">
                         {blog.excerpt}
                     </p>
                 )}
@@ -191,7 +190,7 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Related posts */}
             {related.length > 0 && (
                 <section className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                    <div className="container mx-auto px-4 py-10 max-w-4xl">
+                    <div className="container reading-page mx-auto px-4 max-w-4xl">
                         <h2 className="font-display text-xl font-bold text-gray-900 dark:text-white mb-6">
                             More from {catMeta?.name}
                         </h2>

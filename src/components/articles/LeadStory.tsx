@@ -32,7 +32,7 @@ export function LeadStory({ article }: { article: Article }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#120F0B] via-[#120F0B]/55 to-transparent" />
 
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
-                    <span className="inline-block mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FDBA74]">
+                    <span className="inline-block mb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[#D8E0FF]">
                         {cat?.name} · Lead Story
                     </span>
                     <h2 className="font-display text-3xl md:text-5xl font-black leading-[1.04] text-white tracking-[-0.02em] max-w-3xl">

@@ -1,98 +1,18 @@
-'use client';
-
-import { useState } from 'react';
-import Image from 'next/image';
-import { PublisherLink } from './PublisherLink';
-import { Flame } from 'lucide-react';
-import { Badge } from '@/components/ui';
-import { Article, CATEGORY_META } from '@/types';
-import { stripHtml, truncate } from '@/lib/utils';
-import { NewsFallbackImage } from './NewsFallbackImage';
 import { ArticleViewCount } from './ArticleViewCount';
+import { Article, CATEGORY_META } from '@/types';
+import { PublisherLink } from './PublisherLink';
 import { PublisherMetadata } from './PublisherMetadata';
+import { NewsPhoto } from './NewsPhoto';
+import { stripHtml, truncate } from '@/lib/utils';
 
-interface ArticleCardProps {
-    article: Article;
-    priority?: boolean;
-    compact?: boolean;
-}
-
-// Articles above this view count get a red "HOT" badge.
-const HOT_VIEW_THRESHOLD = 20;
-
-export function ArticleCard({ article, priority = false, compact = false }: ArticleCardProps) {
-    const isHot = article.view_count >= HOT_VIEW_THRESHOLD;
-    // Fall back to the placeholder if the remote image fails (404, blocked host, etc.)
-    const [imageFailed, setImageFailed] = useState(false);
-    const showImage = article.featured_image && !imageFailed;
-    return (
-        <article className={`group bg-surface rounded-lg overflow-hidden border border-hairline transition-all duration-300 hover:shadow-md hover:border-primary/40 ${compact ? 'text-sm' : ''}`}>
-            {/* Image */}
-            <PublisherLink article={article} className={`block relative overflow-hidden ${compact ? 'aspect-square sm:aspect-[4/3] md:aspect-video' : 'aspect-video'}`}>
-                {showImage ? (
-                    <Image
-                        src={article.featured_image!}
-                        alt={article.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        priority={priority}
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        onError={() => setImageFailed(true)}
-                    />
-                ) : (
-                    <NewsFallbackImage seed={article.id} />
-                )}
-                {/* AI Badge */}
-                {article.ai_generated && (
-                    <div className="absolute top-3 right-3">
-                        <Badge variant="info" size="sm">
-                            AI ✨
-                        </Badge>
-                    </div>
-                )}
-                {/* HOT Badge — high-traffic articles */}
-                {isHot && (
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-1.5 py-0.5 sm:px-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-                            <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            Hot
-                        </span>
-                    </div>
-                )}
-            </PublisherLink>
-
-            {/* Content */}
-            <div className={compact ? "p-1.5 sm:p-2 md:p-3" : "p-4"}>
-                {/* Category eyebrow */}
-                <span className="block text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">
-                    {CATEGORY_META[article.category]?.name}
-                </span>
-
-                {/* Title */}
-                <PublisherLink article={article}>
-                    <h3 className={`font-display font-semibold text-ink mb-1 line-clamp-3 sm:line-clamp-2 group-hover:text-primary transition-colors ${compact ? 'text-[11px] leading-tight sm:text-xs md:text-sm' : 'text-lg'}`}>
-                        {article.title}
-                    </h3>
-                </PublisherLink>
-
-                {/* Excerpt - Hidden in compact mode */}
-                {!compact && (
-                    <p className="text-sm text-muted mb-3 line-clamp-2">
-                        {truncate(stripHtml(article.excerpt || ''), 150)}
-                    </p>
-                )}
-
-                {/* Meta */}
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                        {/* Source with Tooltip */}
-                        <PublisherMetadata article={article} className="text-muted" />
-                    </div>
-
-                    {/* Views — rendered red for hot articles */}
-                    <ArticleViewCount count={article.view_count} className={`shrink-0 ${isHot ? 'font-semibold text-red-600' : ''}`} />
-                </div>
-            </div>
-        </article>
-    );
+export function ArticleCard({ article, priority = false, compact = false }: { article: Article; priority?: boolean; compact?: boolean }) {
+    return <article className={`news-card ${article.featured_image ? '' : 'no-photo'}`}>
+        {article.featured_image && <PublisherLink article={article} className="news-card-photo" ariaLabel={article.title}><NewsPhoto src={article.featured_image} priority={priority} /></PublisherLink>}
+        <div className="news-card-copy">
+            <span className="story-category">{CATEGORY_META[article.category]?.name || 'News'}</span>
+            <h3><PublisherLink article={article}>{article.title}</PublisherLink></h3>
+            {!compact && article.excerpt && <p className="news-card-excerpt line-clamp-2">{truncate(stripHtml(article.excerpt), 160)}</p>}
+            <div className="story-metadata"><PublisherMetadata article={article} /><ArticleViewCount count={article.view_count} /></div>
+        </div>
+    </article>;
 }

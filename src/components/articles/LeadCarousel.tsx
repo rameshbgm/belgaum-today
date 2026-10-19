@@ -57,7 +57,7 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                         </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#120F0B]/75 via-transparent to-transparent" />
-                    <span className="absolute bottom-5 left-5 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#FDBA74] md:left-7">
+                    <span className="absolute bottom-5 left-5 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[#D8E0FF] md:left-7">
                         {!isFallback && <TrendingUp className="h-3 w-3" />}
                         {cat?.name}
                         {!isFallback && ` · Trending #${article.rank_position ?? current + 1}`}
@@ -89,7 +89,7 @@ export function LeadCarousel({ articles, isFallback = false }: LeadCarouselProps
                                     className="flex h-11 w-8 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-white"
                                     aria-label={`Go to story ${i + 1}`}
                                     aria-current={i === current ? 'true' : undefined}
-                                ><span className={`h-2 rounded-full transition-[width] ${i === current ? 'w-6 bg-[#FDBA74]' : 'w-2 bg-white/60'}`} /></button>
+                                ><span className={`h-2 rounded-full transition-[width] ${i === current ? 'w-6 bg-[#D8E0FF]' : 'w-2 bg-white/60'}`} /></button>
                             ))}
                         </div>
                     </>

@@ -229,7 +229,7 @@ export default function ArticleEditPage() {
                             {readingTime} min read
                         </span>
 
-                        <Button variant="outline" size="sm" onClick={() => handleSave()}>
+                        <Button variant="outline" size="sm" mutation onClick={() => handleSave()}>
                             <Save className="w-4 h-4 mr-2" />
                             Save Draft
                         </Button>
@@ -243,7 +243,7 @@ export default function ArticleEditPage() {
                             </Link>
                         )}
 
-                        <Button onClick={handlePublish} loading={isSaving}>
+                        <Button mutation onClick={handlePublish} loading={isSaving}>
                             Publish
                         </Button>
                     </div>
@@ -251,9 +251,9 @@ export default function ArticleEditPage() {
             </header>
 
             <div className="container mx-auto px-4 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] gap-7">
                     {/* Main Editor */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="min-w-0 space-y-6">
                         {/* Title */}
                         <Card>
                             <CardContent className="p-6">
@@ -431,7 +431,7 @@ export default function ArticleEditPage() {
                         {!isNew && (
                             <Card>
                                 <CardContent className="p-6">
-                                    <Button variant="danger" className="w-full" onClick={handleDelete}>
+                                    <Button variant="danger" className="w-full" mutation onClick={handleDelete}>
                                         <Trash2 className="w-4 h-4 mr-2" />
                                         Delete Article
                                     </Button>

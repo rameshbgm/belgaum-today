@@ -24,7 +24,7 @@ function SearchForm({ params }: { params: string }) {
         return () => window.clearTimeout(timer);
     }, []);
     return <>
-        <form className="mb-6 rounded-lg border border-hairline bg-surface p-4 sm:p-5" onSubmit={event => {
+        <form className="mb-8 rounded-xl bg-surface p-5 sm:p-7" onSubmit={event => {
             event.preventDefault();
             const fields = new FormData(event.currentTarget);
             const next = new URLSearchParams();
@@ -97,7 +97,8 @@ function SearchContent() {
     const enabled = ['q', 'category', 'startDate', 'endDate', 'sortBy', 'page'].some(key => search.has(key));
     const result = useArchiveSearch(params, enabled);
     return <div className="container mx-auto min-w-0 px-4 py-6 sm:py-8">
-        <h1 className="mb-6 font-display text-3xl font-bold text-ink md:text-4xl">Search news</h1>
+        <h1 className="mb-2 font-display text-3xl font-bold text-ink md:text-4xl">Search news</h1>
+        <p className="mb-7 text-muted">Find a headline, explore a topic, or revisit a report.</p>
         <SearchForm key={params} params={params} />
         {enabled ? <section aria-label="Search results">
             {search.get('q') && <h2 className="mb-4 break-words font-display text-xl text-ink">Results for “{search.get('q')}”</h2>}

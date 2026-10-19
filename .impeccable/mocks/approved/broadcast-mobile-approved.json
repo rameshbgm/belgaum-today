@@ -1,0 +1,20 @@
+{
+  "id": "broadcast-mobile-approved",
+  "file": "broadcast-mobile-approved.png",
+  "source_path": "/Users/laxmi/.codex/generated_images/01a15490-b7dd-7223-b229-1607c885ff1b/exec-11df4724-ccd5-4b93-b1dc-f4c1c0a012c6.png",
+  "approval": {
+    "status": "explicitly_approved_by_user",
+    "explicitly_approved_by_user": true,
+    "recorded_date": "2026-10-19",
+    "scope": "Mobile Broadcast visual direction and implementation reference",
+    "evidence": "Parent task and session context record the user's explicit approval of this mobile mockup."
+  },
+  "usage": "design_reference_only",
+  "shipping_asset": false,
+  "news_imagery": "Illustrative mock imagery and copy must not ship; production articles, publisher photos, dates, and metadata come from the real Hostinger database.",
+  "dimensions": { "width": 887, "height": 1774 },
+  "format": "png",
+  "transparency": false,
+  "sha256": "a002af013b3ea4b8d12b9207051e915ce8056ea0d17603b0eff0fb2b2a8cf0c1",
+  "copy_integrity": "Byte-for-byte copy; source unchanged."
+}

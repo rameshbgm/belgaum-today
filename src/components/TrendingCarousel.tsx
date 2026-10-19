@@ -41,10 +41,10 @@ export function TrendingCarousel({ articles, accentColor = 'saffron' }: Trending
 
     const colorMap: Record<string, { badge: string; btn: string; dot: string; gradient: string }> = {
         saffron: {
-            badge: 'bg-[#E8590C]',
-            btn: 'text-[#FDBA74] hover:text-[#FB923C]',
-            dot: 'bg-[#E8590C]',
-            gradient: 'from-[#1A1712] via-black/80',
+            badge: 'bg-[#2F4BEB]',
+            btn: 'text-[#D8E0FF] hover:text-[#FB923C]',
+            dot: 'bg-[#2F4BEB]',
+            gradient: 'from-[#101C31] via-black/80',
         },
         orange: {
             badge: 'bg-orange-500',

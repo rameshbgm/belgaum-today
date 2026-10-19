@@ -47,7 +47,7 @@ export const FEED_CATEGORIES: Category[] = [
 ];
 
 export const TOP_LEVEL_CATEGORIES: Category[] = [
-  'belgaum', 'india', 'business', 'technology', 'sports', 'entertainment',
+  'india', 'business', 'technology', 'sports', 'entertainment', 'belgaum',
 ];
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';
@@ -173,81 +173,81 @@ export const CATEGORY_META: Record<Category, { name: string; description: string
   india: {
     name: 'India',
     description: 'Latest news from across India',
-    color: '#E8590C'
+    color: '#2F4BEB'
   },
   world: {
     name: 'World',
     description: 'News from around the world',
-    color: '#365A78'
+    color: '#2F4BEB'
   },
   business: {
     name: 'Business',
     description: 'Business and economy updates',
-    color: '#0F766E'
+    color: '#2F4BEB'
   },
   technology: {
     name: 'Technology',
     description: 'Tech news and innovations',
-    color: '#1D4ED8'
+    color: '#2F4BEB'
   },
   entertainment: {
     name: 'Entertainment',
     description: 'Movies, music, and pop culture',
-    color: '#BE123C'
+    color: '#2F4BEB'
   },
   sports: {
     name: 'Sports',
     description: 'Sports news and updates',
-    color: '#15803D'
+    color: '#2F4BEB'
   },
   belgaum: {
     name: 'Belgaum',
     description: 'Local news from Belgaum region',
-    color: '#B45309'
+    color: '#2F4BEB'
   },
   travel: {
     name: 'Travel',
     description: 'Travel guides, destinations and tips',
-    color: '#0369A1'
+    color: '#2F4BEB'
   },
   science: {
     name: 'Science',
     description: 'Scientific discoveries and research',
-    color: '#7C3AED'
+    color: '#2F4BEB'
   },
   health: {
     name: 'Health',
     description: 'Health, wellness and medical news',
-    color: '#059669'
+    color: '#2F4BEB'
   },
   lifestyle: {
     name: 'Lifestyle',
     description: 'Lifestyle, fashion and personal development',
-    color: '#DB2777'
+    color: '#2F4BEB'
   },
   food: {
     name: 'Food',
     description: 'Recipes, cuisine and food culture',
-    color: '#D97706'
+    color: '#2F4BEB'
   },
   education: {
     name: 'Education',
     description: 'Education news, tips and learning resources',
-    color: '#2563EB'
+    color: '#2F4BEB'
   },
   environment: {
     name: 'Environment',
     description: 'Climate, sustainability and environmental news',
-    color: '#16A34A'
+    color: '#2F4BEB'
   },
   culture: {
     name: 'Culture',
     description: 'Art, culture, heritage and society',
-    color: '#9333EA'
+    color: '#2F4BEB'
   },
   finance: {
     name: 'Finance',
     description: 'Personal finance, investing and markets',
-    color: '#CA8A04'
+    color: '#2F4BEB'
   },
 };

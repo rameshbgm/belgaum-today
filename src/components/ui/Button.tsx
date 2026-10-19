@@ -2,22 +2,25 @@
 
 import { cn } from '@/lib/utils';
 import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'sm' | 'md' | 'lg';
     loading?: boolean;
+    mutation?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant = 'primary', size = 'md', loading, children, disabled, ...props }, ref) => {
-        const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg';
+    ({ className, variant = 'primary', size = 'md', loading, children, disabled, mutation = false, ...props }, ref) => {
+        const preview = useReadOnlyPreview();
+        const baseStyles = 'inline-flex min-h-11 items-center justify-center gap-1.5 font-semibold transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-offset-3 disabled:opacity-45 disabled:cursor-not-allowed rounded-lg';
 
         const variants = {
-            primary: 'bg-primary text-white hover:bg-primary-hover focus:ring-primary shadow-sm',
-            secondary: 'bg-accent text-white hover:bg-teal-800 focus:ring-accent',
-            outline: 'border border-hairline text-ink hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] focus:ring-primary',
-            ghost: 'text-ink hover:bg-[#F3EEE4] dark:hover:bg-[#2A251E] focus:ring-primary',
+            primary: 'bg-[#2F4BEB] text-white hover:bg-[#243AC4]',
+            secondary: 'bg-ink text-background hover:opacity-90',
+            outline: 'border border-hairline bg-surface text-ink hover:bg-soft',
+            ghost: 'text-ink hover:bg-soft',
             danger: 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500',
         };
 
@@ -31,7 +34,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <button
                 className={cn(baseStyles, variants[variant], sizes[size], className)}
                 ref={ref}
-                disabled={disabled || loading}
+                disabled={disabled || loading || (preview && mutation)}
+                title={preview && mutation ? 'Unavailable in read-only preview' : props.title}
                 {...props}
             >
                 {loading && (

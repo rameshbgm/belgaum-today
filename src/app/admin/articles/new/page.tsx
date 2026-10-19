@@ -125,7 +125,7 @@ export default function NewArticlePage() {
                             <Clock className="w-4 h-4" />
                             {readingTime} min read
                         </span>
-                        <Button variant="outline" size="sm" onClick={() => save('draft')} loading={isSaving}>
+                        <Button variant="outline" size="sm" mutation onClick={() => save('draft')} loading={isSaving}>
                             <Save className="w-4 h-4 mr-2" />
                             Save Draft
                         </Button>
@@ -137,7 +137,7 @@ export default function NewArticlePage() {
                                 </Button>
                             </Link>
                         )}
-                        <Button onClick={() => save('published')} loading={isSaving}>
+                        <Button mutation onClick={() => save('published')} loading={isSaving}>
                             Publish
                         </Button>
                     </div>
@@ -145,8 +145,8 @@ export default function NewArticlePage() {
             </header>
 
             <div className="container mx-auto px-4 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] gap-7">
+                    <div className="min-w-0 space-y-6">
                         <Card>
                             <CardContent className="p-6">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

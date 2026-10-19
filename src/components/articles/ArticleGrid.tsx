@@ -1,42 +1,5 @@
 import { Article } from '@/types';
 import { ArticleCard } from './ArticleCard';
-
-interface ArticleGridProps {
-    articles: Article[];
-    priority?: boolean;
-    columns?: 1 | 2 | 3;
-    compact?: boolean;
-}
-
-export function ArticleGrid({ articles, priority = false, columns = 3, compact = false }: ArticleGridProps) {
-    if (articles.length === 0) {
-        return (
-            <div className="text-center py-12">
-                <div className="text-6xl mb-4">📭</div>
-                <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                    No articles found
-                </h3>
-                <p className="text-muted">
-                    Check back later for more news updates.
-                </p>
-            </div>
-        );
-    }
-
-    const gridClass = columns === 1
-        ? "flex flex-col gap-4"
-        : `grid grid-cols-1 sm:grid-cols-2 ${columns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4 sm:gap-4 md:gap-5`;
-
-    return (
-        <div className={gridClass}>
-            {articles.map((article, index) => (
-                <ArticleCard
-                    key={article.id}
-                    article={article}
-                    priority={priority && index < 3}
-                    compact={compact}
-                />
-            ))}
-        </div>
-    );
+export function ArticleGrid({ articles, columns = 3, compact = false, priority = false }: { articles: Article[]; columns?: 1 | 2 | 3 | 4; compact?: boolean; priority?: boolean }) {
+    return <div className={`archive-grid ${columns === 2 ? 'two-columns' : columns === 1 ? 'one-column' : ''}`}>{articles.map((article, index) => <ArticleCard key={article.id} article={article} priority={priority && index === 0} compact={compact} />)}</div>;
 }

@@ -15,8 +15,8 @@ export function Card({ children, className, hover = false, gradient = false }: C
                 'rounded-lg overflow-hidden',
                 'bg-surface',
                 'border border-hairline',
-                hover && 'transition-all duration-300 hover:shadow-md hover:border-primary/40',
-                gradient && 'bg-gradient-to-br from-surface to-[#FBF6EE] dark:from-[#211D17] dark:to-[#1A1712]',
+                hover && 'transition-colors duration-150 hover:border-primary/40',
+                gradient && 'bg-surface',
                 className
             )}
         >
@@ -39,7 +39,7 @@ export function CardContent({ children, className }: { children: ReactNode; clas
 
 export function CardFooter({ children, className }: { children: ReactNode; className?: string }) {
     return (
-        <div className={cn('px-6 py-4 border-t border-hairline bg-[#FBF6EE] dark:bg-[#1A1712]', className)}>
+            <div className={cn('px-6 py-4 border-t border-hairline bg-background', className)}>
             {children}
         </div>
     );

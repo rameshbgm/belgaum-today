@@ -1,5 +1,7 @@
 'use client';
 
+import { DetailPanel } from '@/components/ui/DetailPanel';
+import { useReadOnlyPreview } from '@/components/PreviewProvider';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Rss, Plus, Trash2, Power, PowerOff, RefreshCw, Loader2, Clock, ExternalLink, Edit, X, Search, ArrowUpDown, Sparkles
@@ -26,6 +28,7 @@ interface Feed {
 }
 
 export default function RSSFeedsPage() {
+    const preview = useReadOnlyPreview();
     const { showToast } = useToast();
     const [feeds, setFeeds] = useState<Feed[]>([]);
     const [loading, setLoading] = useState(true);
@@ -371,21 +374,21 @@ export default function RSSFeedsPage() {
     };
 
     const categoryColors: Record<string, string> = {
-        india: '#FF9933',
-        business: '#4CAF50',
-        technology: '#2196F3',
-        entertainment: '#E91E63',
-        sports: '#FF5722',
-        belgaum: '#9C27B0',
-        travel: '#00BCD4',
-        science: '#3F51B5',
-        health: '#8BC34A',
-        lifestyle: '#FF4081',
-        food: '#FF9800',
-        education: '#607D8B',
-        environment: '#4CAF50',
-        culture: '#795548',
-        finance: '#009688',
+        india: '#2F4BEB',
+        business: '#2F4BEB',
+        technology: '#2F4BEB',
+        entertainment: '#2F4BEB',
+        sports: '#2F4BEB',
+        belgaum: '#2F4BEB',
+        travel: '#2F4BEB',
+        science: '#2F4BEB',
+        health: '#2F4BEB',
+        lifestyle: '#2F4BEB',
+        food: '#2F4BEB',
+        education: '#2F4BEB',
+        environment: '#2F4BEB',
+        culture: '#2F4BEB',
+        finance: '#2F4BEB',
     };
 
     // Filter and sort feeds
@@ -441,7 +444,7 @@ export default function RSSFeedsPage() {
     };
 
     // Unique categories from feeds list
-    const feedCategories = useMemo(() => [...new Set(feeds.map(f => f.category))].sort(), [feeds]);
+    const feedCategories = useMemo(() => [...new Set(feeds.map(f => f.category))].sort((a, b) => { const order = ['india','business','technology','sports','entertainment','belgaum']; return (order.indexOf(a) < 0 ? 99 : order.indexOf(a)) - (order.indexOf(b) < 0 ? 99 : order.indexOf(b)); }), [feeds]);
 
     if (loading) {
         return (
@@ -457,9 +460,9 @@ export default function RSSFeedsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">RSS Feeds</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Publisher feeds</h1>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Manage news sources, trigger RSS fetching, and run AI trending analysis
+                        Manage publishers, check feed health, and choose what reaches the briefing.
                     </p>
                 </div>
                 <Button onClick={openAddModal}>
@@ -503,7 +506,7 @@ export default function RSSFeedsPage() {
                         </div>
                         <Button
                             className="w-full"
-                            onClick={runCron}
+                            mutation onClick={runCron}
                             disabled={cronRunning || (feedScope === 'selected' && selectedFeeds.length === 0) || (feedScope === 'category' && !feedCategory)}
                         >
                             {cronRunning
@@ -547,7 +550,7 @@ export default function RSSFeedsPage() {
                         </div>
                         <Button
                             className="w-full bg-purple-600 hover:bg-purple-700"
-                            onClick={runAiAnalysis}
+                            mutation onClick={runAiAnalysis}
                             disabled={aiRunning || (aiScope === 'selected' && selectedFeeds.length === 0) || (aiScope === 'category' && !aiCategory)}
                         >
                             {aiRunning
@@ -639,15 +642,15 @@ export default function RSSFeedsPage() {
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={handleEnableSelected}>
+                                <Button variant="outline" size="sm" mutation onClick={handleEnableSelected}>
                                     <Power className="w-4 h-4 mr-1" />
                                     Enable
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={handleDisableSelected}>
+                                <Button variant="outline" size="sm" mutation onClick={handleDisableSelected}>
                                     <PowerOff className="w-4 h-4 mr-1" />
                                     Disable
                                 </Button>
-                                <Button variant="danger" size="sm" onClick={handleDeleteSelected}>
+                                <Button variant="danger" size="sm" mutation onClick={handleDeleteSelected}>
                                     <Trash2 className="w-4 h-4 mr-1" />
                                     Delete
                                 </Button>
@@ -663,11 +666,11 @@ export default function RSSFeedsPage() {
             {/* Bulk All Actions */}
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handleEnableAll}>
+                    <Button variant="outline" size="sm" mutation onClick={handleEnableAll}>
                         <Power className="w-4 h-4 mr-1" />
                         Enable All
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleDisableAll}>
+                    <Button variant="outline" size="sm" mutation onClick={handleDisableAll}>
                         <PowerOff className="w-4 h-4 mr-1" />
                         Disable All
                     </Button>
@@ -807,14 +810,14 @@ export default function RSSFeedsPage() {
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => toggleFeed(feed.id, feed.is_active)}
+                                                disabled={preview} title="Unavailable in read-only preview" onClick={() => toggleFeed(feed.id, feed.is_active)}
                                                 className={`p-1.5 rounded transition ${feed.is_active ? 'text-green-500 hover:text-red-500' : 'text-red-500 hover:text-green-500'}`}
                                                 aria-label={feed.is_active ? 'Disable feed' : 'Enable feed'}
                                             >
                                                 {feed.is_active ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                                             </button>
                                             <button
-                                                onClick={() => confirmDelete(feed)}
+                                                disabled={preview} title="Unavailable in read-only preview" onClick={() => confirmDelete(feed)}
                                                 className="p-1.5 rounded text-gray-400 hover:text-red-500 transition"
                                                 aria-label="Delete feed"
                                             >
@@ -832,8 +835,8 @@ export default function RSSFeedsPage() {
 
             {/* Add/Edit Feed Modal */}
             {showFeedModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <DetailPanel label={editingFeed ? "Edit publisher feed" : "Add publisher feed"} onClose={() => setShowFeedModal(false)}>
+                    <div>
                         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                                 {editingFeed ? 'Edit Feed' : 'Add New Feed'}
@@ -936,7 +939,7 @@ export default function RSSFeedsPage() {
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={formSubmitting}>
+                                <Button mutation type="submit" disabled={formSubmitting}>
                                     {formSubmitting ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -949,7 +952,7 @@ export default function RSSFeedsPage() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </DetailPanel>
             )}
 
             {/* Delete Confirmation Modal */}
@@ -973,7 +976,7 @@ export default function RSSFeedsPage() {
                                 </Button>
                                 <Button
                                     variant="danger"
-                                    onClick={handleDelete}
+                                    mutation onClick={handleDelete}
                                     disabled={deleteSubmitting}
                                 >
                                     {deleteSubmitting ? (
