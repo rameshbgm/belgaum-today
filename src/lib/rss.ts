@@ -1,3 +1,5 @@
+import { isBelgaumStory } from './local-news';
+
 /**
  * RSS Feed Parser & Validator
  * Parses RSS XML from admin-configured publisher feeds,
@@ -35,6 +37,11 @@ export interface FeedFetchResult {
 // the newest bounded batch on each run so shared-hosting jobs finish reliably;
 // subsequent runs deduplicate those entries before saving anything.
 const MAX_ITEMS_PER_FEED_RUN = 50;
+// RSS feeds can publish many non-local items ahead of an occasional Belagavi
+// report. Scan a bounded tail and retain those reports without doubling every
+// feed's normal ingestion workload.
+const MAX_ENTRIES_TO_SCAN_PER_FEED_RUN = 200;
+const MAX_LOCAL_ITEMS_BEYOND_LIMIT = 20;
 
 /**
  * Strip HTML tags and CDATA wrappers from a string
@@ -189,9 +196,13 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
     // Support both RSS <item> and Atom <entry> documents.
     const itemRegex = /<(?:item|entry)[^>]*>([\s\S]*?)<\/(?:item|entry)>/gi;
     let match;
+    let entriesScanned = 0;
+    let extraLocalItems = 0;
 
 
     while ((match = itemRegex.exec(xml)) !== null) {
+        entriesScanned++;
+        if (entriesScanned > MAX_ENTRIES_TO_SCAN_PER_FEED_RUN) break;
         const itemXml = match[1];
 
         // Extract fields
@@ -232,6 +243,9 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
             continue;
         }
 
+        const localStory = isBelgaumStory(cleanTitle, cleanDescription);
+        if (items.length >= MAX_ITEMS_PER_FEED_RUN && (!localStory || extraLocalItems >= MAX_LOCAL_ITEMS_BEYOND_LIMIT)) continue;
+
         items.push({
             title: cleanTitle,
             description: cleanDescription.length > 500
@@ -243,7 +257,7 @@ export async function parseRssFeed(feedUrl: string, sourceName?: string): Promis
             guid: guid || link,
             sourceName: itemSourceName,
         });
-        if (items.length >= MAX_ITEMS_PER_FEED_RUN) break;
+        if (items.length > MAX_ITEMS_PER_FEED_RUN) extraLocalItems++;
     }
 
     if (items.length === 0 && /<(?:item|entry)(?:\s|>)/i.test(xml)) {

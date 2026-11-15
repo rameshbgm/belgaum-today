@@ -4,6 +4,7 @@ import { fetchAllFeeds, RssFeedConfig } from '@/lib/rss';
 import { publisherUrl, assertSourcePolicyConfigured } from '@/lib/source-policy';
 import { generateSlug, calculateReadingTime } from '@/lib/utils';
 import { fileLogger } from '@/lib/fileLogger';
+import { isBelgaumStory } from '@/lib/local-news';
 
 type FetchItemLog = {
     title: string;
@@ -105,13 +106,20 @@ export async function runRssFetch(options: {
                     continue;
                 }
 
-                const existing = await query<Array<{ id: number; status: string; feed_id: number | null; geo_status: string }>>(
-                    'SELECT id, status, feed_id, geo_status FROM articles WHERE source_url IN (?, ?) LIMIT 1',
+                const localStory = isBelgaumStory(item.title, item.description);
+                const existing = await query<Array<{ id: number; status: string; feed_id: number | null; geo_status: string; category: string }>>(
+                    'SELECT id, status, feed_id, geo_status, category FROM articles WHERE source_url IN (?, ?) LIMIT 1',
                     [item.link, sourceLink]
                 );
 
                 if (existing.length > 0) {
                     const article = existing[0];
+                    // Local reports can arrive through statewide or national
+                    // publisher feeds; promote explicit Belagavi mentions into
+                    // the local section even when the article was already seen.
+                    if (localStory && article.category !== 'belgaum') {
+                        await execute('UPDATE articles SET category = ? WHERE id = ?', ['belgaum', article.id]);
+                    }
                     // The item URL proves feed membership, including for legacy rows.
                     const wasHeldForClassification = (article.status === 'draft' && article.geo_status === 'pending') ||
                         (article.status === 'archived' && article.geo_status === 'excluded');
@@ -153,7 +161,7 @@ export async function runRssFetch(options: {
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             item.title, slug, item.description || item.title, item.description || item.title,
-                            item.imageUrl, feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
+                            item.imageUrl, localStory ? 'belgaum' : feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
                             'published', false, false, 0, readingTime, item.pubDate,
                         ]
                         );
@@ -165,7 +173,7 @@ export async function runRssFetch(options: {
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
                                 item.title, `${slug}-${Date.now()}`, item.description || item.title, item.description || item.title,
-                                item.imageUrl, feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
+                            item.imageUrl, localStory ? 'belgaum' : feed.category, feed.publisher_name || feed.name, sourceLink, feed.id, feed.publisher_domain, 'pending',
                                 'published', false, false, 0, readingTime, item.pubDate,
                             ]
                         );
