@@ -35,7 +35,7 @@
 .home-explore-action:hover { text-decoration: underline; }
 .home-hero-figure { position: relative; margin-top: 28px; }
 .home-clip-definitions { position: absolute; }
-.home-hero-image { aspect-ratio: 1.85; clip-path: url(#home-photo-clip); overflow: hidden; }
+.home-hero-image { display: block; aspect-ratio: 1.85; clip-path: url(#home-photo-clip); overflow: hidden; }
 .home-hero-image .news-photo img { object-position: 50% 62%; transform: scale(1.06) translateY(var(--photo-shift, 0)); }
 .home-photo-credit { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .home-photo-credit a { text-decoration: underline; text-decoration-color: var(--hairline); }
