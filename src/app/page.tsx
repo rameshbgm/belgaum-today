@@ -16,7 +16,7 @@ import { distinctStories } from '@/lib/story-clusters';
 import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
 import { Article, CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
 import { dateFromBriefing, listDailyBriefings } from '@/lib/daily-briefings';
-import { safeJsonLd } from '@/lib/seo';
+import { publisher, safeJsonLd } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
@@ -81,7 +81,13 @@ export default async function HomePage() {
     const edition = editions[0];
 
     return <TrackingProvider category="home"><HomeMotion>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Belgaum Today', url: SITE_URL, description: 'India news and daily briefings with linked publisher reports.' }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+            '@context': 'https://schema.org', '@graph': [publisher, {
+                '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: 'Belgaum Today', url: SITE_URL,
+                description: 'India news and daily briefings with linked publisher reports.', publisher: { '@id': publisher['@id'] },
+                inLanguage: 'en-IN',
+            }],
+        }) }} />
         <section className="home-cover" data-home-cover aria-labelledby="home-title">
             <div className="container home-cover-inner">
                 <div className="home-cover-copy">

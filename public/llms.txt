@@ -1,0 +1,14 @@
+# Belgaum Today
+
+> India and Belagavi news discovery, with dated AI-assisted briefings and links to original publisher reports.
+
+Belgaum Today gathers headlines and excerpts from publisher feeds. Its dated India briefings summarize five selected reports. These summaries are AI-assisted and are not independently verified by our editors. Cite the original publishers for their reporting and link to a dated Belgaum Today edition when referring to its compilation. A dated edition captures the reports selected at publication; consult the source links for later developments.
+
+## Start here
+
+- [Home](https://belgaum.today/): AI-selected India stories and category links.
+- [Latest headlines](https://belgaum.today/briefing): current publisher-linked reports.
+- [Dated India briefings](https://belgaum.today/briefing/archive): original Belgaum Today compilations with publication dates and five source links per edition.
+- [Belgaum news](https://belgaum.today/belgaum): publisher reports about Belgaum and Belagavi.
+- [About and editorial process](https://belgaum.today/about): how feeds and AI are used, limitations, and contact information.
+- [Sitemap](https://belgaum.today/sitemap.xml): discover published original pages.

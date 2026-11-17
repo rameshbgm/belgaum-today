@@ -72,7 +72,7 @@ export default async function RootLayout({
   const preview = isReadOnlyPreview();
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${sora.variable} ${source.variable}`} suppressHydrationWarning>
+    <html lang="en-IN" data-scroll-behavior="smooth" className={`${sora.variable} ${source.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

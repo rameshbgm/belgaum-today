@@ -9,7 +9,7 @@ import { query } from '@/lib/db';
 import { Article, CATEGORY_META, Category } from '@/types';
 import { formatDate, stripHtml } from '@/lib/utils';
 import { SITE_URL } from '@/lib/site-url';
-import { safeJsonLd } from '@/lib/seo';
+import { publisher, safeJsonLd } from '@/lib/seo';
 import { ShareButtons, NewsFallbackImage, ArticleViewCount, ArticleViewTracker } from '@/components/articles';
 
 export const dynamic = 'force-dynamic';
@@ -90,8 +90,9 @@ export default async function BlogPostPage({ params }: Props) {
                 image: blog.featured_image || undefined,
                 datePublished: blog.published_at ? new Date(blog.published_at).toISOString() : undefined,
                 dateModified: blog.updated_at ? new Date(blog.updated_at).toISOString() : undefined,
-                author: { '@type': 'Organization', name: 'Belgaum Today' },
-                publisher: { '@type': 'Organization', name: 'Belgaum Today', logo: { '@type': 'ImageObject', url: `${SITE_URL}/images/logo.jpeg` } },
+                author: { '@id': publisher['@id'] },
+                publisher,
+                inLanguage: 'en-IN',
                 mainEntityOfPage: `${SITE_URL}/blog/post/${encodeURIComponent(blog.slug)}`,
             }) }} />
             {/* Breadcrumb */}

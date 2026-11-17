@@ -5,7 +5,7 @@ import { getDailyBriefing, parseBriefing } from '@/lib/daily-briefings';
 import { briefingLabel } from '@/lib/briefing-content';
 import { NewsPhoto } from '@/components/articles/NewsPhoto';
 import { PublisherLink } from '@/components/articles/PublisherLink';
-import { safeJsonLd } from '@/lib/seo';
+import { publisher, safeJsonLd } from '@/lib/seo';
 import { SITE_URL } from '@/lib/site-url';
 import '../daily-briefing.css';
 
@@ -36,10 +36,11 @@ export default async function DailyBriefingPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
             '@context': 'https://schema.org', '@type': 'Article', headline: row.title, description: row.excerpt,
             mainEntityOfPage: url, url, datePublished: new Date(row.published_at).toISOString(), dateModified: new Date(row.updated_at).toISOString(),
-            author: { '@type': 'Organization', name: 'Belgaum Today', url: `${SITE_URL}/about` },
-            publisher: { '@type': 'Organization', name: 'Belgaum Today', url: SITE_URL },
+            inLanguage: 'en-IN', articleSection: 'India',
+            author: { '@id': publisher['@id'] }, publisher,
             image: row.featured_image ? [row.featured_image] : undefined,
             citation: content.stories.map(story => story.source.source_url),
+            isBasedOn: content.stories.map(story => ({ '@type': 'CreativeWork', name: story.source.title, url: story.source.source_url, publisher: { '@type': 'Organization', name: story.source.source_name } })),
         }) }} />
         <nav aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true"> / </span><Link href="/briefing/archive">Daily briefings</Link></nav>
         <article>
