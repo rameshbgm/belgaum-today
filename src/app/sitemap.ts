@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { TOP_LEVEL_CATEGORIES } from '@/types';
 import { SITE_URL } from '@/lib/site-url';
 import { AI_NEWS_ENABLED } from '@/lib/features';
+import { dateFromBriefing, listDailyBriefings } from '@/lib/daily-briefings';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     let stories: StoryRow[] = [];
     let blogs: BlogRow[] = [];
     let blogCategories: BlogCategoryRow[] = [];
+    const briefings = await listDailyBriefings(1000).catch(() => []);
     try {
         [stories, blogs, blogCategories] = await Promise.all([
             AI_NEWS_ENABLED ? query<StoryRow[]>(`SELECT e.id, e.last_updated_at FROM ai_suggested_stories pick
@@ -34,6 +36,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
         { url: SITE_URL },
         { url: `${SITE_URL}/briefing` },
+        { url: `${SITE_URL}/briefing/archive` },
+        ...briefings.map(briefing => ({ url: `${SITE_URL}/briefing/${dateFromBriefing(briefing)}`, lastModified: briefing.updated_at })),
         ...(AI_NEWS_ENABLED ? [{ url: `${SITE_URL}/ai-news` }] : []),
         { url: `${SITE_URL}/blog` },
         { url: `${SITE_URL}/about` },

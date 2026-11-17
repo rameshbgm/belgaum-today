@@ -40,6 +40,18 @@
 .home-photo-credit { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .home-photo-credit a { text-decoration: underline; text-decoration-color: var(--hairline); }
 .home-photo-credit a:hover { color: var(--primary); }
+.home-hero-figure figure { margin: 0; }
+.home-hero-figure .home-photo-credit { margin-top: 0; padding-top: 12px; background: var(--background); }
+.home-carousel-controls { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding-top: 12px; background: var(--background); }
+.home-hero-figure .home-photo-credit, .home-carousel-controls { position: relative; isolation: isolate; }
+.home-hero-figure .home-photo-credit::before, .home-carousel-controls::before { content: ''; position: absolute; inset: 0 -100vw; z-index: -1; background: var(--background); }
+.home-carousel-controls button { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 1px solid var(--hairline); border-radius: 50%; background: var(--background); color: var(--ink); font-weight: 600; }
+.home-carousel-controls button:hover, .home-carousel-controls button[aria-current="true"] { background: var(--primary); color: white; }
+.home-carousel-controls button:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.home-carousel-selectors { display: flex; gap: 4px; }
+.home-edition-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; margin-top: 24px; }
+.home-edition-links a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--primary); font-weight: 600; }
+@media (max-width: 380px) { .home-carousel-controls { flex-wrap: wrap; gap: 8px; justify-content: center; } .home-carousel-selectors { order: 3; flex-basis: 100%; justify-content: center; gap: 4px; } }
 
 .home-introduction, .home-latest, .home-local { margin: auto; padding-inline: 24px; }
 .home-introduction { display: flex; justify-content: space-between; align-items: flex-end; gap: 56px; padding-top: 64px; padding-bottom: 64px; }

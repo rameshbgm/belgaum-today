@@ -4,6 +4,7 @@ import { analyzeTrendingArticles, ArticleForAnalysis } from '@/lib/openai';
 import { fileLogger } from '@/lib/fileLogger';
 import { selectAiSuggestion } from '@/lib/scheduler/ai-suggestions';
 import { AI_INTERVAL_MS } from '@/lib/scheduler/constants';
+import { publishDailyBriefing } from './daily-briefing';
 
 export interface TrendingRunResult {
     categoriesProcessed: number;
@@ -79,6 +80,12 @@ export async function runTrendingAnalysis(options: {
             results.push({ category, trendingCount: 0, durationMs: Date.now() - startedAt, error: message });
             fileLogger.error('ai', `Trending analysis failed for "${category}"`, { runId, error: message });
         }
+    }
+
+    // Publishing is independent: a failed briefing must not invalidate working rankings.
+    if (results.some(result => result.category === 'india' && result.trendingCount > 0)) {
+        try { await publishDailyBriefing(); }
+        catch (error) { fileLogger.warn('ai', 'Daily India briefing publication deferred', { error: String(error) }); }
     }
 
     fileLogger.info('ai', '═══ AI trending analysis completed ═══', {

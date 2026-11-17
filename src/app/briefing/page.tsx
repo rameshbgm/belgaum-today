@@ -18,9 +18,10 @@ import { safeJsonLd } from '@/lib/seo';
 import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
 import { ArticleViewCount } from '@/components/articles/ArticleViewCount';
 import { ReloadButton } from '@/components/ui/ReloadButton';
+import { dateFromBriefing, listDailyBriefings } from '@/lib/daily-briefings';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Today’s briefing', alternates: { canonical: '/briefing' } };
+export const metadata: Metadata = { title: 'India news briefing — latest headlines', description: 'Follow India’s latest headlines and explore daily AI-assisted briefings with links to original publisher reports.', alternates: { canonical: '/briefing' } };
 const fields = 'id, title, slug, excerpt, featured_image, category, source_name, source_url, published_at, created_at, view_count, reading_time';
 const eligible = "status = 'published' AND source_url NOT LIKE 'https://news.google.com/%'";
 async function readArticles(sql: string, params: unknown[] = []) {
@@ -30,6 +31,7 @@ async function readArticles(sql: string, params: unknown[] = []) {
 
 export default async function BriefingPage() {
     void reviveSchedulerIfStale();
+    const editions = await listDailyBriefings(1).catch(() => []);
     const [latest, ranked, mostRead, ...sections] = await Promise.all([
         readArticles(`SELECT ${fields} FROM public_articles WHERE ${eligible} ORDER BY COALESCE(published_at, created_at) DESC LIMIT 24`),
         readArticles(`SELECT ${fields.split(', ').map(field => `a.${field}`).join(', ')} FROM trending_articles t JOIN public_articles a ON a.id = t.article_id WHERE a.status = 'published' AND a.source_url NOT LIKE 'https://news.google.com/%' ORDER BY t.rank_position LIMIT 12`),
@@ -50,6 +52,7 @@ export default async function BriefingPage() {
             <div><h1>Today&rsquo;s briefing</h1><p><time dateTime={today.toISOString()}>{dateline}</time><span className="mx-2" aria-hidden="true">·</span>Headlines from across India.</p></div>
             <div className="briefing-actions"><a href="#your-topics"><SlidersHorizontal size={17} />Your topics</a>{mostRead.length > 0 && <a href="#most-read" className="text-primary">Most read <ArrowRight size={17} /></a>}</div>
         </div>
+        <p className="mb-7 flex flex-wrap gap-x-6 gap-y-3 text-primary">{editions[0] && <Link href={`/briefing/${dateFromBriefing(editions[0])}`} className="inline-flex min-h-11 items-center underline">{editions[0].title}</Link>}<Link href="/briefing/archive" className="inline-flex min-h-11 items-center underline">Daily briefing archive</Link></p>
         {lead ? <section className="lead-layout" aria-label="Today's top stories">
             <article className="lead-article">
                 <PublisherLink article={lead} className="lead-photo" ariaLabel={lead.title}><NewsPhoto src={lead.featured_image} priority /></PublisherLink>

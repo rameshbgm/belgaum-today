@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import './home.css';
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { HomeMotion } from '@/components/home/HomeMotion';
+import { HomeStoryCarousel } from '@/components/home/HomeStoryCarousel';
 import { ArticleCard } from '@/components/articles/ArticleCard';
 import { NewsPhoto } from '@/components/articles/NewsPhoto';
 import { PublisherLink } from '@/components/articles/PublisherLink';
@@ -13,14 +15,21 @@ import { query } from '@/lib/db';
 import { distinctStories } from '@/lib/story-clusters';
 import { reviveSchedulerIfStale } from '@/lib/scheduler/recovery';
 import { Article, CATEGORY_META, TOP_LEVEL_CATEGORIES } from '@/types';
+import { dateFromBriefing, listDailyBriefings } from '@/lib/daily-briefings';
+import { safeJsonLd } from '@/lib/seo';
+import { SITE_URL } from '@/lib/site-url';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = {
-    title: { absolute: 'Belgaum Today — Make sense of today' },
-    description: 'The national picture. The local perspective. Discover headlines across India and Belgaum, then read the original report at its publisher.',
-    alternates: { canonical: '/' },
-    openGraph: { title: 'Belgaum Today — Make sense of today', description: 'The national picture. The local perspective. Your next good read.', url: '/', images: [{ url: '/images/home/belagavi-heritage.webp', width: 2000, height: 1500, alt: 'Kamal Basadi inside Belagavi Fort' }] },
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const [lead] = await aiRankedInCategory('india');
+    const title = 'India News & Daily Briefing | Belgaum Today';
+    const description = 'Follow India’s important stories with AI-selected headlines, dated daily briefings, and linked publisher reports across business, technology and Belagavi.';
+    const images = lead?.featured_image ? [{ url: lead.featured_image }] : [{ url: '/images/belgaum-today-logo.png' }];
+    return { title: { absolute: title }, description, alternates: { canonical: '/' },
+        openGraph: { title, description, url: '/', type: 'website', images },
+        twitter: { card: 'summary_large_image', title, description, images },
+    };
+}
 
 const descriptions: Record<string, string> = {
     india: 'The national conversation.',
@@ -31,7 +40,7 @@ const descriptions: Record<string, string> = {
     belgaum: 'Stories from closer to home.',
 };
 
-async function aiRankedInCategory(category: string): Promise<Article[]> {
+const aiRankedInCategory = cache(async (category: string): Promise<Article[]> => {
     try {
         return distinctStories(await query<Article[]>(
             `SELECT a.* FROM trending_articles t JOIN public_articles a ON a.id = t.article_id
@@ -45,7 +54,7 @@ async function aiRankedInCategory(category: string): Promise<Article[]> {
         console.error('Home headlines unavailable:', error instanceof Error ? error.message : error);
         return [];
     }
-}
+});
 
 async function latestLocalStory(): Promise<Article | undefined> {
     try {
@@ -62,29 +71,28 @@ async function latestLocalStory(): Promise<Article | undefined> {
 
 export default async function HomePage() {
     void reviveSchedulerIfStale();
-    const [sections, localStory] = await Promise.all([
+    const [sections, localStory, editions] = await Promise.all([
         Promise.all(['india', 'business', 'technology'].map(aiRankedInCategory)),
         latestLocalStory(),
+        listDailyBriefings(1).catch(() => []),
     ]);
     const previews = sections.flatMap(articles => articles.slice(0, 1));
-    const leadStory = sections[0]?.[0];
+    const coverStories = sections[0].slice(0, 5).map(({ id, title, featured_image, source_name, source_url }) => ({ id, title, featured_image, source_name, source_url }));
+    const edition = editions[0];
 
     return <TrackingProvider category="home"><HomeMotion>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Belgaum Today', url: SITE_URL, description: 'India news and daily briefings with linked publisher reports.' }) }} />
         <section className="home-cover" data-home-cover aria-labelledby="home-title">
             <div className="container home-cover-inner">
                 <div className="home-cover-copy">
                     <h1 id="home-title"><span>Make </span><span>sense of </span><span>today.</span></h1>
                     <div className="home-cover-intro">
-                        <p>The national picture. The local perspective. Your next good read.</p>
+                        <p>India’s important stories. AI-selected, with the sources in view.</p>
                         <Link className="home-white-action" href="/briefing">Read the briefing <ArrowRight size={23} aria-hidden="true" /></Link>
                         <a className="home-explore-action" href="#explore">Explore categories <ArrowDown size={19} aria-hidden="true" /></a>
                     </div>
                 </div>
-                {leadStory && <figure className="home-hero-figure">
-                    <svg className="home-clip-definitions" width="0" height="0" aria-hidden="true"><defs><clipPath id="home-photo-clip" clipPathUnits="objectBoundingBox"><path data-photo-shape d="M0,.38 C0,.285 .025,.236 .08,.228 L.6,.122 C.66,.114 .66,.01 .74,0 L1,0 L1,.95 Q1,1 .96,1 L.04,1 Q0,1 0,.95 Z" /></clipPath></defs></svg>
-                    <PublisherLink article={leadStory} className="home-hero-image" ariaLabel={leadStory.title}><NewsPhoto src={leadStory.featured_image} alt="" priority /></PublisherLink>
-                    <figcaption className="home-photo-credit">AI-selected India story · <PublisherLink article={leadStory}>{leadStory.title}</PublisherLink> · {leadStory.source_name}</figcaption>
-                </figure>}
+                <HomeStoryCarousel stories={coverStories} />
             </div>
         </section>
 
@@ -96,6 +104,7 @@ export default async function HomePage() {
         <section className="container home-latest" aria-labelledby="home-latest-heading">
             <div className="home-section-heading"><h2 id="home-latest-heading">Today&rsquo;s briefing</h2><Link href="/briefing">View all <ArrowRight size={19} aria-hidden="true" /></Link></div><p>AI-selected stories from India, business and technology.</p>
             {previews.length ? <div className="home-story-grid">{previews.map(article => <ArticleCard key={article.id} article={article} compact />)}</div> : <div className="home-empty"><p>The latest headlines are taking a moment to load.</p><Link href="/briefing">Open the briefing <ArrowRight size={18} aria-hidden="true" /></Link></div>}
+            <div className="home-edition-links">{edition && <Link href={`/briefing/${dateFromBriefing(edition)}`}>{edition.title}<ArrowRight size={18} aria-hidden="true" /></Link>}<Link href="/briefing/archive">Browse daily briefings<ArrowRight size={18} aria-hidden="true" /></Link></div>
         </section>
 
         <section id="explore" className="home-discover" aria-labelledby="home-discover-heading">
